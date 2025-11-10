@@ -15,7 +15,7 @@ import { fileURLToPath } from "url";
 
 // Simple log function
 const log = (...args: any[]) => {
-  console.log(`[${new Date().toISOString()}]`, ...args);
+  console.log(`[${new Date().toISOString()}] - index.ts:18`, ...args);
 };
 
 // Build version v8.0.0-AUTO-SYNC - Production asset sync implemented
@@ -54,12 +54,12 @@ const parseFrontendUrls = (envVar: string | undefined): string[] => {
     const hasWildcard = url.includes('*');
     
     if (hasWildcard) {
-      console.error(`[CORS] Invalid FRONTEND_URL - wildcards not allowed: ${url}`);
+      console.error(`[CORS] Invalid FRONTEND_URL  wildcards not allowed: ${url} - index.ts:57`);
       return false;
     }
     
     if (!isHttps && !isLocalhost) {
-      console.error(`[CORS] Invalid FRONTEND_URL - must use HTTPS: ${url}`);
+      console.error(`[CORS] Invalid FRONTEND_URL  must use HTTPS: ${url} - index.ts:62`);
       return false;
     }
     
@@ -70,7 +70,7 @@ const parseFrontendUrls = (envVar: string | undefined): string[] => {
 
 const configuredFrontendUrls = parseFrontendUrls(process.env.FRONTEND_URL);
 if (configuredFrontendUrls.length > 0) {
-  console.log(`[CORS] Configured frontend URLs: ${configuredFrontendUrls.join(', ')}`);
+  console.log(`[CORS] Configured frontend URLs: ${configuredFrontendUrls.join(', ')} - index.ts:73`);
 }
 
 // Add CORS headers for external browser access
@@ -384,7 +384,7 @@ app.use((req, res, next) => {
   } else {
     // In production, serve from Vite's actual build output
     log('Setting up static file serving for production');
-    const distPath = path.resolve(__dirname, 'public');
+    const distPath = __dirname;
     log(`Serving static files from: ${distPath}`);
     
     if (!fsSync.existsSync(distPath)) {
