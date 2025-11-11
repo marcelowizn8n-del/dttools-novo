@@ -1908,19 +1908,6 @@ export class DatabaseStorage implements IStorage {
   }
 
 
-  async updateUserLimits(userId: string, limits: {
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customAiChatLimit: number | null;
-  }): Promise<void> {
-    await db.update(users)
-      .set({
-        customMaxProjects: limits.customMaxProjects,
-        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
-        customAiChatLimit: limits.customAiChatLimit,
-      })
-      .where(eq(users.id, userId));
-  }
 
 }
 
