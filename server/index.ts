@@ -236,6 +236,30 @@ app.use((req, res, next) => {
         ADD COLUMN IF NOT EXISTS price_per_additional_user INTEGER;
       `);
       
+      // Add custom limit columns to users table
+      await db.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_max_projects INTEGER;
+      `);
+      await db.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_max_double_diamond_projects INTEGER;
+      `);
+      await db.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_max_double_diamond_exports INTEGER;
+      `);
+      await db.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_ai_chat_limit INTEGER;
+      `);
+      
+      // Add export limit column to subscription_plans
+      await db.execute(`
+        ALTER TABLE IF EXISTS subscription_plans 
+        ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
+      `);
+      
       // Add OAuth fields to users table
       await db.execute(`
         ALTER TABLE IF EXISTS users 
