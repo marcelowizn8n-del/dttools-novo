@@ -2121,5 +2121,35 @@ export async function initializeDefaultData() {
 
   } catch (error) {
     console.error('❌ Error initializing default data:', error);
+  
+  async updateUserLimits(userId: string, limits: {
+    customMaxProjects: number | null;
+    customMaxDoubleDiamondProjects: number | null;
+    customAiChatLimit: number | null;
+  }): Promise<void> {
+    await db.update(users)
+      .set({
+        customMaxProjects: limits.customMaxProjects,
+        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
+        customAiChatLimit: limits.customAiChatLimit,
+      })
+      .where(eq(users.id, userId));
   }
+
+
+  async updateUserLimits(userId: string, limits: {
+    customMaxProjects: number | null;
+    customMaxDoubleDiamondProjects: number | null;
+    customAiChatLimit: number | null;
+  }): Promise<void> {
+    await db.update(users)
+      .set({
+        customMaxProjects: limits.customMaxProjects,
+        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
+        customAiChatLimit: limits.customAiChatLimit,
+      })
+      .where(eq(users.id, userId));
+  }
+
+}
 }

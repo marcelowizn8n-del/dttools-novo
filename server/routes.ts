@@ -2400,6 +2400,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.updateUser(req.params.id, validatedData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
+  // Update user custom limits (admin only)
+  app.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { customMaxProjects, customMaxDoubleDiamondProjects, customAiChatLimit } = req.body;
+      
+      await storage.updateUserLimits(req.params.id, {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customAiChatLimit,
+      });
+      
+      res.json({ message: "Limites atualizados com sucesso" });
+    } catch (error) {
+      console.error("Error updating user limits:", error);
+      res.status(500).json({ error: "Failed to update limits" });
+    }
+  });
+
       }
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
