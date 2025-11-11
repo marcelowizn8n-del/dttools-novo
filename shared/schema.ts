@@ -286,6 +286,11 @@ export const users = pgTable("users", {
   subscriptionStatus: text("subscription_status").default("active"), // active, canceled, expired, trialing
   subscriptionEndDate: timestamp("subscription_end_date"),
   aiProjectsUsed: integer("ai_projects_used").default(0), // Track AI-generated projects used
+  // Custom limits (override plan limits) - null = use plan limit
+  customMaxProjects: integer("custom_max_projects"), // null = use plan limit
+  customMaxDoubleDiamondProjects: integer("custom_max_double_diamond_projects"), // null = use plan limit
+  customMaxDoubleDiamondExports: integer("custom_max_double_diamond_exports"), // null = use plan limit
+  customAiChatLimit: integer("custom_ai_chat_limit"), // null = use plan limit
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -306,6 +311,8 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   includedUsers: integer("included_users"), // number of users included in base price (null if not applicable)
   pricePerAdditionalUser: integer("price_per_additional_user"), // price in cents for each additional user beyond includedUsers
   aiChatLimit: integer("ai_chat_limit"), // null for unlimited
+  maxDoubleDiamondProjects: integer("max_double_diamond_projects"), // null for unlimited Double Diamond projects
+  maxDoubleDiamondExports: integer("max_double_diamond_exports"), // null for unlimited exports to main system
   libraryArticlesCount: integer("library_articles_count"), // null for all articles
   features: jsonb("features").default([]), // Array of feature strings
   exportFormats: jsonb("export_formats").default([]), // Array of export formats (pdf, png, csv)
@@ -691,6 +698,20 @@ export const benchmarkAssessments = pgTable("benchmark_assessments", {
   improvementPlan: text("improvement_plan"), // How to improve
   createdAt: timestamp("created_at").default(sql`now()`),
   updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// Double Diamond Exports - Track exports from DD to main system
+export const doubleDiamondExports = pgTable("double_diamond_exports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  doubleDiamondProjectId: varchar("double_diamond_project_id").references(() => doubleDiamondProjects.id, { onDelete: 'cascade' }).notNull(),
+  exportedProjectId: varchar("exported_project_id").references(() => projects.id, { onDelete: 'cascade' }), // Created project in main system
+  exportType: text("export_type").default("full"), // full, partial
+  includedPhases: jsonb("included_phases").default([]), // Which phases were exported: empathize, define, ideate, prototype, test
+  exportCost: real("export_cost").default(0), // Cost in credits
+  status: text("status").default("completed"), // completed, failed, processing
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").default(sql`now()`),
 });
 
 // Insert schemas for benchmarking
