@@ -1892,6 +1892,36 @@ export class DatabaseStorage implements IStorage {
   async listSuccessCases(): Promise<SuccessCase[]> {
     return await db.select().from(successCases).orderBy(successCases.company);
   }
+
+  async updateUserLimits(userId: string, limits: {
+    customMaxProjects: number | null;
+    customMaxDoubleDiamondProjects: number | null;
+    customAiChatLimit: number | null;
+  }): Promise<void> {
+    await db.update(users)
+      .set({
+        customMaxProjects: limits.customMaxProjects,
+        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
+        customAiChatLimit: limits.customAiChatLimit,
+      })
+      .where(eq(users.id, userId));
+  }
+
+
+  async updateUserLimits(userId: string, limits: {
+    customMaxProjects: number | null;
+    customMaxDoubleDiamondProjects: number | null;
+    customAiChatLimit: number | null;
+  }): Promise<void> {
+    await db.update(users)
+      .set({
+        customMaxProjects: limits.customMaxProjects,
+        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
+        customAiChatLimit: limits.customAiChatLimit,
+      })
+      .where(eq(users.id, userId));
+  }
+
 }
 
 // Use DatabaseStorage in production, keep reference to blueprint:javascript_database integration
@@ -2112,44 +2142,11 @@ export async function initializeDefaultData() {
       ];
 
       for (const helpArticle of defaultHelpArticles) {
-        await storage.createHelpArticle(helpArticle);
+        await storage.createHelpArticle(helpArticle as any);
       }
       console.log('✅ Default help articles created');
     }
-
-    // Sample project creation removed - real projects already exist in production
-
   } catch (error) {
     console.error('❌ Error initializing default data:', error);
-  
-  async updateUserLimits(userId: string, limits: {
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customAiChatLimit: number | null;
-  }): Promise<void> {
-    await db.update(users)
-      .set({
-        customMaxProjects: limits.customMaxProjects,
-        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
-        customAiChatLimit: limits.customAiChatLimit,
-      })
-      .where(eq(users.id, userId));
   }
-
-
-  async updateUserLimits(userId: string, limits: {
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customAiChatLimit: number | null;
-  }): Promise<void> {
-    await db.update(users)
-      .set({
-        customMaxProjects: limits.customMaxProjects,
-        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
-        customAiChatLimit: limits.customAiChatLimit,
-      })
-      .where(eq(users.id, userId));
-  }
-
-}
 }

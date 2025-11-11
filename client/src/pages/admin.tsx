@@ -295,146 +295,6 @@ const userFormSchema = z.object({
 
 
 // Dialog para editar limites personalizados de usuário
-function UserLimitsDialog({ 
-  user, 
-  isOpen, 
-  onClose 
-}: { 
-  user: Omit<User, 'password'>; 
-  isOpen: boolean; 
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  
-  const limitsFormSchema = z.object({
-    customMaxProjects: z.number().nullable(),
-    customMaxDoubleDiamondProjects: z.number().nullable(),
-    customAiChatLimit: z.number().nullable(),
-  });
-  
-  const form = useForm<z.infer<typeof limitsFormSchema>>({
-    resolver: zodResolver(limitsFormSchema),
-    defaultValues: {
-      customMaxProjects: (user as any).customMaxProjects || null,
-      customMaxDoubleDiamondProjects: (user as any).customMaxDoubleDiamondProjects || null,
-      customAiChatLimit: (user as any).customAiChatLimit || null,
-    },
-  });
-
-  const updateLimitsMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof limitsFormSchema>) => {
-      const response = await apiRequest("PUT", `/api/users/${user.id}/limits`, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: "Limites atualizados",
-        description: "Os limites personalizados foram salvos com sucesso.",
-      });
-      onClose();
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao atualizar limites",
-        description: "Ocorreu um erro ao salvar os limites.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (data: z.infer<typeof limitsFormSchema>) => {
-    updateLimitsMutation.mutate(data);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Limites Personalizados: {user.username}</DialogTitle>
-          <DialogDescription>
-            Configure limites específicos para este usuário. Deixe vazio para usar o limite do plano.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="customMaxProjects"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Máx. Projetos (vazio = usar plano)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      {...field} 
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="Padrão do plano" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="customMaxDoubleDiamondProjects"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Máx. Double Diamonds (vazio = usar plano)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      {...field} 
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="Padrão do plano" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="customAiChatLimit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Máx. Chat IA (vazio = usar plano)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      {...field} 
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="Padrão do plano" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={updateLimitsMutation.isPending}>
-                {updateLimitsMutation.isPending ? "Salvando..." : "Salvar Limites"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
 
 // Dialog para editar limites personalizados de usuário
 function UserLimitsDialog({ 
@@ -582,7 +442,6 @@ function UsersTab() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
   const [editingUser, setEditingUser] = useState<Omit<User, 'password'> | null>(null);
-  const [editingUserLimits, setEditingUserLimits] = useState<Omit<User, 'password'> | null>(null);
   const [editingUserLimits, setEditingUserLimits] = useState<Omit<User, 'password'> | null>(null);
   const { toast } = useToast();
 
@@ -978,15 +837,6 @@ function UserCreateDialog({
         </Form>
       </DialogContent>
     </Dialog>
-
-      {/* Dialog para editar limites de usuário */}
-      {editingUserLimits && (
-        <UserLimitsDialog
-          user={editingUserLimits}
-          isOpen={!!editingUserLimits}
-          onClose={() => setEditingUserLimits(null)}
-        />
-      )}
 
       );
 }
