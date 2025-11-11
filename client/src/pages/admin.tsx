@@ -838,16 +838,6 @@ function UserCreateDialog({
       </DialogContent>
     </Dialog>
 
-    
-
-      {/* Dialog para editar limites de usuário */}
-      {editingUserLimits && (
-        <UserLimitsDialog
-          user={editingUserLimits}
-          isOpen={!!editingUserLimits}
-          onClose={() => setEditingUserLimits(null)}
-        />
-      )}
 
       );
 }
