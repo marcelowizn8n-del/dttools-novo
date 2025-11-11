@@ -1932,6 +1932,7 @@ function PlanEditDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/subscription-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription-info"] });
       toast({
         title: "Plano atualizado",
         description: "As alterações foram salvas com sucesso.",
