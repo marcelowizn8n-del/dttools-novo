@@ -39,8 +39,13 @@ export default function DoubleDiamond() {
   // Check if user has reached the limit
   const currentUsage = projects.length;
   const isFreeUser = !subscriptionInfo?.subscription || subscriptionInfo?.plan?.name === "free" || subscriptionInfo?.plan?.priceMonthly === 0;
-  const hasReachedLimit = isFreeUser && currentUsage >= FREE_PLAN_DOUBLE_DIAMOND_LIMIT;
-  const remainingProjects = isFreeUser ? Math.max(0, FREE_PLAN_DOUBLE_DIAMOND_LIMIT - currentUsage) : null;
+  
+  // Get limit from plan or use default for free users
+  const planLimit = subscriptionInfo?.plan?.maxDoubleDiamondProjects;
+  const effectiveLimit = planLimit !== null && planLimit !== undefined ? planLimit : (isFreeUser ? FREE_PLAN_DOUBLE_DIAMOND_LIMIT : null);
+  
+  const hasReachedLimit = effectiveLimit !== null && currentUsage >= effectiveLimit;
+  const remainingProjects = effectiveLimit !== null ? Math.max(0, effectiveLimit - currentUsage) : null;
 
   const getPhaseLabel = (phase: string) => {
     const phases: Record<string, string> = {
@@ -67,7 +72,7 @@ export default function DoubleDiamond() {
       setShowLimitAlert(true);
       toast({
         title: "Limite atingido",
-        description: `Você atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond do plano gratuito. Faça upgrade para criar projetos ilimitados.`,
+        description: `Você atingiu o limite de ${effectiveLimit} projetos Double Diamond do plano gratuito. Faça upgrade para criar projetos ilimitados.`,
         variant: "destructive",
       });
       return;
@@ -138,7 +143,7 @@ export default function DoubleDiamond() {
                 </h3>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   {hasReachedLimit 
-                    ? `Você atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos. Faça upgrade para criar projetos ilimitados.`
+                    ? `Você atingiu o limite de ${effectiveLimit} projetos. Faça upgrade para criar projetos ilimitados.`
                     : `Preencha 5 campos e a IA gera todo o resto: pain points, POVs, ideias, MVP completo e análise DFV`
                   }
                   {isFreeUser && !hasReachedLimit && remainingProjects !== null && (
