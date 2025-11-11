@@ -17,6 +17,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { 
+  Book, 
+  Settings, 
+  CreditCard, 
+  Users,
+  BarChart3,
+  MessageCircle,
+  Menu,
+  X,
+  Video
+} from "lucide-react";
+import { 
+  Book, 
+  Settings, 
+  CreditCard, 
+  Users,
+  BarChart3,
+  MessageCircle,
+  Menu,
+  X,
+  Video,
+  TrendingUp
+} from "lucide-react";
 // Use direct path to logo in public root with cache busting
 const logoHorizontal = "/logo-horizontal.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
 const logoIcon = "/logo-icon.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
