@@ -1728,6 +1728,7 @@ const planFormSchema = z.object({
   includedUsers: z.number().nullable(),
   pricePerAdditionalUser: z.number().nullable(),
   aiChatLimit: z.number().nullable(),
+  maxDoubleDiamondProjects: z.number().nullable(),
   hasCollaboration: z.boolean(),
   hasSso: z.boolean(),
   hasCustomIntegrations: z.boolean(),
@@ -1757,6 +1758,7 @@ function PlanEditDialog({
       includedUsers: plan.includedUsers,
       pricePerAdditionalUser: plan.pricePerAdditionalUser ? plan.pricePerAdditionalUser / 100 : null,
       aiChatLimit: plan.aiChatLimit,
+      maxDoubleDiamondProjects: plan.maxDoubleDiamondProjects,
       hasCollaboration: plan.hasCollaboration || false,
       hasSso: plan.hasSso || false,
       hasCustomIntegrations: plan.hasCustomIntegrations || false,
@@ -1914,6 +1916,26 @@ function PlanEditDialog({
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder="Ilimitado" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="maxDoubleDiamondProjects"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Máx. Projetos Double Diamond (vazio = ilimitado)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number"
+                            {...field} 
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                            placeholder="Ilimitado (ex: 3 para plano Free)" 
                           />
                         </FormControl>
                         <FormMessage />
