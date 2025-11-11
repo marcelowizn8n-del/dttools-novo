@@ -18,12 +18,12 @@ const phases = [
     icon: Users,
     name: "Empatizar",
     nameEn: "Empathize",
-    description: "Compreenda profundamente seus usuários através de pesquisas, entrevistas e observações.",
-    descriptionEn: "Deeply understand your users through research, interviews and observations.",
-    bgColor: "#E8F4FA", // Tom suave de #90C5E0
-    borderColor: "#90C5E0",
-    iconColor: "#5A9FC5",
-    textColor: "#2C5F7C"
+    description: "Compreenda profundamente seus usuários",
+    descriptionEn: "Deeply understand your users",
+    bgColor: "#90C5E0",
+    hoverColor: "#69A1C5",
+    iconColor: "text-white",
+    completed: false
   },
   {
     id: 2,
@@ -32,10 +32,10 @@ const phases = [
     nameEn: "Define", 
     description: "Defina claramente o problema e crie declarações de ponto de vista focadas.",
     descriptionEn: "Clearly define the problem and create focused point of view statements.",
-    bgColor: "#E2E6ED", // Tom suave de #3A5A7E
-    borderColor: "#3A5A7E",
-    iconColor: "#2C4560",
-    textColor: "#1E2F45"
+    bgColor: "#3A5A7E",
+    hoverColor: "#2A4259",
+    iconColor: "text-white",
+    completed: false
   },
   {
     id: 3,
@@ -44,10 +44,10 @@ const phases = [
     nameEn: "Ideate",
     description: "Gere uma ampla gama de ideias criativas através de brainstorming estruturado.",
     descriptionEn: "Generate a wide range of creative ideas through structured brainstorming.",
-    bgColor: "#FFFBEB", // Tom suave de #FFD700
-    borderColor: "#FFD700",
-    iconColor: "#D4AF00",
-    textColor: "#7A6500"
+    bgColor: "#FFD700",
+    hoverColor: "#E6C200",
+    iconColor: "text-black",
+    completed: false
   },
   {
     id: 4,
@@ -56,10 +56,10 @@ const phases = [
     nameEn: "Prototype",
     description: "Construa protótipos rápidos e baratos para testar suas melhores ideias.",
     descriptionEn: "Build quick and inexpensive prototypes to test your best ideas.",
-    bgColor: "#FFF2EC", // Tom suave de #FF8C42
-    borderColor: "#FF8C42",
-    iconColor: "#E07038",
-    textColor: "#8C4A1F"
+    bgColor: "#FF8C42",
+    hoverColor: "#E0773A",
+    iconColor: "text-white",
+    completed: false
   },
   {
     id: 5,
@@ -68,10 +68,10 @@ const phases = [
     nameEn: "Test",
     description: "Teste seus protótipos com usuários reais e colete feedback valioso.",
     descriptionEn: "Test your prototypes with real users and collect valuable feedback.",
-    bgColor: "#E9FAF6", // Tom suave de #76D7C4
-    borderColor: "#76D7C4",
-    iconColor: "#48A396",
-    textColor: "#2D6B5F"
+    bgColor: "#76D7C4",
+    hoverColor: "#48A9A6",
+    iconColor: "text-black",
+    completed: false
   }
 ];
 
@@ -272,54 +272,54 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {phases.map((phase, index) => {
-              const Icon = phase.icon;
-              const isHovered = hoveredPhase === phase.id;
-              
-              return (
-                <div key={phase.id} onClick={() => handlePhaseClick(phase.id)}>
-                  <Card 
-                    className="relative transition-all duration-300 cursor-pointer border-2 hover:shadow-lg hover:scale-105"
-                    style={{
-                      backgroundColor: phase.bgColor,
-                      borderColor: isHovered ? phase.borderColor : '#e5e7eb'
-                    }}
-                    onMouseEnter={() => setHoveredPhase(phase.id)}
-                    onMouseLeave={() => setHoveredPhase(null)}
-                    data-testid={`card-phase-${phase.id}`}
-                  >
-                    <CardHeader className="text-center pb-3">
-                      <div 
-                        className="mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3"
-                        style={{
-                          backgroundColor: isHovered ? phase.borderColor : 'white',
-                          color: isHovered ? 'white' : phase.iconColor
-                        }}
-                      >
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      <CardTitle className="text-lg font-semibold">
-                        {index + 1}. {isEnglish ? phase.nameEn : phase.name}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-sm text-gray-600 leading-relaxed">
-                        {isEnglish ? phase.descriptionEn : phase.description}
-                      </CardDescription>
-                    </CardContent>
-                    {index < phases.length - 1 && (
-                      <div className="hidden lg:block absolute -right-3 top-1/2 transform -translate-y-1/2 z-10">
-                        <ArrowRight className="w-6 h-6 text-gray-400" />
-                      </div>
-                    )}
-                  </Card>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {phases.map((phase) => {
+                  const Icon = phase.icon;
+                  const isHovered = hoveredPhase === phase.id;
+                  
+                  return (
+                    <Card 
+                      key={phase.id}
+ className={`cursor-pointer transition-all duration-300 border-2 ${
+                        isHovered ? 'shadow-lg scale-105' : 'shadow-md'
+                      }`}
+                      style={{
+                        backgroundColor: isHovered ? phase.hoverColor : phase.bgColor,
+                        borderColor: phase.bgColor,
+                        color: phase.iconColor === 'text-black' ? '#000' : '#fff'
+                      }}
+                      onMouseEnter={() => setHoveredPhase(phase.id)}
+                      onMouseLeave={() => setHoveredPhase(null)}
+                      onClick={() => handlePhaseClick(phase.id)}
+                      data-testid={`card-phase-${phase.id}`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center gap-4">
+                          <div 
+                            className={`w-12 h-12 rounded-lg flex items-center justify-center ${phase.iconColor}`}
+                            style={{ 
+                              backgroundColor: 'rgba(255,255,255,0.2)',
+                              backdropFilter: 'blur(10px)'
+                            }}
+                          >
+                            <Icon className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">
+                              {phase.id}. {isEnglish ? phase.nameEn : phase.name}
+                            </CardTitle>
+                            <CardDescription className="mt-1" style={{ color: phase.iconColor === 'text-black' ? '#666' : 'rgba(255,255,255,0.8)' }}>
+                              {isEnglish ? phase.descriptionEn : phase.description}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
 
       {/* Features Section */}
 
