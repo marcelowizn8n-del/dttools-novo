@@ -322,6 +322,147 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
+
+      {/* Double Diamond Section - Call to Action for Signup */}
+      <section className="py-20 bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 text-sm px-4 py-1">
+              ✨ {isEnglish ? "ADVANCED FRAMEWORK" : "FRAMEWORK AVANÇADO"}
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              {isEnglish ? "Double Diamond + AI" : "Double Diamond + IA"}
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              {isEnglish 
+                ? "The most complete framework for innovation: combines problem discovery and solution development with full AI automation."
+                : "O framework mais completo para inovação: combina descoberta de problemas e desenvolvimento de soluções com automação total de IA."
+              }
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto">
+            <Card className="border-2 border-purple-200 shadow-2xl overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-start gap-5 flex-1">
+                    <div className="p-4 bg-white/20 rounded-xl backdrop-blur-sm flex-shrink-0">
+                      <Sparkles className="w-10 h-10 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-bold mb-3">
+                        {isEnglish 
+                          ? "Complete MVP in Minutes" 
+                          : "MVP Completo em Minutos"}
+                      </h3>
+                      <p className="text-blue-100 text-lg mb-4 leading-relaxed">
+                        {isEnglish 
+                          ? "AI generates POV statements, problem definitions, creative ideas with automatic DFV analysis, and complete prototypes."
+                          : "IA gera declarações POV, definição de problemas, ideias criativas com análise DFV automática e protótipos completos."
+                        }
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {(isEnglish 
+                          ? ["POV Statements", "Problem Definition", "AI Ideas", "DFV Analysis", "Auto Prototypes"]
+                          : ["Declarações POV", "Definição Problema", "Ideias com IA", "Análise DFV", "Protótipos Auto"]
+                        ).map((feature) => (
+                          <Badge key={feature} className="bg-white/90 text-purple-700 hover:bg-white">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {feature}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Link href="/signup">
+                      <Button 
+                        size="lg" 
+                        className="bg-white text-purple-600 hover:bg-gray-50 text-xl px-10 py-7 shadow-xl hover:shadow-2xl transition-all duration-300"
+                        data-testid="button-double-diamond-cta"
+                      >
+                        <Rocket className="mr-3 h-7 w-7" />
+                        {isEnglish ? "Start Free" : "Começar Grátis"}
+                        <ArrowRight className="ml-3 h-6 w-6" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <CardContent className="p-8 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Discovery Diamond */}
+                  <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <Target className="w-6 h-6 text-white" />
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900">
+                        {isEnglish ? "Discovery Diamond" : "Diamante da Descoberta"}
+                      </h4>
+                    </div>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                      {isEnglish 
+                        ? "Explore the problem space deeply before jumping to solutions."
+                        : "Explore o espaço do problema profundamente antes de pular para soluções."
+                      }
+                    </p>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{isEnglish ? "User research" : "Pesquisa de usuários"}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{isEnglish ? "Problem definition" : "Definição do problema"}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Delivery Diamond */}
+                  <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <Zap className="w-6 h-6 text-white" />
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900">
+                        {isEnglish ? "Delivery Diamond" : "Diamante da Entrega"}
+                      </h4>
+                    </div>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                      {isEnglish 
+                        ? "Create, test and refine solutions iteratively."
+                        : "Crie, teste e refine soluções iterativamente."
+                      }
+                    </p>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{isEnglish ? "Ideation & DFV" : "Ideação & DFV"}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{isEnglish ? "Prototyping & Testing" : "Prototipagem & Testes"}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+                  <p className="text-sm text-gray-500">
+                    {isEnglish 
+                      ? "🎯 Perfect for startups, innovation teams, and product managers"
+                      : "🎯 Perfeito para startups, times de inovação e gerentes de produto"
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
