@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Plus, Sparkles, TrendingUp, CheckCircle2, Circle, AlertCircle, ArrowRight } from "lucide-react";
+import { Plus, Sparkles, TrendingUp, CheckCircle2, Circle, AlertCircle, ArrowRight , Download } from "lucide-react";
 import { DoubleDiamondWizard } from "@/components/double-diamond/DoubleDiamondWizard";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -26,6 +26,37 @@ export default function DoubleDiamond() {
   const [showWizard, setShowWizard] = useState(false);
   const [showLimitAlert, setShowLimitAlert] = useState(false);
   const { toast } = useToast();
+
+  const handleExportProject = async (projectId: string, projectName: string) => {
+    try {
+      const response = await fetch(`/api/double-diamond/${projectId}/export`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectName: `${projectName} (Continuação)` }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "✅ Projeto Exportado!",
+          description: "Projeto criado no sistema principal. Você será redirecionado...",
+        });
+        setTimeout(() => window.location.href = `/projects/${data.projectId}`, 2000);
+      } else {
+        toast({
+          title: "Erro ao exportar",
+          description: data.error || "Tente novamente",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao exportar projeto",
+        variant: "destructive",
+      });
+    }
+  };
   const [, setLocation] = useLocation();
 
   const { data: projects = [], isLoading } = useQuery<DoubleDiamondProject[]>({
@@ -267,6 +298,36 @@ export default function DoubleDiamond() {
                   })}
                 </div>
               </CardContent>
+              
+              <CardFooter className="bg-muted/50 border-t pt-3">
+                <div className="flex gap-2 w-full">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="flex-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = `/double-diamond/${project.id}`;
+                    }}
+                  >
+                    <Eye className="mr-1 h-4 w-4" />
+                    Ver Detalhes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportProject(project.id, project.name);
+                    }}
+                    disabled={project.completionPercentage < 50}
+                    title={project.completionPercentage < 50 ? "Complete pelo menos 50% antes de exportar" : "Exportar para o sistema principal"}
+                  >
+                    <Download className="mr-1 h-4 w-4" />
+                    Exportar
+                  </Button>
+                </div>
+              </CardFooter>
             </Card>
           ))}
         </div>

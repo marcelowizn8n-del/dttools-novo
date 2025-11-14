@@ -1909,6 +1909,27 @@ export class DatabaseStorage implements IStorage {
 
 
 
+
+  async createDoubleDiamondExport(exportData: any): Promise<any> {
+    const [exportRecord] = await db.insert(doubleDiamondExports).values(exportData).returning();
+    return exportRecord;
+  }
+
+  async getDoubleDiamondExportsByMonth(userId: string): Promise<any[]> {
+    const firstDay = new Date();
+    firstDay.setDate(1);
+    firstDay.setHours(0, 0, 0, 0);
+    
+    return await db.select()
+      .from(doubleDiamondExports)
+      .where(
+        and(
+          eq(doubleDiamondExports.userId, userId),
+          gte(doubleDiamondExports.createdAt, firstDay)
+        )
+      );
+  }
+
 }
 
 // Use DatabaseStorage in production, keep reference to blueprint:javascript_database integration
