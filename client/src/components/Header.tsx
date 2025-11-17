@@ -17,29 +17,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { 
-  Book, 
-  Settings, 
-  CreditCard, 
-  Users,
-  BarChart3,
-  MessageCircle,
-  Menu,
-  X,
-  Video
-} from "lucide-react";
-import { 
-  Book, 
-  Settings, 
-  CreditCard, 
-  Users,
-  BarChart3,
-  MessageCircle,
-  Menu,
-  X,
-  Video,
-  TrendingUp
-} from "lucide-react";
 // Use direct path to logo in public root with cache busting
 const logoHorizontal = "/logo-horizontal.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
 const logoIcon = "/logo-icon.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
@@ -92,7 +69,116 @@ export default function Header() {
           </div>
 
           {/* Navigation - Center section with responsive sizing */}
-          <nav className="hidden lg:flex items-center gap-2 xl:gap-4 flex-1 justify-center max-w-3xl">
+          {/* Compact nav (lg até <xl): ícones com rótulo acessível, ocupa menos largura */}
+          <nav className="hidden lg:flex xl:hidden items-center gap-1 flex-1 justify-center max-w-xl">
+            <Link href="/projects">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                data-testid="nav-projects-compact"
+                title={t("nav.projects") || "Projects"}
+              >
+                <Users className="h-4 w-4" />
+                <span className="sr-only">{t("nav.projects") || "Projects"}</span>
+              </Button>
+            </Link>
+            <Link href="/library">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                data-testid="nav-library-compact"
+                title={t("nav.library")}
+              >
+                <Book className="h-4 w-4" />
+                <span className="sr-only">{t("nav.library")}</span>
+              </Button>
+            </Link>
+            <Link href="/video-tutorials">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                data-testid="nav-video-tutorials-compact"
+                title="Tutoriais em vídeo"
+              >
+                <Video className="h-4 w-4" />
+                <span className="sr-only">Tutoriais em vídeo</span>
+              </Button>
+            </Link>
+            {isAuthenticated && (
+              <Link href="/chat">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  data-testid="nav-chat-compact"
+                  title="Chat IA"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="sr-only">Chat IA</span>
+                </Button>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link href="/dashboard">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  data-testid="nav-dashboard-compact"
+                  title="Dashboard"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="sr-only">Dashboard</span>
+                </Button>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link href="/double-diamond">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  data-testid="nav-double-diamond-compact"
+                  title="Double Diamond"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="sr-only">Double Diamond</span>
+                </Button>
+              </Link>
+            )}
+            <Link href="/pricing">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                data-testid="nav-pricing-compact"
+                title={t("nav.pricing")}
+              >
+                <CreditCard className="h-4 w-4" />
+                <span className="sr-only">{t("nav.pricing")}</span>
+              </Button>
+            </Link>
+            {isAdmin && (
+              <Link href="/admin">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  data-testid="nav-admin-compact"
+                  title={t("nav.admin")}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="sr-only">{t("nav.admin")}</span>
+                </Button>
+              </Link>
+            )}
+          </nav>
+
+          {/* Full nav (xl+): com textos, usada em telas grandes */}
+          <nav className="hidden xl:flex items-center gap-2 xl:gap-4 flex-1 justify-center max-w-3xl">
             <Link href="/projects">
               <Button variant="ghost" className="text-sm" data-testid="nav-projects">
                 <Users className="mr-1 h-4 w-4" />
