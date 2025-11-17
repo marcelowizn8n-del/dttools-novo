@@ -10,14 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Sparkles, Loader2, CheckCircle2, Circle, Download } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 interface DoubleDiamondProject {
   id: string;
@@ -25,11 +17,6 @@ interface DoubleDiamondProject {
   description?: string;
   currentPhase: string;
   completionPercentage: number;
-  sectorId?: string | null;
-  successCaseId?: string | null;
-  customSuccessCase?: string | null;
-  targetAudience?: string | null;
-  problemStatement?: string | null;
   discoverStatus: string;
   defineStatus: string;
   developStatus: string;
@@ -57,18 +44,6 @@ interface DoubleDiamondProject {
   dfvFeedback?: string;
 }
 
-const initialBriefingSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  description: z.string().optional(),
-  sectorId: z.string().optional(),
-  successCaseId: z.string().optional(),
-  customSuccessCase: z.string().optional(),
-  targetAudience: z.string().min(10, "Descreva o público-alvo (mínimo 10 caracteres)"),
-  problemStatement: z.string().min(20, "Descreva o problema (mínimo 20 caracteres)"),
-});
-
-type InitialBriefingFormData = z.infer<typeof initialBriefingSchema>;
-
 export default function DoubleDiamondProject() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
@@ -76,7 +51,6 @@ export default function DoubleDiamondProject() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const { language } = useLanguage();
-  const [isEditingBriefing, setIsEditingBriefing] = useState(false);
 
   // Fetch project
   const { data: project, isLoading, isError, error } = useQuery<DoubleDiamondProject>({
@@ -123,63 +97,6 @@ export default function DoubleDiamondProject() {
         variant: "destructive"
       });
     }
-  });
-
-  const { data: sectors = [] } = useQuery<{ id: string; name: string }[]>({
-    queryKey: ["/api/industry-sectors"],
-  });
-
-  const { data: successCases = [] } = useQuery<{ id: string; name: string; company: string }[]>({
-    queryKey: ["/api/success-cases"],
-  });
-
-  const briefingForm = useForm<InitialBriefingFormData>({
-    resolver: zodResolver(initialBriefingSchema),
-    defaultValues: {
-      name: project?.name || "",
-      description: project?.description || "",
-      sectorId: project?.sectorId || "",
-      successCaseId: project?.successCaseId || "",
-      customSuccessCase: project?.customSuccessCase || "",
-      targetAudience: project?.targetAudience || "",
-      problemStatement: project?.problemStatement || "",
-    },
-  });
-
-  // Atualizar valores do formulário quando o projeto carregar
-  if (project && !briefingForm.getValues("name")) {
-    briefingForm.reset({
-      name: project.name || "",
-      description: project.description || "",
-      sectorId: project.sectorId || "",
-      successCaseId: project.successCaseId || "",
-      customSuccessCase: project.customSuccessCase || "",
-      targetAudience: project.targetAudience || "",
-      problemStatement: project.problemStatement || "",
-    });
-  }
-
-  const updateBriefingMutation = useMutation({
-    mutationFn: async (data: InitialBriefingFormData) => {
-      if (!id) throw new Error("Projeto não encontrado");
-      const response = await apiRequest("PATCH", `/api/double-diamond/${id}`, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
-      toast({
-        title: "Briefing atualizado",
-        description: "As informações iniciais do projeto foram atualizadas.",
-      });
-      setIsEditingBriefing(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao atualizar briefing",
-        description: error.message || "Tente novamente",
-        variant: "destructive",
-      });
-    },
   });
 
   const exportProjectMutation = useMutation({
@@ -373,27 +290,15 @@ export default function DoubleDiamondProject() {
           Voltar para Projetos
         </Button>
 
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-2" data-testid="text-project-name">{project.name}</h1>
-                {project.description && (
-                  <p className="text-muted-foreground mb-2">{project.description}</p>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingBriefing(true)}
-                data-testid="button-edit-briefing"
-              >
-                Editar briefing inicial
-              </Button>
-            </div>
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-project-name">{project.name}</h1>
+            {project.description && (
+              <p className="text-muted-foreground mb-4">{project.description}</p>
+            )}
 
             {/* Progress */}
-            <div className="space-y-2 mt-2">
+            <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">Progresso Geral</span>
                 <span className="text-muted-foreground">{project.completionPercentage}%</span>
@@ -402,7 +307,7 @@ export default function DoubleDiamondProject() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="ml-6 flex flex-col gap-2">
             <Badge variant="secondary" className="text-lg px-4 py-2">
               Fase Atual: {project.currentPhase === "discover" ? "Descobrir" : 
                           project.currentPhase === "define" ? "Definir" :
@@ -459,155 +364,6 @@ export default function DoubleDiamondProject() {
           </div>
         </div>
       </div>
-
-      <Dialog open={isEditingBriefing} onOpenChange={setIsEditingBriefing}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar briefing inicial</DialogTitle>
-          </DialogHeader>
-          <Form {...briefingForm}>
-            <form
-              onSubmit={briefingForm.handleSubmit((data) => updateBriefingMutation.mutate(data))}
-              className="space-y-4 mt-2"
-            >
-              <FormField
-                control={briefingForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Projeto *</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={briefingForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição (opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea className="min-h-[60px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={briefingForm.control}
-                  name="sectorId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Setor / Indústria</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um setor" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {sectors.map((sector) => (
-                            <SelectItem key={sector.id} value={sector.id}>
-                              {sector.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={briefingForm.control}
-                  name="successCaseId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Case de Sucesso para Espelhar</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um case" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {successCases.map((successCase) => (
-                            <SelectItem key={successCase.id} value={successCase.id}>
-                              {successCase.name} ({successCase.company})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={briefingForm.control}
-                name="customSuccessCase"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ou descreva um case de sucesso personalizado</FormLabel>
-                    <FormControl>
-                      <Textarea className="min-h-[60px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={briefingForm.control}
-                name="targetAudience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Público-alvo *</FormLabel>
-                    <FormControl>
-                      <Textarea className="min-h-[60px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={briefingForm.control}
-                name="problemStatement"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Problema a ser resolvido *</FormLabel>
-                    <FormControl>
-                      <Textarea className="min-h-[80px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditingBriefing(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={updateBriefingMutation.isPending}>
-                  {updateBriefingMutation.isPending ? "Salvando..." : "Salvar alterações"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
 
       {/* Phase Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

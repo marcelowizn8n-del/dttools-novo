@@ -424,7 +424,7 @@ export default function ProjectDetailPage() {
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3].map(i => (
               <div key={i} className="h-48 bg-gray-200 rounded"></div>
             ))}
           </div>
@@ -437,234 +437,39 @@ export default function ProjectDetailPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Projeto não encontrado
-          </h2>
-          <p className="text-gray-600 mb-6">
-            O projeto que você está procurando não existe ou foi removido.
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Projeto não encontrado</h2>
+          <p className="text-gray-600 mb-6">O projeto que você está procurando não existe ou foi removido.</p>
           <Link href="/projects">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar aos Projetos
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+          ) : project.currentPhase === 3 ? (
+            <Phase3Tools projectId={project.id} />
+          ) : project.currentPhase === 4 ? (
+            <Phase4Tools projectId={project.id} />
+          ) : project.currentPhase === 5 ? (
+            <Phase5Tools projectId={project.id} />
+          ) : (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-blue-900">Em Desenvolvimento</CardTitle>
+                <CardDescription className="text-blue-700">
+                  As ferramentas para esta fase estao sendo desenvolvidas. 
+                  Complete as fases anteriores para desbloquear as proximas fases!
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+        </TabsContent>
 
-  return (
-    <div className="project-detail">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link href="/projects">
-            <Button variant="ghost" size="sm" data-testid="button-back">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1
-              className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900"
-              data-testid="heading-project-name"
-            >
-              {project.name}
-            </h1>
-            {project.description && (
-              <p
-                className="text-gray-600 mt-1"
-                data-testid="text-project-description"
-              >
-                {project.description}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <EditProjectDialog project={project} projectId={projectId!} />
-            <Badge
-              variant={
-                project.status === "completed" ? "default" : "secondary"
-              }
-              className={
-                project.status === "completed"
-                  ? "bg-green-100 text-green-800"
-                  : ""
-              }
-              data-testid="badge-project-status"
-            >
-              {project.status === "completed" ? "Concluído" : "Em andamento"}
-            </Badge>
-          </div>
-        </div>
+        <TabsContent value="kanban" className="space-y-6">
+          <KanbanBoard projectId={project.id} />
+        </TabsContent>
 
-        {/* Project Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Progresso Geral
-              </CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div
-                className="text-2xl font-bold mb-2"
-                data-testid="text-completion-rate"
-              >
-                {project.completionRate}%
-              </div>
-              <Progress value={project.completionRate || 0} className="h-2" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Fase Atual</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold" data-testid="text-current-phase">
-                Fase {project.currentPhase}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {project.currentPhase
-                  ? phaseData[
-                      project.currentPhase as keyof typeof phaseData
-                    ]?.title
-                  : "N/A"}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Criado em</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div
-                className="text-2xl font-bold"
-                data-testid="text-created-date"
-              >
-                {project.createdAt
-                  ? new Date(project.createdAt).toLocaleDateString("pt-BR")
-                  : "N/A"}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {stats && `${stats.completedTools}/${stats.totalTools} ferramentas`}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content with Tabs */}
-        <Tabs defaultValue="phases" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 h-auto">
-            <TabsTrigger
-              value="phases"
-              data-testid="tab-phases"
-              className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
-            >
-              Fases & Ferramentas
-            </TabsTrigger>
-            <TabsTrigger
-              value="kanban"
-              data-testid="tab-kanban"
-              className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
-            >
-              <Columns3 className="w-4 h-4 mr-2 hidden sm:inline" />
-              Board Kanban
-            </TabsTrigger>
-            <TabsTrigger
-              value="analysis"
-              data-testid="tab-analysis"
-              className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
-            >
-              <Brain className="w-4 h-4 mr-2 hidden sm:inline" />
-              Análise Inteligente IA
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="phases" className="space-y-6">
-            {/* Design Thinking Phases */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Fases do Design Thinking
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5].map((phaseNumber) => (
-                  <PhaseCard
-                    key={phaseNumber}
-                    phaseNumber={phaseNumber}
-                    isActive={(project.currentPhase || 1) === phaseNumber}
-                    isCompleted={(project.currentPhase || 1) > phaseNumber}
-                    onClick={() => handlePhaseChange(phaseNumber)}
-                    isUpdating={updatePhaseMutation.isPending}
-                  />
-                ))}
-
-                {/* Benchmarking Card */}
-                <Card className="bg-gradient-to-br from-purple-100 to-blue-100 border-2 border-purple-200 hover:shadow-lg transition-all duration-200">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-purple-600 text-white">
-                        <BarChart3 className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg text-purple-900">
-                          Benchmarking
-                        </CardTitle>
-                        <CardDescription className="text-sm text-purple-700">
-                          Compare sua maturidade em Design Thinking
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Link href="/benchmarking">
-                      <Button
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                        data-testid="button-benchmarking"
-                      >
-                        Explorar Benchmarking
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* DFV Assessment Section */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Avaliação DFV (Desirability, Feasibility, Viability)
-              </h2>
-              {stats?.dvfAssessment ? (
-                <DvfSummary assessment={stats.dvfAssessment as DvfAssessment} />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      Sem avaliação DFV disponível
-                    </CardTitle>
-                    <CardDescription>
-                      Complete as fases do projeto e gere uma análise inteligente
-                      para ver a avaliação DFV.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="kanban" className="space-y-6">
-            <KanbanBoard projectId={project.id} />
-          </TabsContent>
-
-          <TabsContent value="analysis" className="space-y-6">
-            <AnalysisReport projectId={project.id} />
-          </TabsContent>
-        </Tabs>
+        <TabsContent value="analysis" className="space-y-6">
+          <AnalysisReport projectId={project.id} />
+        </TabsContent>
+      </Tabs>
       </div>
     </div>
   );

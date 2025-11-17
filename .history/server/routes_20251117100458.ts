@@ -4750,61 +4750,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Erro ao mapear dados do Double Diamond para projeto principal:", phaseError);
       }
 
-      // 4.2 Criar registro DVF vinculado ao projeto principal (best-effort)
-      try {
-        if (
-          project.dfvDesirabilityScore != null &&
-          project.dfvFeasibilityScore != null &&
-          project.dfvViabilityScore != null
-        ) {
-          const desirability = Number(project.dfvDesirabilityScore) || 0;
-          const feasibility = Number(project.dfvFeasibilityScore) || 0;
-          const viability = Number(project.dfvViabilityScore) || 0;
-
-          // Converter escala 0-100 para 0-5 (mantendo uma casa decimal)
-          const desirabilityScore = Math.round((desirability / 20) * 10) / 10;
-          const feasibilityScore = Math.round((feasibility / 20) * 10) / 10;
-          const viabilityScore = Math.round((viability / 20) * 10) / 10;
-
-          const overallScore = Math.round(((desirabilityScore + feasibilityScore + viabilityScore) / 3) * 10) / 10;
-
-          // Heurística simples de recomendação
-          let recommendation: "proceed" | "modify" | "stop" = "modify";
-          if (overallScore >= 4) {
-            recommendation = "proceed";
-          } else if (overallScore < 2.5) {
-            recommendation = "stop";
-          }
-
-          await storage.createDvfAssessment({
-            projectId: createdProject.id,
-            itemType: "solution",
-            itemId: "double-diamond-export",
-            itemName: createdProject.name,
-            desirabilityScore,
-            desirabilityEvidence: (project.dfvAnalysis as any)?.desirability?.reasoning || project.dfvFeedback || null,
-            userFeedback: project.dfvFeedback || null,
-            marketDemand: 0,
-            feasibilityScore,
-            feasibilityEvidence: (project.dfvAnalysis as any)?.feasibility?.reasoning || null,
-            technicalComplexity: "medium",
-            resourceRequirements: [],
-            timeToImplement: 0,
-            viabilityScore,
-            viabilityEvidence: (project.dfvAnalysis as any)?.viability?.reasoning || null,
-            businessModel: null,
-            costEstimate: 0,
-            revenueProjection: 0,
-            overallScore,
-            recommendation,
-            nextSteps: (project.dfvAnalysis as any)?.recommendations || [],
-            risksIdentified: [],
-          } as any);
-        }
-      } catch (dfvError) {
-        console.error("Erro ao criar avaliação DVF para projeto principal:", dfvError);
-      }
-
       // 5. Registrar a exportação
       await storage.createDoubleDiamondExport({
         userId,
