@@ -48,7 +48,7 @@ import {
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, gte } from "drizzle-orm";
 
 export interface IStorage {
   // Projects
@@ -1831,12 +1831,10 @@ export class DatabaseStorage implements IStorage {
   async incrementVideoView(id: string): Promise<void> {
     await db.update(videoTutorials)
       .set({ viewCount: sql`${videoTutorials.viewCount} + 1` })
-      .where(eq(videoTutorials.id, id));
-  }
 
   // Double Diamond
   async getDoubleDiamondProjects(userId: string): Promise<DoubleDiamondProject[]> {
-    return db
+    return await db
       .select()
       .from(doubleDiamondProjects)
       .where(eq(doubleDiamondProjects.userId, userId))
@@ -1915,7 +1913,6 @@ export class DatabaseStorage implements IStorage {
       ));
     return (result.rowCount || 0) > 0;
   }
-
   // Industry Sectors & Success Cases
   async listIndustrySectors(): Promise<IndustrySector[]> {
     return await db.select().from(industrySectors).orderBy(industrySectors.name);
@@ -1937,29 +1934,6 @@ export class DatabaseStorage implements IStorage {
         customAiChatLimit: limits.customAiChatLimit,
       })
       .where(eq(users.id, userId));
-  }
-
-
-
-
-  async createDoubleDiamondExport(exportData: any): Promise<any> {
-    const [exportRecord] = await db.insert(doubleDiamondExports).values(exportData).returning();
-    return exportRecord;
-  }
-
-  async getDoubleDiamondExportsByMonth(userId: string): Promise<any[]> {
-    const firstDay = new Date();
-    firstDay.setDate(1);
-    firstDay.setHours(0, 0, 0, 0);
-    
-    return await db.select()
-      .from(doubleDiamondExports)
-      .where(
-        and(
-          eq(doubleDiamondExports.userId, userId),
-          gte(doubleDiamondExports.createdAt, firstDay)
-        )
-      );
   }
 
 }

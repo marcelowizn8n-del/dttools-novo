@@ -9,6 +9,7 @@ import { DoubleDiamondWizard } from "@/components/double-diamond/DoubleDiamondWi
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DoubleDiamondProject {
   id: string;
@@ -26,6 +27,7 @@ export default function DoubleDiamond() {
   const [showWizard, setShowWizard] = useState(false);
   const [showLimitAlert, setShowLimitAlert] = useState(false);
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   const handleExportProject = async (projectId: string, projectName: string) => {
     try {
@@ -73,7 +75,13 @@ export default function DoubleDiamond() {
   
   // Get limit from plan or use default for free users
   const planLimit = subscriptionInfo?.plan?.maxDoubleDiamondProjects;
-  const effectiveLimit = planLimit !== null && planLimit !== undefined ? planLimit : (isFreeUser ? FREE_PLAN_DOUBLE_DIAMOND_LIMIT : null);
+
+  // Admins têm limite ilimitado de Double Diamond
+  const effectiveLimit = isAdmin
+    ? null
+    : (planLimit !== null && planLimit !== undefined
+        ? planLimit
+        : (isFreeUser ? FREE_PLAN_DOUBLE_DIAMOND_LIMIT : null));
   
   const hasReachedLimit = effectiveLimit !== null && currentUsage >= effectiveLimit;
   const remainingProjects = effectiveLimit !== null ? Math.max(0, effectiveLimit - currentUsage) : null;
@@ -103,7 +111,7 @@ export default function DoubleDiamond() {
       setShowLimitAlert(true);
       toast({
         title: "Limite atingido",
-        description: `Você atingiu o limite de ${effectiveLimit} projetos Double Diamond do plano gratuito. Faça upgrade para criar projetos ilimitados.`,
+        description: `Você atingiu o limite de ${effectiveLimit} projetos Double Diamond do seu plano. Faça upgrade para criar projetos ilimitados.`,
         variant: "destructive",
       });
       return;
@@ -131,13 +139,13 @@ export default function DoubleDiamond() {
         </p>
       </div>
 
-      {/* Limit Alert */}
-      {showLimitAlert && (
+      {/* Limit Alert (não mostrar para admin, que é ilimitado) */}
+      {showLimitAlert && !isAdmin && effectiveLimit !== null && (
         <Alert className="mb-6 sm:mb-8 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
           <AlertCircle className="h-4 w-4 text-orange-600" />
           <AlertTitle className="text-orange-900 dark:text-orange-100">Limite de Projetos Atingido</AlertTitle>
           <AlertDescription className="text-orange-800 dark:text-orange-200">
-            Você atingiu o limite de {FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond do plano gratuito.
+            Você atingiu o limite de {effectiveLimit} projetos Double Diamond do seu plano.
             <Button 
               variant="outline" 
               size="sm" 

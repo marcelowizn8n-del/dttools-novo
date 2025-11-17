@@ -4593,18 +4593,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ success: false, error: "Projeto não encontrado" });
       }
 
-      // 2. Verificar limite de exportações do usuário
+      // 2. Verificar limite de exportações do usuário (exceto admin, que é ilimitado)
       const user = await storage.getUserById(userId);
-      const plan = user?.subscriptionPlanId ? await storage.getSubscriptionPlan(user.subscriptionPlanId) : null;
-      const maxExports = user?.customMaxDoubleDiamondExports ?? plan?.maxDoubleDiamondExports;
-      
-      if (maxExports !== null && maxExports !== undefined) {
-        const exportsThisMonth = await storage.getDoubleDiamondExportsByMonth(userId);
-        if (exportsThisMonth.length >= maxExports) {
-          return res.status(403).json({ 
-            success: false, 
-            error: `Limite de ${maxExports} exportações mensais atingido. Atualize seu plano para exportar mais projetos.` 
-          });
+      const isAdmin = user?.role === "admin";
+
+      if (!isAdmin) {
+        const plan = user?.subscriptionPlanId ? await storage.getSubscriptionPlan(user.subscriptionPlanId) : null;
+        const maxExports = user?.customMaxDoubleDiamondExports ?? plan?.maxDoubleDiamondExports;
+        
+        if (maxExports !== null && maxExports !== undefined) {
+          const exportsThisMonth = await storage.getDoubleDiamondExportsByMonth(userId);
+          if (exportsThisMonth.length >= maxExports) {
+            return res.status(403).json({ 
+              success: false, 
+              error: `Limite de ${maxExports} exportações mensais atingido. Atualize seu plano para exportar mais projetos.` 
+            });
+          }
         }
       }
 
