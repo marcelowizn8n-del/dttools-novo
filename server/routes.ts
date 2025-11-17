@@ -4217,10 +4217,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/double-diamond/:id", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
+      // Validar e limpar payload para evitar erros de FK com strings vazias
+      const updatesInput = req.body;
+
+      const validatedUpdates = insertDoubleDiamondProjectSchema
+        .partial()
+        .parse(updatesInput);
+
+      const cleanedUpdates = {
+        ...validatedUpdates,
+        sectorId:
+          validatedUpdates.sectorId && validatedUpdates.sectorId.trim() !== ""
+            ? validatedUpdates.sectorId
+            : undefined,
+        successCaseId:
+          validatedUpdates.successCaseId &&
+          validatedUpdates.successCaseId.trim() !== ""
+            ? validatedUpdates.successCaseId
+            : undefined,
+        customSuccessCase:
+          validatedUpdates.customSuccessCase &&
+          validatedUpdates.customSuccessCase.trim() !== ""
+            ? validatedUpdates.customSuccessCase
+            : undefined,
+        description:
+          validatedUpdates.description &&
+          validatedUpdates.description.trim() !== ""
+            ? validatedUpdates.description
+            : undefined,
+      };
+
       const updated = await storage.updateDoubleDiamondProject(
         req.params.id,
         userId,
-        req.body
+        cleanedUpdates
       );
       if (!updated) {
         return res.status(404).json({ error: "Double Diamond project not found" });
@@ -4545,8 +4575,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PUT /api/admin/double-diamond/:id - Atualiza projeto Double Diamond (admin only)
-  app.put("/api/admin/double-diamond/:id", requireAdmin, async (req, res) => {
+  // PATCH /api/admin/double-diamond/:id - Atualiza projeto Double Diamond (admin only)
+  app.patch("/api/admin/double-diamond/:id", requireAdmin, async (req, res) => {
     try {
       // Admin pode atualizar qualquer projeto, então buscamos todos e filtramos por ID
       const allProjects = await storage.getAllDoubleDiamondProjects();
@@ -4556,9 +4586,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Double Diamond project not found" });
       }
 
-      // Admin pode atualizar qualquer campo
-      const updates = req.body;
-      const updated = await storage.updateDoubleDiamondProject(req.params.id, project.userId, updates);
+      // Admin pode atualizar qualquer campo, mas limpamos strings vazias em FKs opcionais
+      const updatesInput = req.body;
+
+      const validatedUpdates = insertDoubleDiamondProjectSchema
+        .partial()
+        .parse(updatesInput);
+
+      const cleanedUpdates = {
+        ...validatedUpdates,
+        sectorId:
+          validatedUpdates.sectorId && validatedUpdates.sectorId.trim() !== ""
+            ? validatedUpdates.sectorId
+            : undefined,
+        successCaseId:
+          validatedUpdates.successCaseId &&
+          validatedUpdates.successCaseId.trim() !== ""
+            ? validatedUpdates.successCaseId
+            : undefined,
+        customSuccessCase:
+          validatedUpdates.customSuccessCase &&
+          validatedUpdates.customSuccessCase.trim() !== ""
+            ? validatedUpdates.customSuccessCase
+            : undefined,
+        description:
+          validatedUpdates.description &&
+          validatedUpdates.description.trim() !== ""
+            ? validatedUpdates.description
+            : undefined,
+      };
+
+      const updated = await storage.updateDoubleDiamondProject(
+        req.params.id,
+        project.userId,
+        cleanedUpdates
+      );
       
       if (!updated) {
         return res.status(404).json({ error: "Failed to update project" });
