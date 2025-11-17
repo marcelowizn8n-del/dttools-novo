@@ -4162,13 +4162,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/double-diamond/:id - Busca um projeto Double Diamond específico
+  // Usuário comum: só acessa projetos próprios
+  // Admin: pode acessar qualquer projeto
   app.get("/api/double-diamond/:id", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
-      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+      const user = await storage.getUserById(userId);
+
+      let project;
+
+      if (user?.role === "admin") {
+        const allProjects = await storage.getAllDoubleDiamondProjects();
+        project = allProjects.find((p) => p.id === req.params.id);
+      } else {
+        project = await storage.getDoubleDiamondProject(req.params.id, userId);
+      }
+
       if (!project) {
         return res.status(404).json({ error: "Double Diamond project not found" });
       }
+
       res.json(project);
     } catch (error) {
       console.error("Error fetching Double Diamond project:", error);
