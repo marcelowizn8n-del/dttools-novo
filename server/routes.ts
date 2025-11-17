@@ -4644,6 +4644,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 4. Salvar o novo projeto
       const createdProject = await storage.createProject(newProject);
 
+      // 4.1 Mapear dados do Double Diamond para as 5 fases do projeto principal (best-effort)
+      try {
+        // Fase 1: Empatizar - Mapa de Empatia a partir do Discover
+        if (project.discoverEmpathyMap) {
+          const em = project.discoverEmpathyMap as any;
+          await storage.createEmpathyMap({
+            projectId: createdProject.id,
+            title: `Mapa de Empatia - ${project.name}`,
+            says: Array.isArray(em.says) ? em.says : [],
+            thinks: Array.isArray(em.thinks) ? em.thinks : [],
+            does: Array.isArray(em.does) ? em.does : [],
+            feels: Array.isArray(em.feels) ? em.feels : [],
+          });
+        }
+
+        // Fase 2: Definir - POV Statements
+        if (project.definePovStatements && Array.isArray(project.definePovStatements)) {
+          for (const item of project.definePovStatements as any[]) {
+            await storage.createPovStatement({
+              projectId: createdProject.id,
+              user: item.user ?? "",
+              need: item.need ?? "",
+              insight: item.insight ?? "",
+              statement: item.fullStatement ?? `${item.user ?? "Usuário"} precisa ${item.need ?? "..."} porque ${item.insight ?? "..."}`,
+            });
+          }
+        }
+
+        // Fase 2: Definir - HMW Questions
+        if (project.defineHmwQuestions && Array.isArray(project.defineHmwQuestions)) {
+          for (const item of project.defineHmwQuestions as any[]) {
+            await storage.createHmwQuestion({
+              projectId: createdProject.id,
+              question: item.question ?? "",
+              context: null,
+              challenge: null,
+              scope: "product",
+              priority: "medium",
+              category: item.focusArea ?? null,
+              votes: 0,
+            });
+          }
+        }
+
+        // Fase 3: Idear - Ideias selecionadas em Develop
+        if (project.developSelectedIdeas && Array.isArray(project.developSelectedIdeas)) {
+          for (const idea of project.developSelectedIdeas as any[]) {
+            await storage.createIdea({
+              projectId: createdProject.id,
+              title: idea.title ?? "Ideia",
+              description: idea.description ?? "",
+              category: idea.category ?? null,
+            });
+          }
+        }
+
+        // Fase 4: Prototipar - Protótipo a partir do MVP Concept
+        if (project.deliverMvpConcept) {
+          const mvp = project.deliverMvpConcept as any;
+          const descriptionParts: string[] = [];
+          if (mvp.description) {
+            descriptionParts.push(mvp.description);
+          }
+          if (Array.isArray(mvp.coreFeatures) && mvp.coreFeatures.length > 0) {
+            descriptionParts.push("Recursos principais: " + mvp.coreFeatures.join("; "));
+          }
+
+          await storage.createPrototype({
+            projectId: createdProject.id,
+            ideaId: null,
+            name: mvp.name || `MVP - ${project.name}`,
+            type: "digital",
+            description: descriptionParts.join("\n\n") || "MVP gerado a partir do Double Diamond.",
+            materials: [],
+            images: [],
+            canvasData: null,
+            version: 1,
+            feedback: null,
+          });
+        }
+
+        // Fase 5: Testar - Plano de Testes a partir do Deliver
+        if (project.deliverTestPlan) {
+          const tp = project.deliverTestPlan as any;
+          const objectivesText = Array.isArray(tp.objectives) ? tp.objectives.join("; ") : "";
+          const methodsText = Array.isArray(tp.testMethods) ? tp.testMethods.join("; ") : "";
+          const participants = typeof tp.participants === "number" ? tp.participants : 5;
+          const duration = typeof tp.duration === "number" ? tp.duration : 60;
+
+          await storage.createTestPlan({
+            projectId: createdProject.id,
+            prototypeId: null,
+            name: `Plano de Testes - ${project.name}`,
+            objective: objectivesText || "Plano de testes gerado a partir do Double Diamond.",
+            methodology: methodsText || "Metodologia derivada da fase Deliver do Double Diamond.",
+            participants,
+            duration,
+            tasks: Array.isArray(tp.tasks) ? tp.tasks : [],
+            metrics: Array.isArray(tp.metrics) ? tp.metrics : [],
+            status: "planned",
+          });
+        }
+      } catch (phaseError) {
+        console.error("Erro ao mapear dados do Double Diamond para projeto principal:", phaseError);
+      }
+
       // 5. Registrar a exportação
       await storage.createDoubleDiamondExport({
         userId,
