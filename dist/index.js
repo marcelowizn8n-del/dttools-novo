@@ -24,6 +24,7 @@ __export(schema_exports, {
   benchmarks: () => benchmarks,
   canvasDrawings: () => canvasDrawings,
   competitiveAnalysis: () => competitiveAnalysis,
+  doubleDiamondExports: () => doubleDiamondExports2,
   doubleDiamondProjects: () => doubleDiamondProjects,
   dvfAssessments: () => dvfAssessments,
   empathyMaps: () => empathyMaps,
@@ -95,7 +96,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, real, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertCanvasDrawingSchema, updateProfileSchema, phaseCards, benchmarks, benchmarkAssessments, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, insertDoubleDiamondProjectSchema;
+var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertCanvasDrawingSchema, updateProfileSchema, phaseCards, benchmarks, benchmarkAssessments, doubleDiamondExports2, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, insertDoubleDiamondProjectSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -412,6 +413,15 @@ var init_schema = __esm({
       subscriptionEndDate: timestamp("subscription_end_date"),
       aiProjectsUsed: integer("ai_projects_used").default(0),
       // Track AI-generated projects used
+      // Custom limits (override plan limits) - null = use plan limit
+      customMaxProjects: integer("custom_max_projects"),
+      // null = use plan limit
+      customMaxDoubleDiamondProjects: integer("custom_max_double_diamond_projects"),
+      // null = use plan limit
+      customMaxDoubleDiamondExports: integer("custom_max_double_diamond_exports"),
+      // null = use plan limit
+      customAiChatLimit: integer("custom_ai_chat_limit"),
+      // null = use plan limit
       createdAt: timestamp("created_at").default(sql`now()`)
     });
     subscriptionPlans = pgTable("subscription_plans", {
@@ -439,6 +449,10 @@ var init_schema = __esm({
       // price in cents for each additional user beyond includedUsers
       aiChatLimit: integer("ai_chat_limit"),
       // null for unlimited
+      maxDoubleDiamondProjects: integer("max_double_diamond_projects"),
+      // null for unlimited Double Diamond projects
+      maxDoubleDiamondExports: integer("max_double_diamond_exports"),
+      // null for unlimited exports to main system
       libraryArticlesCount: integer("library_articles_count"),
       // null for all articles
       features: jsonb("features").default([]),
@@ -720,6 +734,23 @@ var init_schema = __esm({
       // How to improve
       createdAt: timestamp("created_at").default(sql`now()`),
       updatedAt: timestamp("updated_at").default(sql`now()`)
+    });
+    doubleDiamondExports2 = pgTable("double_diamond_exports", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: varchar("user_id").references(() => users.id).notNull(),
+      doubleDiamondProjectId: varchar("double_diamond_project_id").references(() => doubleDiamondProjects.id, { onDelete: "cascade" }).notNull(),
+      exportedProjectId: varchar("exported_project_id").references(() => projects.id, { onDelete: "cascade" }),
+      // Created project in main system
+      exportType: text("export_type").default("full"),
+      // full, partial
+      includedPhases: jsonb("included_phases").default([]),
+      // Which phases were exported: empathize, define, ideate, prototype, test
+      exportCost: real("export_cost").default(0),
+      // Cost in credits
+      status: text("status").default("completed"),
+      // completed, failed, processing
+      errorMessage: text("error_message"),
+      createdAt: timestamp("created_at").default(sql`now()`)
     });
     insertBenchmarkSchema = createInsertSchema(benchmarks).omit({
       id: true,
@@ -2585,6 +2616,28 @@ var init_storage = __esm({
       }
       async listSuccessCases() {
         return await db.select().from(successCases).orderBy(successCases.company);
+      }
+      async updateUserLimits(userId, limits) {
+        await db.update(users).set({
+          customMaxProjects: limits.customMaxProjects,
+          customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
+          customAiChatLimit: limits.customAiChatLimit
+        }).where(eq2(users.id, userId));
+      }
+      async createDoubleDiamondExport(exportData) {
+        const [exportRecord] = await db.insert(doubleDiamondExports).values(exportData).returning();
+        return exportRecord;
+      }
+      async getDoubleDiamondExportsByMonth(userId) {
+        const firstDay = /* @__PURE__ */ new Date();
+        firstDay.setDate(1);
+        firstDay.setHours(0, 0, 0, 0);
+        return await db.select().from(doubleDiamondExports).where(
+          and(
+            eq2(doubleDiamondExports.userId, userId),
+            gte(doubleDiamondExports.createdAt, firstDay)
+          )
+        );
       }
     };
     storage = new DatabaseStorage();
@@ -8680,6 +8733,20 @@ async function registerRoutes(app2) {
       const user = await storage.updateUser(req.params.id, validatedData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
+        app2.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req2, res2) => {
+          try {
+            const { customMaxProjects, customMaxDoubleDiamondProjects, customAiChatLimit } = req2.body;
+            await storage.updateUserLimits(req2.params.id, {
+              customMaxProjects,
+              customMaxDoubleDiamondProjects,
+              customAiChatLimit
+            });
+            res2.json({ message: "Limites atualizados com sucesso" });
+          } catch (error) {
+            console.error("Error updating user limits:", error);
+            res2.status(500).json({ error: "Failed to update limits" });
+          }
+        });
       }
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
@@ -10412,7 +10479,7 @@ import fsSync from "fs";
 import path4 from "path";
 import { fileURLToPath } from "url";
 var log2 = (...args) => {
-  console.log(`[${(/* @__PURE__ */ new Date()).toISOString()}]`, ...args);
+  console.log(`[${(/* @__PURE__ */ new Date()).toISOString()}] - index.ts:18`, ...args);
 };
 var MemStore = MemoryStore(session);
 var PgStore = ConnectPgSimple(session);
@@ -10425,11 +10492,11 @@ var parseFrontendUrls = (envVar) => {
     const isLocalhost = url.startsWith("http://localhost");
     const hasWildcard = url.includes("*");
     if (hasWildcard) {
-      console.error(`[CORS] Invalid FRONTEND_URL - wildcards not allowed: ${url}`);
+      console.error(`[CORS] Invalid FRONTEND_URL  wildcards not allowed: ${url} - index.ts:57`);
       return false;
     }
     if (!isHttps && !isLocalhost) {
-      console.error(`[CORS] Invalid FRONTEND_URL - must use HTTPS: ${url}`);
+      console.error(`[CORS] Invalid FRONTEND_URL  must use HTTPS: ${url} - index.ts:62`);
       return false;
     }
     return true;
@@ -10437,7 +10504,7 @@ var parseFrontendUrls = (envVar) => {
 };
 var configuredFrontendUrls = parseFrontendUrls(process.env.FRONTEND_URL);
 if (configuredFrontendUrls.length > 0) {
-  console.log(`[CORS] Configured frontend URLs: ${configuredFrontendUrls.join(", ")}`);
+  console.log(`[CORS] Configured frontend URLs: ${configuredFrontendUrls.join(", ")} - index.ts:73`);
 }
 app.use((req, res, next) => {
   const origin = req.headers.origin?.replace(/\/$/, "");
@@ -10567,6 +10634,34 @@ app.use((req, res, next) => {
       `);
       await db2.execute(`
         ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_max_projects INTEGER;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_max_double_diamond_projects INTEGER;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_max_double_diamond_exports INTEGER;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_ai_chat_limit INTEGER;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS subscription_plans 
+        ADD COLUMN IF NOT EXISTS max_double_diamond_projects INTEGER;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS subscription_plans 
+        ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS subscription_plans 
+        ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS users 
         ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'local';
       `);
       await db2.execute(`
@@ -10674,7 +10769,7 @@ app.use((req, res, next) => {
     await setupVite2(app, server);
   } else {
     log2("Setting up static file serving for production");
-    const distPath = path4.resolve(__dirname, "public");
+    const distPath = path4.join(__dirname, "..", "client", "dist");
     log2(`Serving static files from: ${distPath}`);
     if (!fsSync.existsSync(distPath)) {
       throw new Error(`Could not find the build directory: ${distPath}`);
