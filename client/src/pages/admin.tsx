@@ -693,6 +693,15 @@ function UsersTab() {
         onSubmit={(data) => createUserMutation.mutate(data)}
         isSubmitting={createUserMutation.isPending}
       />
+
+      {/* User Limits Dialog */}
+      {editingUserLimits && (
+        <UserLimitsDialog
+          user={editingUserLimits}
+          isOpen={!!editingUserLimits}
+          onClose={() => setEditingUserLimits(null)}
+        />
+      )}
     </div>
   );
 }
