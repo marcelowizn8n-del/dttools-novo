@@ -1831,6 +1831,8 @@ export class DatabaseStorage implements IStorage {
   async incrementVideoView(id: string): Promise<void> {
     await db.update(videoTutorials)
       .set({ viewCount: sql`${videoTutorials.viewCount} + 1` })
+      .where(eq(videoTutorials.id, id));
+  }
 
   // Double Diamond
   async getDoubleDiamondProjects(userId: string): Promise<DoubleDiamondProject[]> {
