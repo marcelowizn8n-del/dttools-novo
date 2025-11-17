@@ -35,15 +35,13 @@ import {
   type ProjectInvite, type InsertProjectInvite,
   type ProjectComment, type InsertProjectComment,
   type DoubleDiamondProject, type InsertDoubleDiamondProject,
-  type DoubleDiamondExport, type InsertDoubleDiamondExport,
   projects, empathyMaps, personas, interviews, observations,
   povStatements, hmwQuestions, ideas, prototypes, testPlans, testResults,
   userProgress, users, articles, testimonials, videoTutorials, subscriptionPlans, userSubscriptions,
   canvasDrawings, phaseCards, benchmarks, benchmarkAssessments,
   dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis,
   projectBackups, helpArticles, industrySectors, successCases, aiGeneratedAssets,
-  analyticsEvents, projectMembers, projectInvites, projectComments, 
-  doubleDiamondProjects, doubleDiamondExports
+  analyticsEvents, projectMembers, projectInvites, projectComments, doubleDiamondProjects
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
@@ -1836,39 +1834,9 @@ export class DatabaseStorage implements IStorage {
 
   // Double Diamond
   async getDoubleDiamondProjects(userId: string): Promise<DoubleDiamondProject[]> {
-    return db
-      .select()
-      .from(doubleDiamondProjects)
+    return await db.select().from(doubleDiamondProjects)
       .where(eq(doubleDiamondProjects.userId, userId))
       .orderBy(desc(doubleDiamondProjects.createdAt));
-  }
-
-  async createDoubleDiamondExport(exportData: InsertDoubleDiamondExport): Promise<DoubleDiamondExport> {
-    const [exportRecord] = await db
-      .insert(doubleDiamondExports)
-      .values({
-        ...exportData,
-        id: randomUUID(),
-        createdAt: new Date(),
-      })
-      .returning();
-    return exportRecord;
-  }
-
-  async getDoubleDiamondExportsByMonth(userId: string): Promise<any[]> {
-    const firstDay = new Date();
-    firstDay.setDate(1);
-    firstDay.setHours(0, 0, 0, 0);
-
-    return db
-      .select()
-      .from(doubleDiamondExports)
-      .where(
-        and(
-          eq(doubleDiamondExports.userId, userId),
-          gte(doubleDiamondExports.createdAt, firstDay)
-        )
-      );
   }
 
   async getAllDoubleDiamondProjects(): Promise<DoubleDiamondProject[]> {

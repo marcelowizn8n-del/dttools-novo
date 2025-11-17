@@ -38,8 +38,7 @@ import {
   insertIndustrySectorSchema,
   insertSuccessCaseSchema,
   insertAiGeneratedAssetSchema,
-  insertDoubleDiamondProjectSchema,
-  doubleDiamondExports
+  insertDoubleDiamondProjectSchema
 } from "../shared/schema";
 import bcrypt from "bcrypt";
 import Stripe from "stripe";
@@ -2401,15 +2400,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.updateUser(req.params.id, validatedData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
-      }
-      // Remove password from response
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid user data" });
-    }
-  });
-
   // Update user custom limits (admin only)
   app.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req, res) => {
     try {
@@ -2425,6 +2415,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user limits:", error);
       res.status(500).json({ error: "Failed to update limits" });
+    }
+  });
+
+      }
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid user data" });
     }
   });
 
@@ -4577,77 +4576,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching success cases:", error);
       res.status(500).json({ error: "Failed to fetch success cases" });
-    }
-  });
-
-  // POST /api/double-diamond/:id/export - Exporta projeto Double Diamond para o sistema principal
-  app.post("/api/double-diamond/:id/export", requireAuth, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { projectName } = req.body;
-      const userId = req.session.userId!;
-
-      // 1. Verificar se o projeto existe e pertence ao usuário
-      const project = await storage.getDoubleDiamondProject(id, userId);
-      if (!project) {
-        return res.status(404).json({ success: false, error: "Projeto não encontrado" });
-      }
-
-      // 2. Verificar limite de exportações do usuário
-      const user = await storage.getUserById(userId);
-      const plan = user?.subscriptionPlanId ? await storage.getSubscriptionPlan(user.subscriptionPlanId) : null;
-      const maxExports = user?.customMaxDoubleDiamondExports ?? plan?.maxDoubleDiamondExports;
-      
-      if (maxExports !== null && maxExports !== undefined) {
-        const exportsThisMonth = await storage.getDoubleDiamondExportsByMonth(userId);
-        if (exportsThisMonth.length >= maxExports) {
-          return res.status(403).json({ 
-            success: false, 
-            error: `Limite de ${maxExports} exportações mensais atingido. Atualize seu plano para exportar mais projetos.` 
-          });
-        }
-      }
-
-      // 3. Converter o projeto Double Diamond para um projeto principal
-      const newProject = {
-        name: projectName || `${project.name} (Exportado)`,
-        description: project.description || `Projeto exportado do Double Diamond: ${project.name}`,
-        status: "in_progress",
-        currentPhase: 1,
-        completionRate: 0,
-        sectorId: project.sectorId || null,
-        successCaseId: project.successCaseId || null,
-        userProblemDescription: project.problemStatement || null,
-        aiGenerated: true,
-        generationTimestamp: new Date(),
-        businessModelBase: null,
-        userId: userId
-      };
-
-      // 4. Salvar o novo projeto
-      const createdProject = await storage.createProject(newProject);
-
-      // 5. Registrar a exportação
-      await storage.createDoubleDiamondExport({
-        userId,
-        doubleDiamondProjectId: id,
-        exportedProjectId: createdProject.id,
-        status: 'completed',
-        exportType: 'full'
-      });
-
-      // 6. Retornar sucesso
-      return res.json({ 
-        success: true, 
-        projectId: createdProject.id 
-      });
-
-    } catch (error) {
-      console.error("Erro ao exportar projeto:", error);
-      return res.status(500).json({ 
-        success: false, 
-        error: "Erro interno ao exportar projeto" 
-      });
     }
   });
 

@@ -2401,15 +2401,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.updateUser(req.params.id, validatedData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
-      }
-      // Remove password from response
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid user data" });
-    }
-  });
-
   // Update user custom limits (admin only)
   app.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req, res) => {
     try {
@@ -2425,6 +2416,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user limits:", error);
       res.status(500).json({ error: "Failed to update limits" });
+    }
+  });
+
+      }
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid user data" });
     }
   });
 

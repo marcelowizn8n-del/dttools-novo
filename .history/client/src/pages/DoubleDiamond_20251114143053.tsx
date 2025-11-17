@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Plus, Sparkles, TrendingUp, CheckCircle2, Circle, AlertCircle, ArrowRight, Download, Eye } from "lucide-react";
+import { Plus, Sparkles, TrendingUp, CheckCircle2, Circle, AlertCircle, ArrowRight , Download } from "lucide-react";
 import { DoubleDiamondWizard } from "@/components/double-diamond/DoubleDiamondWizard";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";

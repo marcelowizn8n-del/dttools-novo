@@ -714,14 +714,6 @@ export const doubleDiamondExports = pgTable("double_diamond_exports", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
-export const insertDoubleDiamondExportSchema = createInsertSchema(doubleDiamondExports).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type DoubleDiamondExport = typeof doubleDiamondExports.$inferSelect;
-export type InsertDoubleDiamondExport = z.infer<typeof insertDoubleDiamondExportSchema>;
-
 // Insert schemas for benchmarking
 export const insertBenchmarkSchema = createInsertSchema(benchmarks).omit({
   id: true,
