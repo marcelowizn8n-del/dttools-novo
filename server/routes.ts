@@ -130,25 +130,22 @@ function requireProjectAccess(requiredRole: 'owner' | 'editor' | 'viewer' = 'vie
     }
 
     try {
-      const project = await storage.getProject(projectId);
-      if (!project) {
-        return res.status(404).json({ error: "Project not found" });
-      }
+      const userId = req.session.userId!;
 
-      const userId = req.session.userId;
-      
-      // Owner has full access
-      if (project.userId === userId) {
+      // Check if the user is the project owner
+      const ownerProject = await storage.getProject(projectId, userId);
+      if (ownerProject) {
+        // Owner always has full access regardless of requiredRole
         return next();
       }
 
-      // Check if user is a member
+      // If not owner, check if user is a project member
       const member = await storage.getProjectMember(projectId, userId);
       if (!member) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Check role permissions
+      // Check role permissions based on member role
       const roleHierarchy = { viewer: 1, editor: 2, owner: 3 };
       const userLevel = roleHierarchy[member.role as keyof typeof roleHierarchy] || 0;
       const requiredLevel = roleHierarchy[requiredRole];
@@ -708,7 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const limits = req.subscription?.limits;
       if (limits && limits.maxUsersPerTeam !== null && limits.maxUsersPerTeam !== undefined) {
-        const project = await storage.getProject(projectId);
+        const project = await storage.getProject(projectId, userId);
         if (!project) {
           return res.status(404).json({ error: "Project not found" });
         }
