@@ -24,7 +24,7 @@ __export(schema_exports, {
   benchmarks: () => benchmarks,
   canvasDrawings: () => canvasDrawings,
   competitiveAnalysis: () => competitiveAnalysis,
-  doubleDiamondExports: () => doubleDiamondExports2,
+  doubleDiamondExports: () => doubleDiamondExports,
   doubleDiamondProjects: () => doubleDiamondProjects,
   dvfAssessments: () => dvfAssessments,
   empathyMaps: () => empathyMaps,
@@ -39,6 +39,7 @@ __export(schema_exports, {
   insertBenchmarkSchema: () => insertBenchmarkSchema,
   insertCanvasDrawingSchema: () => insertCanvasDrawingSchema,
   insertCompetitiveAnalysisSchema: () => insertCompetitiveAnalysisSchema,
+  insertDoubleDiamondExportSchema: () => insertDoubleDiamondExportSchema,
   insertDoubleDiamondProjectSchema: () => insertDoubleDiamondProjectSchema,
   insertDvfAssessmentSchema: () => insertDvfAssessmentSchema,
   insertEmpathyMapSchema: () => insertEmpathyMapSchema,
@@ -96,7 +97,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, real, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertCanvasDrawingSchema, updateProfileSchema, phaseCards, benchmarks, benchmarkAssessments, doubleDiamondExports2, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, insertDoubleDiamondProjectSchema;
+var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertCanvasDrawingSchema, updateProfileSchema, phaseCards, benchmarks, benchmarkAssessments, doubleDiamondExports, insertDoubleDiamondExportSchema, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, insertDoubleDiamondProjectSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -735,7 +736,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").default(sql`now()`),
       updatedAt: timestamp("updated_at").default(sql`now()`)
     });
-    doubleDiamondExports2 = pgTable("double_diamond_exports", {
+    doubleDiamondExports = pgTable("double_diamond_exports", {
       id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").references(() => users.id).notNull(),
       doubleDiamondProjectId: varchar("double_diamond_project_id").references(() => doubleDiamondProjects.id, { onDelete: "cascade" }).notNull(),
@@ -751,6 +752,10 @@ var init_schema = __esm({
       // completed, failed, processing
       errorMessage: text("error_message"),
       createdAt: timestamp("created_at").default(sql`now()`)
+    });
+    insertDoubleDiamondExportSchema = createInsertSchema(doubleDiamondExports).omit({
+      id: true,
+      createdAt: true
     });
     insertBenchmarkSchema = createInsertSchema(benchmarks).omit({
       id: true,
@@ -1245,8 +1250,9 @@ var init_db = __esm({
 });
 
 // server/storage.ts
+import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
-import { eq as eq2, and, desc, sql as sql2 } from "drizzle-orm";
+import { eq as eq2, and, desc, sql as sql2, gte } from "drizzle-orm";
 async function initializeDefaultData() {
   try {
     const adminUser = await storage.getUserByUsername("dttools.app@gmail.com");
@@ -2582,6 +2588,25 @@ var init_storage = __esm({
       async getDoubleDiamondProjects(userId) {
         return await db.select().from(doubleDiamondProjects).where(eq2(doubleDiamondProjects.userId, userId)).orderBy(desc(doubleDiamondProjects.createdAt));
       }
+      async createDoubleDiamondExport(exportData) {
+        const [exportRecord] = await db.insert(doubleDiamondExports).values({
+          ...exportData,
+          id: randomUUID(),
+          createdAt: /* @__PURE__ */ new Date()
+        }).returning();
+        return exportRecord;
+      }
+      async getDoubleDiamondExportsByMonth(userId) {
+        const firstDay = /* @__PURE__ */ new Date();
+        firstDay.setDate(1);
+        firstDay.setHours(0, 0, 0, 0);
+        return db.select().from(doubleDiamondExports).where(
+          and(
+            eq2(doubleDiamondExports.userId, userId),
+            gte(doubleDiamondExports.createdAt, firstDay)
+          )
+        );
+      }
       async getAllDoubleDiamondProjects() {
         return await db.select().from(doubleDiamondProjects).orderBy(desc(doubleDiamondProjects.createdAt));
       }
@@ -2623,21 +2648,6 @@ var init_storage = __esm({
           customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
           customAiChatLimit: limits.customAiChatLimit
         }).where(eq2(users.id, userId));
-      }
-      async createDoubleDiamondExport(exportData) {
-        const [exportRecord] = await db.insert(doubleDiamondExports).values(exportData).returning();
-        return exportRecord;
-      }
-      async getDoubleDiamondExportsByMonth(userId) {
-        const firstDay = /* @__PURE__ */ new Date();
-        firstDay.setDate(1);
-        firstDay.setHours(0, 0, 0, 0);
-        return await db.select().from(doubleDiamondExports).where(
-          and(
-            eq2(doubleDiamondExports.userId, userId),
-            gte(doubleDiamondExports.createdAt, firstDay)
-          )
-        );
       }
     };
     storage = new DatabaseStorage();
@@ -4151,66 +4161,83 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { eq } from "drizzle-orm";
 function setupPassport() {
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env.GOOGLE_CLIENT_ID || "",
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback"
-      },
-      async (accessToken, refreshToken, profile, done) => {
-        try {
-          const email = profile.emails?.[0]?.value;
-          const googleId = profile.id;
-          const displayName = profile.displayName || email?.split("@")[0] || "User";
-          const profilePicture = profile.photos?.[0]?.value;
-          if (!email) {
-            return done(new Error("No email found in Google profile"), void 0);
-          }
-          let [user] = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
-          if (user) {
-            return done(null, user);
-          }
-          [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-          if (user) {
-            const [updatedUser] = await db.update(users).set({
-              googleId,
+  const hasGoogleCredentials = !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+  if (hasGoogleCredentials) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackURL: process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback"
+        },
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            const email = profile.emails?.[0]?.value;
+            const googleId = profile.id;
+            const displayName = profile.displayName || email?.split("@")[0] || "User";
+            const profilePicture = profile.photos?.[0]?.value;
+            if (!email) {
+              return done(
+                new Error("No email found in Google profile"),
+                void 0
+              );
+            }
+            let [user] = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
+            if (user) {
+              return done(null, user);
+            }
+            [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+            if (user) {
+              const [updatedUser] = await db.update(users).set({
+                googleId,
+                provider: "google",
+                profilePicture: profilePicture || user.profilePicture
+              }).where(eq(users.id, user.id)).returning();
+              return done(null, updatedUser);
+            }
+            const allPlans = await db.select().from(subscriptionPlans);
+            const freePlan = allPlans.find(
+              (p) => p.name.toLowerCase() === "free"
+            );
+            if (!freePlan) {
+              console.error("\u274C [Passport Google] Free plan not found!");
+              console.error(
+                "Available plans:",
+                allPlans.map((p) => p.name).join(", ")
+              );
+              return done(new Error("System configuration error"), void 0);
+            }
+            const username = email.split("@")[0] + "_" + Math.random().toString(36).substring(7);
+            const [newUser] = await db.insert(users).values({
+              email,
+              username,
+              name: displayName,
               provider: "google",
-              profilePicture: profilePicture || user.profilePicture
-            }).where(eq(users.id, user.id)).returning();
-            return done(null, updatedUser);
+              googleId,
+              profilePicture,
+              password: null,
+              // No password for OAuth users
+              role: "user",
+              subscriptionPlanId: freePlan.id,
+              // Automatically assign Free plan
+              subscriptionStatus: "active"
+            }).returning();
+            console.log(
+              `\u2705 [Passport Google] New user created with Free plan: ${newUser.email}`
+            );
+            return done(null, newUser);
+          } catch (error) {
+            console.error("[Passport Google] Error:", error);
+            return done(error, void 0);
           }
-          const allPlans = await db.select().from(subscriptionPlans);
-          const freePlan = allPlans.find((p) => p.name.toLowerCase() === "free");
-          if (!freePlan) {
-            console.error("\u274C [Passport Google] Free plan not found!");
-            console.error("Available plans:", allPlans.map((p) => p.name).join(", "));
-            return done(new Error("System configuration error"), void 0);
-          }
-          const username = email.split("@")[0] + "_" + Math.random().toString(36).substring(7);
-          const [newUser] = await db.insert(users).values({
-            email,
-            username,
-            name: displayName,
-            provider: "google",
-            googleId,
-            profilePicture,
-            password: null,
-            // No password for OAuth users
-            role: "user",
-            subscriptionPlanId: freePlan.id,
-            // Automatically assign Free plan
-            subscriptionStatus: "active"
-          }).returning();
-          console.log(`\u2705 [Passport Google] New user created with Free plan: ${newUser.email}`);
-          return done(null, newUser);
-        } catch (error) {
-          console.error("[Passport Google] Error:", error);
-          return done(error, void 0);
         }
-      }
-    )
-  );
+      )
+    );
+  } else {
+    console.warn(
+      "[Passport Google] GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET not set - Google OAuth disabled"
+    );
+  }
   passport.serializeUser((user, done) => {
     done(null, user.id);
   });
@@ -4343,6 +4370,19 @@ async function checkPersonaLimit(req, res, next) {
     console.error("Error checking persona limit:", error);
     next(error);
   }
+}
+async function checkCollaborationAccess(req, res, next) {
+  if (!req.subscription?.limits) {
+    return next();
+  }
+  if (!req.subscription.limits.canCollaborate) {
+    return res.status(403).json({
+      error: "Collaboration not available",
+      message: "Real-time collaboration is not available in your current plan. Upgrade to Team or Enterprise plan.",
+      upgrade_required: true
+    });
+  }
+  next();
 }
 async function getSubscriptionInfo(req, res) {
   if (!req.user?.id) {
@@ -7322,13 +7362,21 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/projects/:projectId/members", requireAuth, requireProjectAccess("viewer"), async (req, res) => {
     try {
-      const members = await storage.getProjectMembers(req.params.projectId);
-      res.json(members);
+      const projectId = req.params.projectId;
+      const members = await storage.getProjectMembers(projectId);
+      const membersWithUser = await Promise.all(members.map(async (member) => {
+        const user = await storage.getUserById(member.userId);
+        return {
+          ...member,
+          user: user ? { id: user.id, username: user.username, email: user.email } : void 0
+        };
+      }));
+      res.json(membersWithUser);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch project members" });
     }
   });
-  app2.post("/api/projects/:projectId/members/invite", requireAuth, requireProjectAccess("owner"), async (req, res) => {
+  app2.post("/api/projects/:projectId/members/invite", requireAuth, loadUserSubscription, checkCollaborationAccess, requireProjectAccess("owner"), async (req, res) => {
     try {
       const { email, role } = req.body;
       const userId = req.session.userId;
@@ -7338,6 +7386,22 @@ async function registerRoutes(app2) {
       }
       if (!["editor", "viewer"].includes(role)) {
         return res.status(400).json({ error: "Invalid role. Must be 'editor' or 'viewer'" });
+      }
+      const limits = req.subscription?.limits;
+      if (limits && limits.maxUsersPerTeam !== null && limits.maxUsersPerTeam !== void 0) {
+        const project = await storage.getProject(projectId);
+        if (!project) {
+          return res.status(404).json({ error: "Project not found" });
+        }
+        const members = await storage.getProjectMembers(projectId);
+        const currentTeamSize = 1 + members.length;
+        if (currentTeamSize >= limits.maxUsersPerTeam) {
+          return res.status(403).json({
+            error: "Team member limit reached",
+            message: `Seu plano permite at\xE9 ${limits.maxUsersPerTeam} usu\xE1rios por equipe. Fa\xE7a upgrade do plano para adicionar mais membros.`,
+            upgrade_required: true
+          });
+        }
       }
       const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
@@ -7356,7 +7420,13 @@ async function registerRoutes(app2) {
   });
   app2.delete("/api/projects/:projectId/members/:userId", requireAuth, requireProjectAccess("owner"), async (req, res) => {
     try {
-      const success = await storage.deleteProjectMember(req.params.projectId, req.params.userId);
+      const projectId = req.params.projectId;
+      const userId = req.params.userId;
+      const member = await storage.getProjectMember(projectId, userId);
+      if (!member) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+      const success = await storage.deleteProjectMember(member.id);
       if (!success) {
         return res.status(404).json({ error: "Member not found" });
       }
@@ -7371,11 +7441,17 @@ async function registerRoutes(app2) {
       if (!role || !["editor", "viewer"].includes(role)) {
         return res.status(400).json({ error: "Invalid role" });
       }
-      const member = await storage.updateProjectMemberRole(req.params.projectId, req.params.userId, role);
-      if (!member) {
+      const projectId = req.params.projectId;
+      const userId = req.params.userId;
+      const existing = await storage.getProjectMember(projectId, userId);
+      if (!existing) {
         return res.status(404).json({ error: "Member not found" });
       }
-      res.json(member);
+      const updated = await storage.updateProjectMemberRole(existing.id, role);
+      if (!updated) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+      res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to update member role" });
     }
@@ -7387,7 +7463,7 @@ async function registerRoutes(app2) {
       if (!user?.email) {
         return res.status(400).json({ error: "User email not found" });
       }
-      const invites = await storage.getProjectInvites(user.email);
+      const invites = await storage.getPendingInvitesByEmail(user.email);
       res.json(invites);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch invites" });
@@ -8733,25 +8809,25 @@ async function registerRoutes(app2) {
       const user = await storage.updateUser(req.params.id, validatedData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
-        app2.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req2, res2) => {
-          try {
-            const { customMaxProjects, customMaxDoubleDiamondProjects, customAiChatLimit } = req2.body;
-            await storage.updateUserLimits(req2.params.id, {
-              customMaxProjects,
-              customMaxDoubleDiamondProjects,
-              customAiChatLimit
-            });
-            res2.json({ message: "Limites atualizados com sucesso" });
-          } catch (error) {
-            console.error("Error updating user limits:", error);
-            res2.status(500).json({ error: "Failed to update limits" });
-          }
-        });
       }
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(400).json({ error: "Invalid user data" });
+    }
+  });
+  app2.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { customMaxProjects, customMaxDoubleDiamondProjects, customAiChatLimit } = req.body;
+      await storage.updateUserLimits(req.params.id, {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customAiChatLimit
+      });
+      res.json({ message: "Limites atualizados com sucesso" });
+    } catch (error) {
+      console.error("Error updating user limits:", error);
+      res.status(500).json({ error: "Failed to update limits" });
     }
   });
   app2.delete("/api/users/:id", requireAdmin, async (req, res) => {
@@ -10130,7 +10206,14 @@ async function registerRoutes(app2) {
   app2.get("/api/double-diamond/:id", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId;
-      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+      const user = await storage.getUserById(userId);
+      let project;
+      if (user?.role === "admin") {
+        const allProjects = await storage.getAllDoubleDiamondProjects();
+        project = allProjects.find((p) => p.id === req.params.id);
+      } else {
+        project = await storage.getDoubleDiamondProject(req.params.id, userId);
+      }
       if (!project) {
         return res.status(404).json({ error: "Double Diamond project not found" });
       }
@@ -10162,10 +10245,19 @@ async function registerRoutes(app2) {
   app2.patch("/api/double-diamond/:id", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId;
+      const updatesInput = req.body;
+      const validatedUpdates = insertDoubleDiamondProjectSchema.partial().parse(updatesInput);
+      const cleanedUpdates = {
+        ...validatedUpdates,
+        sectorId: validatedUpdates.sectorId && validatedUpdates.sectorId.trim() !== "" ? validatedUpdates.sectorId : void 0,
+        successCaseId: validatedUpdates.successCaseId && validatedUpdates.successCaseId.trim() !== "" ? validatedUpdates.successCaseId : void 0,
+        customSuccessCase: validatedUpdates.customSuccessCase && validatedUpdates.customSuccessCase.trim() !== "" ? validatedUpdates.customSuccessCase : void 0,
+        description: validatedUpdates.description && validatedUpdates.description.trim() !== "" ? validatedUpdates.description : void 0
+      };
       const updated = await storage.updateDoubleDiamondProject(
         req.params.id,
         userId,
-        req.body
+        cleanedUpdates
       );
       if (!updated) {
         return res.status(404).json({ error: "Double Diamond project not found" });
@@ -10415,15 +10507,27 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to delete Double Diamond project" });
     }
   });
-  app2.put("/api/admin/double-diamond/:id", requireAdmin, async (req, res) => {
+  app2.patch("/api/admin/double-diamond/:id", requireAdmin, async (req, res) => {
     try {
       const allProjects = await storage.getAllDoubleDiamondProjects();
       const project = allProjects.find((p) => p.id === req.params.id);
       if (!project) {
         return res.status(404).json({ error: "Double Diamond project not found" });
       }
-      const updates = req.body;
-      const updated = await storage.updateDoubleDiamondProject(req.params.id, project.userId, updates);
+      const updatesInput = req.body;
+      const validatedUpdates = insertDoubleDiamondProjectSchema.partial().parse(updatesInput);
+      const cleanedUpdates = {
+        ...validatedUpdates,
+        sectorId: validatedUpdates.sectorId && validatedUpdates.sectorId.trim() !== "" ? validatedUpdates.sectorId : void 0,
+        successCaseId: validatedUpdates.successCaseId && validatedUpdates.successCaseId.trim() !== "" ? validatedUpdates.successCaseId : void 0,
+        customSuccessCase: validatedUpdates.customSuccessCase && validatedUpdates.customSuccessCase.trim() !== "" ? validatedUpdates.customSuccessCase : void 0,
+        description: validatedUpdates.description && validatedUpdates.description.trim() !== "" ? validatedUpdates.description : void 0
+      };
+      const updated = await storage.updateDoubleDiamondProject(
+        req.params.id,
+        project.userId,
+        cleanedUpdates
+      );
       if (!updated) {
         return res.status(404).json({ error: "Failed to update project" });
       }
@@ -10449,6 +10553,198 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error fetching success cases:", error);
       res.status(500).json({ error: "Failed to fetch success cases" });
+    }
+  });
+  app2.post("/api/double-diamond/:id/export", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { projectName } = req.body;
+      const userId = req.session.userId;
+      const project = await storage.getDoubleDiamondProject(id, userId);
+      if (!project) {
+        return res.status(404).json({ success: false, error: "Projeto n\xE3o encontrado" });
+      }
+      const user = await storage.getUserById(userId);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        const plan = user?.subscriptionPlanId ? await storage.getSubscriptionPlan(user.subscriptionPlanId) : null;
+        const maxExports = user?.customMaxDoubleDiamondExports ?? plan?.maxDoubleDiamondExports;
+        if (maxExports !== null && maxExports !== void 0) {
+          const exportsThisMonth = await storage.getDoubleDiamondExportsByMonth(userId);
+          if (exportsThisMonth.length >= maxExports) {
+            return res.status(403).json({
+              success: false,
+              error: `Limite de ${maxExports} exporta\xE7\xF5es mensais atingido. Atualize seu plano para exportar mais projetos.`
+            });
+          }
+        }
+      }
+      const newProject = {
+        name: projectName || `${project.name} (Exportado)`,
+        description: project.description || `Projeto exportado do Double Diamond: ${project.name}`,
+        status: "in_progress",
+        currentPhase: 1,
+        completionRate: 0,
+        sectorId: project.sectorId || null,
+        successCaseId: project.successCaseId || null,
+        userProblemDescription: project.problemStatement || null,
+        aiGenerated: true,
+        generationTimestamp: /* @__PURE__ */ new Date(),
+        businessModelBase: null,
+        userId
+      };
+      const createdProject = await storage.createProject(newProject);
+      try {
+        if (project.discoverEmpathyMap) {
+          const em = project.discoverEmpathyMap;
+          await storage.createEmpathyMap({
+            projectId: createdProject.id,
+            title: `Mapa de Empatia - ${project.name}`,
+            says: Array.isArray(em.says) ? em.says : [],
+            thinks: Array.isArray(em.thinks) ? em.thinks : [],
+            does: Array.isArray(em.does) ? em.does : [],
+            feels: Array.isArray(em.feels) ? em.feels : []
+          });
+        }
+        if (project.definePovStatements && Array.isArray(project.definePovStatements)) {
+          for (const item of project.definePovStatements) {
+            await storage.createPovStatement({
+              projectId: createdProject.id,
+              user: item.user ?? "",
+              need: item.need ?? "",
+              insight: item.insight ?? "",
+              statement: item.fullStatement ?? `${item.user ?? "Usu\xE1rio"} precisa ${item.need ?? "..."} porque ${item.insight ?? "..."}`
+            });
+          }
+        }
+        if (project.defineHmwQuestions && Array.isArray(project.defineHmwQuestions)) {
+          for (const item of project.defineHmwQuestions) {
+            await storage.createHmwQuestion({
+              projectId: createdProject.id,
+              question: item.question ?? "",
+              context: null,
+              challenge: null,
+              scope: "product",
+              priority: "medium",
+              category: item.focusArea ?? null,
+              votes: 0
+            });
+          }
+        }
+        if (project.developSelectedIdeas && Array.isArray(project.developSelectedIdeas)) {
+          for (const idea of project.developSelectedIdeas) {
+            await storage.createIdea({
+              projectId: createdProject.id,
+              title: idea.title ?? "Ideia",
+              description: idea.description ?? "",
+              category: idea.category ?? null
+            });
+          }
+        }
+        if (project.deliverMvpConcept) {
+          const mvp = project.deliverMvpConcept;
+          const descriptionParts = [];
+          if (mvp.description) {
+            descriptionParts.push(mvp.description);
+          }
+          if (Array.isArray(mvp.coreFeatures) && mvp.coreFeatures.length > 0) {
+            descriptionParts.push("Recursos principais: " + mvp.coreFeatures.join("; "));
+          }
+          await storage.createPrototype({
+            projectId: createdProject.id,
+            ideaId: null,
+            name: mvp.name || `MVP - ${project.name}`,
+            type: "digital",
+            description: descriptionParts.join("\n\n") || "MVP gerado a partir do Double Diamond.",
+            materials: [],
+            images: [],
+            canvasData: null,
+            version: 1,
+            feedback: null
+          });
+        }
+        if (project.deliverTestPlan) {
+          const tp = project.deliverTestPlan;
+          const objectivesText = Array.isArray(tp.objectives) ? tp.objectives.join("; ") : "";
+          const methodsText = Array.isArray(tp.testMethods) ? tp.testMethods.join("; ") : "";
+          const participants = typeof tp.participants === "number" ? tp.participants : 5;
+          const duration = typeof tp.duration === "number" ? tp.duration : 60;
+          await storage.createTestPlan({
+            projectId: createdProject.id,
+            prototypeId: null,
+            name: `Plano de Testes - ${project.name}`,
+            objective: objectivesText || "Plano de testes gerado a partir do Double Diamond.",
+            methodology: methodsText || "Metodologia derivada da fase Deliver do Double Diamond.",
+            participants,
+            duration,
+            tasks: Array.isArray(tp.tasks) ? tp.tasks : [],
+            metrics: Array.isArray(tp.metrics) ? tp.metrics : [],
+            status: "planned"
+          });
+        }
+      } catch (phaseError) {
+        console.error("Erro ao mapear dados do Double Diamond para projeto principal:", phaseError);
+      }
+      try {
+        if (project.dfvDesirabilityScore != null && project.dfvFeasibilityScore != null && project.dfvViabilityScore != null) {
+          const desirability = Number(project.dfvDesirabilityScore) || 0;
+          const feasibility = Number(project.dfvFeasibilityScore) || 0;
+          const viability = Number(project.dfvViabilityScore) || 0;
+          const desirabilityScore = Math.round(desirability / 20 * 10) / 10;
+          const feasibilityScore = Math.round(feasibility / 20 * 10) / 10;
+          const viabilityScore = Math.round(viability / 20 * 10) / 10;
+          const overallScore = Math.round((desirabilityScore + feasibilityScore + viabilityScore) / 3 * 10) / 10;
+          let recommendation = "modify";
+          if (overallScore >= 4) {
+            recommendation = "proceed";
+          } else if (overallScore < 2.5) {
+            recommendation = "stop";
+          }
+          await storage.createDvfAssessment({
+            projectId: createdProject.id,
+            itemType: "solution",
+            itemId: "double-diamond-export",
+            itemName: createdProject.name,
+            desirabilityScore,
+            desirabilityEvidence: project.dfvAnalysis?.desirability?.reasoning || project.dfvFeedback || null,
+            userFeedback: project.dfvFeedback || null,
+            marketDemand: 0,
+            feasibilityScore,
+            feasibilityEvidence: project.dfvAnalysis?.feasibility?.reasoning || null,
+            technicalComplexity: "medium",
+            resourceRequirements: [],
+            timeToImplement: 0,
+            viabilityScore,
+            viabilityEvidence: project.dfvAnalysis?.viability?.reasoning || null,
+            businessModel: null,
+            costEstimate: 0,
+            revenueProjection: 0,
+            overallScore,
+            recommendation,
+            nextSteps: project.dfvAnalysis?.recommendations || [],
+            risksIdentified: []
+          });
+        }
+      } catch (dfvError) {
+        console.error("Erro ao criar avalia\xE7\xE3o DVF para projeto principal:", dfvError);
+      }
+      await storage.createDoubleDiamondExport({
+        userId,
+        doubleDiamondProjectId: id,
+        exportedProjectId: createdProject.id,
+        status: "completed",
+        exportType: "full"
+      });
+      return res.json({
+        success: true,
+        projectId: createdProject.id
+      });
+    } catch (error) {
+      console.error("Erro ao exportar projeto:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Erro interno ao exportar projeto"
+      });
     }
   });
   app2.get("/api/double-diamond/:id/export/pdf", requireAuth, async (req, res) => {
@@ -10801,11 +11097,13 @@ app.use((req, res, next) => {
     });
   }
   const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true
-  }, () => {
-    log2(`serving on port ${port}`);
-  });
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0"
+    },
+    () => {
+      log2(`serving on port ${port}`);
+    }
+  );
 })();

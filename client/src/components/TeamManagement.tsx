@@ -43,7 +43,7 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
 
   const inviteMutation = useMutation({
     mutationFn: async (data: { email: string; role: string }) =>
-      apiRequest(`/api/projects/${projectId}/members/invite`, "POST", data),
+      apiRequest("POST", `/api/projects/${projectId}/members/invite`, data),
     onSuccess: () => {
       toast({
         title: "Convite enviado!",
@@ -65,7 +65,7 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
 
   const removeMutation = useMutation({
     mutationFn: async (userId: string) =>
-      apiRequest(`/api/projects/${projectId}/members/${userId}`, "DELETE"),
+      apiRequest("DELETE", `/api/projects/${projectId}/members/${userId}`),
     onSuccess: () => {
       toast({
         title: "Membro removido",
@@ -84,7 +84,7 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) =>
-      apiRequest(`/api/projects/${projectId}/members/${userId}/role`, "PATCH", { role: newRole }),
+      apiRequest("PATCH", `/api/projects/${projectId}/members/${userId}/role`, { role: newRole }),
     onSuccess: () => {
       toast({
         title: "Permissão atualizada",

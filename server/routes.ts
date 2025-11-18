@@ -48,7 +48,8 @@ import {
   loadUserSubscription, 
   checkProjectLimit, 
   checkPersonaLimit, 
-  getSubscriptionInfo 
+  getSubscriptionInfo,
+  checkCollaborationAccess
 } from "./subscriptionMiddleware";
 import { checkAiProjectLimits, incrementAiProjectsUsed } from "./middleware/checkAiProjectLimits";
 import { checkDoubleDiamondLimit } from "./middleware/checkDoubleDiamondLimit";
@@ -672,14 +673,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project Members and Team Collaboration routes
   app.get("/api/projects/:projectId/members", requireAuth, requireProjectAccess('viewer'), async (req, res) => {
     try {
-      const members = await storage.getProjectMembers(req.params.projectId);
-      res.json(members);
+      const projectId = req.params.projectId;
+      const members = await storage.getProjectMembers(projectId);
+
+      const membersWithUser = await Promise.all(members.map(async (member) => {
+        const user = await storage.getUserById(member.userId);
+        return {
+          ...member,
+          user: user
+            ? { id: user.id, username: user.username, email: user.email }
+            : undefined,
+        };
+      }));
+
+      res.json(membersWithUser);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch project members" });
     }
   });
 
-  app.post("/api/projects/:projectId/members/invite", requireAuth, requireProjectAccess('owner'), async (req, res) => {
+  app.post("/api/projects/:projectId/members/invite", requireAuth, loadUserSubscription, checkCollaborationAccess, requireProjectAccess('owner'), async (req, res) => {
     try {
       const { email, role } = req.body;
       const userId = req.session!.userId!;
@@ -691,6 +704,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!['editor', 'viewer'].includes(role)) {
         return res.status(400).json({ error: "Invalid role. Must be 'editor' or 'viewer'" });
+      }
+
+      const limits = req.subscription?.limits;
+      if (limits && limits.maxUsersPerTeam !== null && limits.maxUsersPerTeam !== undefined) {
+        const project = await storage.getProject(projectId);
+        if (!project) {
+          return res.status(404).json({ error: "Project not found" });
+        }
+
+        const members = await storage.getProjectMembers(projectId);
+        const currentTeamSize = 1 + members.length;
+
+        if (currentTeamSize >= limits.maxUsersPerTeam) {
+          return res.status(403).json({
+            error: "Team member limit reached",
+            message: `Seu plano permite até ${limits.maxUsersPerTeam} usuários por equipe. Faça upgrade do plano para adicionar mais membros.`,
+            upgrade_required: true,
+          });
+        }
       }
 
       const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -713,10 +745,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/projects/:projectId/members/:userId", requireAuth, requireProjectAccess('owner'), async (req, res) => {
     try {
-      const success = await storage.deleteProjectMember(req.params.projectId, req.params.userId);
+      const projectId = req.params.projectId;
+      const userId = req.params.userId;
+
+      const member = await storage.getProjectMember(projectId, userId);
+      if (!member) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+      const success = await storage.deleteProjectMember(member.id);
       if (!success) {
         return res.status(404).json({ error: "Member not found" });
       }
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to remove member" });
@@ -730,11 +771,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid role" });
       }
 
-      const member = await storage.updateProjectMemberRole(req.params.projectId, req.params.userId, role);
-      if (!member) {
+      const projectId = req.params.projectId;
+      const userId = req.params.userId;
+
+      const existing = await storage.getProjectMember(projectId, userId);
+      if (!existing) {
         return res.status(404).json({ error: "Member not found" });
       }
-      res.json(member);
+
+      const updated = await storage.updateProjectMemberRole(existing.id, role);
+      if (!updated) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+      res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to update member role" });
     }
@@ -748,7 +798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "User email not found" });
       }
 
-      const invites = await storage.getProjectInvites(user.email);
+      const invites = await storage.getPendingInvitesByEmail(user.email);
       res.json(invites);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch invites" });

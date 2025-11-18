@@ -16,6 +16,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import type { Project, DvfAssessment } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
+import TeamManagement from "@/components/TeamManagement";
 import Phase1Tools from "@/components/phase1/Phase1Tools";
 import Phase2Tools from "@/components/phase2/Phase2Tools";
 import Phase3Tools from "@/components/phase3/Phase3Tools";
@@ -351,6 +353,7 @@ function DvfSummaryCard({ projectId }: { projectId: string }) {
 export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params.id;
+  const { user } = useAuth();
 
   const { data: project, isLoading } = useQuery<Project>({
     queryKey: ["/api/projects", projectId],
@@ -454,7 +457,7 @@ export default function ProjectDetailPage() {
     );
   }
 
-  return (
+    return (
     <div className="project-detail">
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
@@ -559,7 +562,7 @@ export default function ProjectDetailPage() {
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="phases" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 h-auto">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 gap-2 h-auto">
             <TabsTrigger
               value="phases"
               data-testid="tab-phases"
@@ -582,6 +585,14 @@ export default function ProjectDetailPage() {
             >
               <Brain className="w-4 h-4 mr-2 hidden sm:inline" />
               Análise Inteligente IA
+            </TabsTrigger>
+            <TabsTrigger
+              value="team"
+              data-testid="tab-team"
+              className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
+            >
+              <Users className="w-4 h-4 mr-2 hidden sm:inline" />
+              Equipe
             </TabsTrigger>
           </TabsList>
 
@@ -639,21 +650,7 @@ export default function ProjectDetailPage() {
               <h2 className="text-2xl font-bold text-gray-900">
                 Avaliação DFV (Desirability, Feasibility, Viability)
               </h2>
-              {stats?.dvfAssessment ? (
-                <DvfSummary assessment={stats.dvfAssessment as DvfAssessment} />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      Sem avaliação DFV disponível
-                    </CardTitle>
-                    <CardDescription>
-                      Complete as fases do projeto e gere uma análise inteligente
-                      para ver a avaliação DFV.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              )}
+              <DvfSummaryCard projectId={project.id} />
             </div>
           </TabsContent>
 
@@ -663,6 +660,17 @@ export default function ProjectDetailPage() {
 
           <TabsContent value="analysis" className="space-y-6">
             <AnalysisReport projectId={project.id} />
+          </TabsContent>
+
+          <TabsContent value="team" className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Colaboração em Equipe</h2>
+            <p className="text-gray-600 mb-2">
+              Convide outros usuários para visualizar ou editar este projeto.
+            </p>
+            <TeamManagement
+              projectId={project.id}
+              isOwner={project.userId === user?.id}
+            />
           </TabsContent>
         </Tabs>
       </div>
