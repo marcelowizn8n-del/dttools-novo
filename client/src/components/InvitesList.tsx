@@ -31,7 +31,7 @@ export default function InvitesList() {
 
   const acceptMutation = useMutation({
     mutationFn: async (token: string) =>
-      apiRequest(`/api/invites/${token}/accept`, "POST"),
+      apiRequest("POST", `/api/invites/${token}/accept`),
     onSuccess: () => {
       toast({
         title: "Convite aceito!",
@@ -51,7 +51,7 @@ export default function InvitesList() {
 
   const declineMutation = useMutation({
     mutationFn: async (token: string) =>
-      apiRequest(`/api/invites/${token}/decline`, "POST"),
+      apiRequest("POST", `/api/invites/${token}/decline`),
     onSuccess: () => {
       toast({
         title: "Convite recusado",

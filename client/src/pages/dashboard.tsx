@@ -33,6 +33,7 @@ import dttoolsIcon from "../assets/dttools-icon.png";
 import { WelcomeMessage } from "@/components/ui/welcome-message";
 import { PhaseNavigator } from "@/components/ui/phase-navigator";
 import { NextStepCard } from "@/components/ui/next-step-card";
+import InvitesList from "@/components/InvitesList";
 
 const phases = [
   {
@@ -469,6 +470,11 @@ export default function Dashboard() {
             className="mb-8"
           />
         )}
+
+        {/* Pending Invites - show internal collaboration invites inside the app */}
+        <div className="mb-8">
+          <InvitesList />
+        </div>
 
         {/* Phase Navigator - Visual progress through 5 phases */}
         {totalProjects > 0 && (
