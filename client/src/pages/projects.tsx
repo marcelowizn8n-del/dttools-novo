@@ -260,45 +260,55 @@ function ProjectCard({ project }: { project: Project }) {
             </div>
 
             {/* Created Date */}
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Clock className="w-3 h-3" />
-              <span>
-                Criado em {project.createdAt ? new Date(project.createdAt).toLocaleDateString('pt-BR') : 'N/A'}
-              </span>
-            </div>
-            
-            {/* Export Buttons - Mobile Optimized */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-1 pt-3 border-t border-gray-100">
-              <Button
-                variant="outline"
-                size="default"
-                onClick={handleExportPPTX}
-                className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 shadow-sm text-xs sm:text-xs h-10 sm:h-8 min-h-[44px] sm:min-h-[32px]"
-                data-testid={`button-export-pptx-${project.id}`}
-              >
-                <FileText className="w-4 h-4 sm:w-3 sm:h-3 mr-1" />
-                <span className="font-medium">PPTX</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="default"
-                onClick={handleExportPDF}
-                className="bg-red-50 hover:bg-red-100 border-red-200 text-red-700 shadow-sm text-xs sm:text-xs h-10 sm:h-8 min-h-[44px] sm:min-h-[32px]"
-                data-testid={`button-export-pdf-${project.id}`}
-              >
-                <FileText className="w-4 h-4 sm:w-3 sm:h-3 mr-1" />
-                <span className="font-medium">PDF</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="default"
-                onClick={handleExportMarkdown}
-                className="bg-green-50 hover:bg-green-100 border-green-200 text-green-700 shadow-sm text-xs sm:text-xs h-10 sm:h-8 min-h-[44px] sm:min-h-[32px]"
-                data-testid={`button-export-markdown-${project.id}`}
-              >
-                <FileText className="w-4 h-4 sm:w-3 sm:h-3 mr-1" />
-                <span className="font-medium">MD</span>
-              </Button>
+            <div className="flex items-center justify-between gap-2 text-xs text-gray-500 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>
+                  Criado em {project.createdAt ? new Date(project.createdAt).toLocaleDateString('pt-BR') : 'N/A'}
+                </span>
+              </div>
+
+              {/* Export Dropdown - compacto e responsivo */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 px-2 whitespace-nowrap"
+                    data-testid={`button-export-${project.id}`}
+                    onClick={(e) => {
+                      // Evitar navegar para o card ao abrir o menu
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Exportar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    onClick={handleExportPPTX}
+                    data-testid={`menu-export-pptx-${project.id}`}
+                  >
+                    <FileText className="w-3 h-3 mr-2" />
+                    PPTX (Apresentação)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleExportPDF}
+                    data-testid={`menu-export-pdf-${project.id}`}
+                  >
+                    <FileText className="w-3 h-3 mr-2" />
+                    PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleExportMarkdown}
+                    data-testid={`menu-export-markdown-${project.id}`}
+                  >
+                    <FileText className="w-3 h-3 mr-2" />
+                    Markdown (MD)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardContent>

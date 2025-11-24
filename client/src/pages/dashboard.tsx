@@ -221,15 +221,18 @@ export default function Dashboard() {
       }
 
       // Update project to the selected phase
-      if (targetProject.currentPhase !== phaseId) {
-        await updatePhaseMutation.mutateAsync({ 
-          projectId: targetProject.id, 
-          phase: phaseId 
-        });
-      }
+      if (targetProject) {
+        // Update project to the selected phase
+        if (targetProject.currentPhase !== phaseId) {
+          await updatePhaseMutation.mutateAsync({ 
+            projectId: targetProject.id, 
+            phase: phaseId 
+          });
+        }
 
-      // Navigate to the project (it will show the selected phase)
-      setLocation(`/projects/${targetProject.id}`);
+        // Navigate to the project (it will show the selected phase)
+        setLocation(`/projects/${targetProject.id}`);
+      }
     } catch (error) {
       toast({
         title: "Erro",

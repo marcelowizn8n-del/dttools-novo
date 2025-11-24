@@ -404,10 +404,10 @@ export default function DoubleDiamondProject() {
 
           <div className="flex flex-col gap-2">
             <Badge variant="secondary" className="text-lg px-4 py-2">
-              Fase Atual: {project.currentPhase === "discover" ? "Descobrir" : 
-                          project.currentPhase === "define" ? "Definir" :
-                          project.currentPhase === "develop" ? "Desenvolver" : 
-                          project.currentPhase === "deliver" ? "Entregar" : "Análise DFV"}
+              Fase Atual: {project.currentPhase === "discover" ? "Descobrir" :
+                project.currentPhase === "define" ? "Definir" :
+                  project.currentPhase === "develop" ? "Desenvolver" :
+                    project.currentPhase === "deliver" ? "Entregar" : "Análise DFV"}
             </Badge>
             <div className="flex flex-col gap-2">
               <Button
@@ -650,7 +650,7 @@ export default function DoubleDiamondProject() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab || "discover"} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="w-full flex overflow-x-auto md:grid md:grid-cols-5 h-auto p-1 gap-1">
           <TabsTrigger value="discover" data-testid="tab-discover">Descobrir</TabsTrigger>
           <TabsTrigger value="define" data-testid="tab-define">Definir</TabsTrigger>
           <TabsTrigger value="develop" data-testid="tab-develop">Desenvolver</TabsTrigger>
@@ -675,7 +675,7 @@ export default function DoubleDiamondProject() {
                   <p className="text-muted-foreground mb-6">
                     A IA irá gerar automaticamente pain points, insights, user needs e um empathy map completo
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => generateDiscoverMutation.mutate()}
                     disabled={generateDiscoverMutation.isPending}
                     size="lg"
@@ -764,7 +764,7 @@ export default function DoubleDiamondProject() {
                   <p className="text-muted-foreground mb-6">
                     A IA criará POV Statements e How Might We questions baseados nos insights da fase Discover
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => generateDefineMutation.mutate()}
                     disabled={generateDefineMutation.isPending || project.discoverStatus !== "completed"}
                     size="lg"
@@ -842,7 +842,7 @@ export default function DoubleDiamondProject() {
                   <p className="text-muted-foreground mb-6">
                     A IA gerará 20+ ideias criativas e soluções cross-pollinadas
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => generateDevelopMutation.mutate()}
                     disabled={generateDevelopMutation.isPending || project.defineStatus !== "completed"}
                     size="lg"
@@ -908,7 +908,7 @@ export default function DoubleDiamondProject() {
                   <p className="text-muted-foreground mb-6">
                     A IA criará o conceito completo do MVP, sugestões de logo, landing page e plano de testes
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => generateDeliverMutation.mutate()}
                     disabled={generateDeliverMutation.isPending || project.developStatus !== "completed"}
                     size="lg"
@@ -1162,7 +1162,7 @@ export default function DoubleDiamondProject() {
                   <p className="text-muted-foreground mb-6">
                     A IA analisará seu projeto em Desejabilidade, Viabilidade e Exequibilidade
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => generateDFVMutation.mutate()}
                     disabled={generateDFVMutation.isPending || project.deliverStatus !== "completed"}
                     size="lg"
@@ -1250,7 +1250,7 @@ export default function DoubleDiamondProject() {
                     <div className="space-y-4">
                       {(() => {
                         const dfvData = project.dfvAnalysis as any;
-                        
+
                         return (
                           <>
                             {/* Desirability Analysis */}

@@ -20,7 +20,7 @@ function getTranslatedArticle(article: Article, language: Language) {
   };
 
   const translation = langMap[language];
-  
+
   return {
     title: translation.title || article.title,
     description: translation.description || article.description,
@@ -53,7 +53,7 @@ function MarkdownRenderer({ content }: { content: string }) {
   };
 
   return (
-    <div 
+    <div
       className="article-content"
       dangerouslySetInnerHTML={{ __html: processMarkdown(content) }}
       data-testid="article-content"
@@ -117,7 +117,7 @@ export default function ArticleDetailPage() {
   const getCategoryLabel = (category: string) => {
     const categories: Record<string, string> = {
       empathize: "Empatizar",
-      define: "Definir", 
+      define: "Definir",
       ideate: "Idear",
       prototype: "Prototipar",
       test: "Testar",
@@ -219,68 +219,68 @@ export default function ArticleDetailPage() {
               <article className="space-y-6">
                 {/* Header */}
                 <header className="space-y-4">
-                  <Badge 
-                    className={getCategoryColor(article.category)} 
+                  <Badge
+                    className={getCategoryColor(article.category)}
                     data-testid="article-category"
                   >
                     {getCategoryLabel(article.category)}
                   </Badge>
-                  
+
                   <h1 className="text-3xl md:text-4xl font-bold tracking-tight" data-testid="article-title">
                     {translated.title}
                   </h1>
-                  
+
                   {translated.description && (
                     <p className="text-xl text-muted-foreground" data-testid="article-description">
                       {translated.description}
                     </p>
                   )}
 
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1" data-testid="article-author">
-                  <User className="h-4 w-4" />
-                  {article.author}
-                </div>
-                
-                {article.createdAt && (
-                  <div className="flex items-center gap-1" data-testid="article-date">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(article.createdAt)}
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-1" data-testid="article-reading-time">
-                  <Clock className="h-4 w-4" />
-                  {estimateReadingTime(translated.content)} min de leitura
-                </div>
-                
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleShare}
-                  data-testid="button-share"
-                >
-                  <Share className="h-4 w-4 mr-1" />
-                  Compartilhar
-                </Button>
-              </div>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1" data-testid="article-author">
+                      <User className="h-4 w-4" />
+                      {article.author}
+                    </div>
 
-              {article.tags && (article.tags as string[]).length > 0 && (
-                <div className="flex flex-wrap gap-2" data-testid="article-tags">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  {(article.tags as string[]).map((tag, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="outline" 
-                      className="text-xs"
-                      data-testid={`tag-${index}`}
+                    {article.createdAt && (
+                      <div className="flex items-center gap-1" data-testid="article-date">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(article.createdAt)}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1" data-testid="article-reading-time">
+                      <Clock className="h-4 w-4" />
+                      {estimateReadingTime(translated.content)} min de leitura
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleShare}
+                      data-testid="button-share"
                     >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </header>
+                      <Share className="h-4 w-4 mr-1" />
+                      Compartilhar
+                    </Button>
+                  </div>
+
+                  {Array.isArray(article.tags) && (article.tags as string[]).length > 0 && (
+                    <div className="flex flex-wrap gap-2" data-testid="article-tags">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                      {(article.tags as string[]).map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-xs"
+                          data-testid={`tag-${index}`}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </header>
 
                 <Separator />
 
@@ -299,7 +299,7 @@ export default function ArticleDetailPage() {
                       Voltar à biblioteca
                     </Button>
                   </Link>
-                  
+
                   <Button onClick={handleShare} data-testid="button-share-footer">
                     <Share className="mr-2 h-4 w-4" />
                     Compartilhar

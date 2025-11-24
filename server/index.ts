@@ -12,6 +12,7 @@ import fs from "fs/promises";
 import fsSync from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { spawn } from "child_process";
 
 // Simple log function
 const log = (...args: any[]) => {
@@ -46,23 +47,23 @@ app.set('trust proxy', 1);
 // Parse and validate FRONTEND_URL from environment
 const parseFrontendUrls = (envVar: string | undefined): string[] => {
   if (!envVar) return [];
-  
+
   return envVar.split(',').map(url => url.trim()).filter(url => {
     // Validate: must be HTTPS (or HTTP for localhost), no wildcards
     const isHttps = url.startsWith('https://');
     const isLocalhost = url.startsWith('http://localhost');
     const hasWildcard = url.includes('*');
-    
+
     if (hasWildcard) {
       console.error(`[CORS] Invalid FRONTEND_URL  wildcards not allowed: ${url} - index.ts:57`);
       return false;
     }
-    
+
     if (!isHttps && !isLocalhost) {
       console.error(`[CORS] Invalid FRONTEND_URL  must use HTTPS: ${url} - index.ts:62`);
       return false;
     }
-    
+
     // Normalize: remove trailing slash
     return true;
   }).map(url => url.replace(/\/$/, '')); // Remove trailing slashes
@@ -76,7 +77,7 @@ if (configuredFrontendUrls.length > 0) {
 // Add CORS headers for external browser access
 app.use((req, res, next) => {
   const origin = req.headers.origin?.replace(/\/$/, ''); // Normalize incoming origin
-  
+
   // Base allowed origins
   const allowedOrigins = [
     'https://designthinkingtools.com',
@@ -87,16 +88,16 @@ app.use((req, res, next) => {
     'http://localhost:5173',
     ...configuredFrontendUrls
   ];
-  
+
   // Allow origin if it's in the allowlist
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
+
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -145,12 +146,12 @@ if (!process.env.SESSION_SECRET) {
 
 // Session configuration
 const isProduction = process.env.NODE_ENV === 'production';
-const sessionStore = isProduction && process.env.DATABASE_URL ? 
+const sessionStore = isProduction && process.env.DATABASE_URL ?
   new PgStore({
     conString: process.env.DATABASE_URL,
     createTableIfMissing: true,
     tableName: 'user_sessions'
-  }) : 
+  }) :
   new MemStore({
     checkPeriod: 86400000 // prune expired entries every 24h
   });
@@ -211,7 +212,7 @@ app.use((req, res, next) => {
   // Auto-detect production: check if running from dist/ OR if NODE_ENV is production
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  
+
   // Consider it production if:
   // 1. Running from dist/index.js (compiled build)
   // 2. OR NODE_ENV is explicitly set to production
@@ -220,22 +221,22 @@ app.use((req, res, next) => {
   // CRITICAL: Verify schema BEFORE anything else if database exists
   if (process.env.DATABASE_URL) {
     log('🔧 [STARTUP] Ensuring database schema is correct...');
-    
+
     try {
       const { db } = await import('./db.js');
       log('🔍 [STARTUP] Verifying critical schema columns...');
-      
+
       // Add missing columns if they don't exist (idempotent, safe to run multiple times)
       await db.execute(`
         ALTER TABLE IF EXISTS subscription_plans 
         ADD COLUMN IF NOT EXISTS included_users INTEGER;
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS subscription_plans 
         ADD COLUMN IF NOT EXISTS price_per_additional_user INTEGER;
       `);
-      
+
       // Add custom limit columns to users table
       await db.execute(`
         ALTER TABLE IF EXISTS users 
@@ -253,72 +254,72 @@ app.use((req, res, next) => {
         ALTER TABLE IF EXISTS users 
         ADD COLUMN IF NOT EXISTS custom_ai_chat_limit INTEGER;
       `);
-      
+
       // Add Double Diamond columns to subscription_plans
       await db.execute(`
         ALTER TABLE IF EXISTS subscription_plans 
         ADD COLUMN IF NOT EXISTS max_double_diamond_projects INTEGER;
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS subscription_plans 
         ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
       `);
-      
+
       // Add export limit column to subscription_plans
       await db.execute(`
         ALTER TABLE IF EXISTS subscription_plans 
         ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
       `);
-      
+
       // Add OAuth fields to users table
       await db.execute(`
         ALTER TABLE IF EXISTS users 
         ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'local';
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS users 
         ADD COLUMN IF NOT EXISTS google_id TEXT;
       `);
-      
+
       // Make password optional for OAuth users
       await db.execute(`
         ALTER TABLE IF EXISTS users 
         ALTER COLUMN password DROP NOT NULL;
       `);
-      
+
       // Add translation columns to video_tutorials (for auto-translation feature)
       await db.execute(`
         ALTER TABLE IF EXISTS video_tutorials 
         ADD COLUMN IF NOT EXISTS title_en TEXT;
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS video_tutorials 
         ADD COLUMN IF NOT EXISTS title_es TEXT;
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS video_tutorials 
         ADD COLUMN IF NOT EXISTS title_fr TEXT;
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS video_tutorials 
         ADD COLUMN IF NOT EXISTS description_en TEXT;
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS video_tutorials 
         ADD COLUMN IF NOT EXISTS description_es TEXT;
       `);
-      
+
       await db.execute(`
         ALTER TABLE IF EXISTS video_tutorials 
         ADD COLUMN IF NOT EXISTS description_fr TEXT;
       `);
-      
+
       log('✅ [STARTUP] Schema columns verified and ready');
     } catch (schemaError) {
       // Log but don't crash - table might not exist yet
@@ -334,28 +335,27 @@ app.use((req, res, next) => {
     // Run database setup asynchronously without blocking server startup
     (async () => {
       let migrationCompleted = false;
-      
+
       // ONLY run db:push in development, NOT in production (Render)
       // In production, schema should already be applied
       const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
-      
+
       if (!isProduction) {
         try {
           log('🔧 Running database migration in background...');
-          
+
           // Run migration with proper timeout handling
           const migrationPromise = new Promise<void>((resolve, reject) => {
-            const { spawn } = require('child_process');
             const migration = spawn('npm', ['run', 'db:push'], {
               stdio: 'inherit' // Inherit to avoid buffer issues
             });
-            
+
             // Set up timeout killer
             const timeoutId = setTimeout(() => {
               migration.kill('SIGTERM');
               reject(new Error('Migration timeout after 90s'));
             }, 90000);
-            
+
             migration.on('close', (code: number) => {
               clearTimeout(timeoutId);
               if (code === 0) {
@@ -365,13 +365,13 @@ app.use((req, res, next) => {
                 reject(new Error(`Migration exited with code ${code}`));
               }
             });
-            
+
             migration.on('error', (error: Error) => {
               clearTimeout(timeoutId);
               reject(error);
             });
           });
-          
+
           await migrationPromise;
           migrationCompleted = true;
         } catch (error) {
@@ -380,7 +380,7 @@ app.use((req, res, next) => {
       } else {
         log('⏭️  Skipping db:push in production (schema should already be applied)');
       }
-      
+
       // ALWAYS initialize default data, regardless of migration result or environment
       try {
         await initializeDefaultData();
@@ -411,7 +411,7 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   const isDevelopment = process.env.NODE_ENV !== 'production' && !isProductionBuild;
   log(`Environment check: NODE_ENV=${process.env.NODE_ENV}, isDevelopment=${isDevelopment}, isProductionBuild=${isProductionBuild}`);
-  
+
   if (isDevelopment) {
     log('Setting up Vite development server');
     const { setupVite } = await import('./vite.js');
@@ -421,11 +421,11 @@ app.use((req, res, next) => {
     log('Setting up static file serving for production');
     const distPath = path.join(__dirname, '..', 'client', 'dist');
     log(`Serving static files from: ${distPath}`);
-    
+
     if (!fsSync.existsSync(distPath)) {
       throw new Error(`Could not find the build directory: ${distPath}`);
     }
-    
+
     // Serve static files with explicit configuration
     app.use(express.static(distPath, {
       etag: true,
@@ -445,7 +445,7 @@ app.use((req, res, next) => {
         }
       }
     }));
-    
+
     // SPA fallback - only for non-file requests
     app.use("*", (req, res) => {
       // Only serve index.html if the request doesn't have a file extension

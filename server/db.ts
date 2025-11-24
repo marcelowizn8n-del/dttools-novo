@@ -8,10 +8,10 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ 
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  
+  ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false),
+
   // Performance optimizations for production
   max: 50, // Maximum 50 connections in pool (up from default 10)
   min: 5,  // Minimum 5 idle connections (faster response time)

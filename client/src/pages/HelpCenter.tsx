@@ -36,7 +36,7 @@ export default function HelpCenter() {
 
   const displayArticles = searchQuery.length > 2 ? searchResults : articles;
 
-  const filteredArticles = selectedCategory === "all" 
+  const filteredArticles = selectedCategory === "all"
     ? displayArticles
     : displayArticles.filter(a => a.category === selectedCategory);
 
@@ -113,8 +113,8 @@ export default function HelpCenter() {
           <h2 className="text-2xl font-bold mb-4">Artigos em Destaque</h2>
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {featuredArticles.map((article) => (
-              <Card 
-                key={article.id} 
+              <Card
+                key={article.id}
                 className="cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => handleArticleClick(article)}
                 data-testid={`card-featured-article-${article.id}`}
@@ -168,8 +168,8 @@ export default function HelpCenter() {
               <CardContent className="py-8 text-center">
                 <HelpCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg text-muted-foreground">
-                  {searchQuery.length > 0 
-                    ? "Nenhum artigo encontrado para sua busca." 
+                  {searchQuery.length > 0
+                    ? "Nenhum artigo encontrado para sua busca."
                     : "Nenhum artigo disponível nesta categoria."}
                 </p>
               </CardContent>
@@ -177,7 +177,7 @@ export default function HelpCenter() {
           ) : (
             <div className="grid gap-4">
               {filteredArticles.map((article) => (
-                <Card 
+                <Card
                   key={article.id}
                   className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => handleArticleClick(article)}
@@ -206,7 +206,7 @@ export default function HelpCenter() {
                         {article.helpful} úteis
                       </span>
                     </div>
-                    {article.tags && Array.isArray(article.tags) && (article.tags as string[]).length > 0 && (
+                    {Array.isArray(article.tags) && (article.tags as string[]).length > 0 && (
                       <div className="flex gap-2 mt-3 flex-wrap">
                         {(article.tags as string[]).map((tag: string, idx: number) => (
                           <Badge key={idx} variant="outline" className="text-xs">

@@ -109,10 +109,10 @@ export default function DashboardAI() {
 
   const handleExport = async () => {
     if (!project) return;
-    
+
     try {
       setIsExporting(true);
-      
+
       const pdfUrl = await generateAIMVPPDF({
         project,
         personas,
@@ -120,16 +120,16 @@ export default function DashboardAI() {
         ideas,
         aiAssets,
       });
-      
+
       const link = document.createElement('a');
       link.href = pdfUrl;
       link.download = `mvp-${project.name.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       URL.revokeObjectURL(pdfUrl);
-      
+
       toast({
         title: "MVP Exportado!",
         description: "O PDF do seu MVP foi baixado com sucesso.",
@@ -173,8 +173,8 @@ export default function DashboardAI() {
                 <p className="text-gray-600 dark:text-gray-300 text-lg">{project.description}</p>
               </div>
             </div>
-            <Button 
-              className="bg-gradient-to-r from-purple-600 to-blue-600" 
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-blue-600"
               data-testid="button-download"
               onClick={handleExport}
               disabled={isExporting}
@@ -237,7 +237,7 @@ export default function DashboardAI() {
                   <CardTitle>Inspiração</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="font-semibold text-lg">{project.businessModelBase}</p>
+                  <p className="font-semibold text-lg">{project.businessModelBase as string}</p>
                   <Badge className="mt-2">Case de Sucesso</Badge>
                 </CardContent>
               </Card>
@@ -306,11 +306,11 @@ export default function DashboardAI() {
                     </div>
                     <div>
                       <h4 className="font-semibold mb-1">Objetivos:</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{persona.goals}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{persona.goals as string}</p>
                     </div>
                     <div>
                       <h4 className="font-semibold mb-1">Frustrações:</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{persona.frustrations}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{persona.frustrations as string}</p>
                     </div>
                   </CardContent>
                 </Card>

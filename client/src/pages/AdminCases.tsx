@@ -179,7 +179,7 @@ export default function AdminCases() {
 
       <div className="mb-4">
         <Select value={sectorFilter} onValueChange={setSectorFilter}>
-          <SelectTrigger className="w-64" data-testid="select-sector-filter">
+          <SelectTrigger className="w-full md:w-64" data-testid="select-sector-filter">
             <SelectValue placeholder="Filtrar por setor" />
           </SelectTrigger>
           <SelectContent>
@@ -207,83 +207,85 @@ export default function AdminCases() {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Logo</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Setor</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCases.map((successCase) => (
-                  <TableRow key={successCase.id}>
-                    <TableCell>
-                      {successCase.logoUrl ? (
-                        <img src={successCase.logoUrl} alt={successCase.name} className="w-10 h-10 object-contain rounded" />
-                      ) : (
-                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-xs">
-                          N/A
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">{successCase.name}</TableCell>
-                    <TableCell>{successCase.sectorId ? getSectorName(successCase.sectorId) : "N/A"}</TableCell>
-                    <TableCell className="max-w-md truncate">
-                      {successCase.descriptionPt || successCase.descriptionEn || "Sem descrição"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={successCase.isActive ? "default" : "secondary"}>
-                        {successCase.isActive ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(successCase)}
-                          data-testid={`button-edit-case-${successCase.id}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              data-testid={`button-delete-case-${successCase.id}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja deletar o case "{successCase.name}"? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteMutation.mutate(successCase.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Deletar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Logo</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Setor</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredCases.map((successCase) => (
+                    <TableRow key={successCase.id}>
+                      <TableCell>
+                        {successCase.logoUrl ? (
+                          <img src={successCase.logoUrl} alt={successCase.name} className="w-10 h-10 object-contain rounded" />
+                        ) : (
+                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-xs">
+                            N/A
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{successCase.name}</TableCell>
+                      <TableCell>{successCase.sectorId ? getSectorName(successCase.sectorId) : "N/A"}</TableCell>
+                      <TableCell className="max-w-md truncate">
+                        {successCase.descriptionPt || successCase.descriptionEn || "Sem descrição"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={successCase.isActive ? "default" : "secondary"}>
+                          {successCase.isActive ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(successCase)}
+                            data-testid={`button-edit-case-${successCase.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                data-testid={`button-delete-case-${successCase.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja deletar o case "{successCase.name}"? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteMutation.mutate(successCase.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Deletar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

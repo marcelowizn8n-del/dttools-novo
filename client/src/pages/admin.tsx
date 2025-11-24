@@ -2440,40 +2440,74 @@ export default function AdminPage() {
           </div>
 
           <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-8">
-              <TabsTrigger value="dashboard" data-testid="tab-dashboard">
-                <BarChart3 className="mr-2 h-4 w-4" />
-                Dashboard
-              </TabsTrigger>
-              <TabsTrigger value="users" data-testid="tab-users">
-                <Users className="mr-2 h-4 w-4" />
-                Usuários
-              </TabsTrigger>
-              <TabsTrigger value="projects" data-testid="tab-projects">
-                <FolderOpen className="mr-2 h-4 w-4" />
-                Projetos
-              </TabsTrigger>
-              <TabsTrigger value="double-diamond" data-testid="tab-double-diamond">
-                <Diamond className="mr-2 h-4 w-4" />
-                Double Diamond
-              </TabsTrigger>
-              <TabsTrigger value="articles" data-testid="tab-articles">
-                <Eye className="mr-2 h-4 w-4" />
-                Artigos
-              </TabsTrigger>
-              <TabsTrigger value="videos" data-testid="tab-videos">
-                <Video className="mr-2 h-4 w-4" />
-                Vídeos
-              </TabsTrigger>
-              <TabsTrigger value="testimonials" data-testid="tab-testimonials">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Depoimentos
-              </TabsTrigger>
-              <TabsTrigger value="plans" data-testid="tab-plans">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Planos
-              </TabsTrigger>
-            </TabsList>
+            <div className="-mx-4 overflow-x-auto pb-1 sm:mx-0">
+              <TabsList className="flex min-w-max gap-2 sm:min-w-0 sm:w-full sm:grid sm:grid-cols-8">
+                <TabsTrigger
+                  value="dashboard"
+                  data-testid="tab-dashboard"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Dashboard
+                </TabsTrigger>
+                <TabsTrigger
+                  value="users"
+                  data-testid="tab-users"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Usuários
+                </TabsTrigger>
+                <TabsTrigger
+                  value="projects"
+                  data-testid="tab-projects"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Projetos
+                </TabsTrigger>
+                <TabsTrigger
+                  value="double-diamond"
+                  data-testid="tab-double-diamond"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <Diamond className="mr-2 h-4 w-4" />
+                  Double Diamond
+                </TabsTrigger>
+                <TabsTrigger
+                  value="articles"
+                  data-testid="tab-articles"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  Artigos
+                </TabsTrigger>
+                <TabsTrigger
+                  value="videos"
+                  data-testid="tab-videos"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <Video className="mr-2 h-4 w-4" />
+                  Vídeos
+                </TabsTrigger>
+                <TabsTrigger
+                  value="testimonials"
+                  data-testid="tab-testimonials"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Depoimentos
+                </TabsTrigger>
+                <TabsTrigger
+                  value="plans"
+                  data-testid="tab-plans"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Planos
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="dashboard">
               <DashboardTab />

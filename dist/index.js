@@ -1,11 +1,5 @@
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
-  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
-}) : x)(function(x) {
-  if (typeof require !== "undefined") return require.apply(this, arguments);
-  throw Error('Dynamic require of "' + x + '" is not supported');
-});
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
@@ -1232,7 +1226,7 @@ var init_db = __esm({
     }
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+      ssl: process.env.DATABASE_URL?.includes("render.com") ? { rejectUnauthorized: false } : process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
       // Performance optimizations for production
       max: 50,
       // Maximum 50 connections in pool (up from default 10)
@@ -6944,12 +6938,9 @@ function requireProjectAccess(requiredRole = "viewer") {
       return res.status(400).json({ error: "Project ID required" });
     }
     try {
-      const project = await storage.getProject(projectId);
-      if (!project) {
-        return res.status(404).json({ error: "Project not found" });
-      }
       const userId = req.session.userId;
-      if (project.userId === userId) {
+      const ownerProject = await storage.getProject(projectId, userId);
+      if (ownerProject) {
         return next();
       }
       const member = await storage.getProjectMember(projectId, userId);
@@ -7389,7 +7380,7 @@ async function registerRoutes(app2) {
       }
       const limits = req.subscription?.limits;
       if (limits && limits.maxUsersPerTeam !== null && limits.maxUsersPerTeam !== void 0) {
-        const project = await storage.getProject(projectId);
+        const project = await storage.getProject(projectId, userId);
         if (!project) {
           return res.status(404).json({ error: "Project not found" });
         }
@@ -10774,6 +10765,7 @@ init_storage();
 import fsSync from "fs";
 import path4 from "path";
 import { fileURLToPath } from "url";
+import { spawn } from "child_process";
 var log2 = (...args) => {
   console.log(`[${(/* @__PURE__ */ new Date()).toISOString()}] - index.ts:18`, ...args);
 };
@@ -11006,7 +10998,6 @@ app.use((req, res, next) => {
         try {
           log2("\u{1F527} Running database migration in background...");
           const migrationPromise = new Promise((resolve, reject) => {
-            const { spawn } = __require("child_process");
             const migration = spawn("npm", ["run", "db:push"], {
               stdio: "inherit"
               // Inherit to avoid buffer issues

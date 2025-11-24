@@ -23,7 +23,7 @@ function getTranslatedArticle(article: Article, language: Language) {
   };
 
   const translation = langMap[language];
-  
+
   return {
     title: translation.title || article.title,
     description: translation.description || article.description,
@@ -43,12 +43,12 @@ const categories = [
 function ArticleCard({ article }: { article: Article }) {
   const { language, t } = useLanguage();
   const translated = getTranslatedArticle(article, language);
-  
+
   const formatDate = (date: Date | string | null) => {
     if (!date) return '';
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
-      month: '2-digit', 
+      month: '2-digit',
       year: 'numeric'
     }).format(new Date(date));
   };
@@ -95,7 +95,7 @@ function ArticleCard({ article }: { article: Article }) {
           <User className="mr-1 h-3 w-3" />
           <span data-testid={`author-${article.id}`}>{article.author}</span>
         </div>
-        {article.tags && Array.isArray(article.tags) && article.tags.length > 0 && (
+        {Array.isArray(article.tags) && article.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {article.tags.slice(0, 3).map((tag: string, index: number) => (
               <Badge
@@ -168,14 +168,14 @@ export default function LibraryPage() {
   const filteredArticles = articles.filter(article => {
     const translated = getTranslatedArticle(article, language);
     const searchLower = searchTerm.toLowerCase();
-    
-    const matchesSearch = 
+
+    const matchesSearch =
       translated.title.toLowerCase().includes(searchLower) ||
       translated.description?.toLowerCase().includes(searchLower) ||
       article.author.toLowerCase().includes(searchLower);
-    
+
     const matchesCategory = selectedCategory === "all" || article.category === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -217,7 +217,7 @@ export default function LibraryPage() {
             {categories.map((category) => {
               const Icon = category.icon;
               const count = getArticleCount(category.id);
-              
+
               return (
                 <TabsTrigger
                   key={category.id}
@@ -268,7 +268,7 @@ export default function LibraryPage() {
                     {t("library.no.articles")}
                   </h3>
                   <p className="text-muted-foreground" data-testid="no-articles-description">
-                    {searchTerm 
+                    {searchTerm
                       ? t("library.no.match", { term: searchTerm })
                       : t("library.no.articles.category")
                     }
