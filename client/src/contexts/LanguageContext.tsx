@@ -685,14 +685,10 @@ const translations = {
     "library.read.article": "Lire l'article",
     "library.all": "Tous",
     "library.all.desc": "Tous les articles",
-    "btn.start.free": " e5 85 8d e8 b4 b9 e5 bc 80 e5 a7 8b",
-    "btn.start.trial": " e5 bc 80 e5 a7 8b e5 85 8d e8 b4 b9 e8 af 95 e7 94 a8",
-    
-    // Currency
-    "currency.symbol": " a5",
-    "currency.month": "/ e6 9c 88",
-    "currency.year": "/ e5 b9 b4",
-    "currency.save": " e5 ad 98 e8 b4 b9 {percent}%",
+    "library.no.articles": "No se encontraron artículos",
+    "library.no.match": "No encontramos artículos que coincidan con tu búsqueda \"{term}\".",
+    "library.no.articles.category": "No hay artículos disponibles en esta categoría en este momento.",
+    "library.clear.search": "Limpiar búsqueda",
   },
 };
 
@@ -719,8 +715,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language]);
 
   const t = (key: string, params?: Record<string, string>): string => {
-    let translation = (translations[language] as any)[key] || (translations["en"] as any)[key] || key;
-    
+    // Safely get translations for the current language, falling back to English
+    const langTranslations = (translations as any)[language] || (translations as any)["en"];
+    let translation = (langTranslations as any)[key] || (translations["en"] as any)[key] || key;
+
     // Replace parameters
     if (params) {
       Object.entries(params).forEach(([param, value]) => {
