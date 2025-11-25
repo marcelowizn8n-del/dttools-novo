@@ -17,6 +17,9 @@ function getTranslatedArticle(article: Article, language: Language) {
     "en": { title: article.titleEn, description: article.descriptionEn, content: article.contentEn },
     "es": { title: article.titleEs, description: article.descriptionEs, content: article.contentEs },
     "fr": { title: article.titleFr, description: article.descriptionFr, content: article.contentFr },
+    // Fallbacks: use English content for languages without specific article fields
+    "de": { title: article.titleEn, description: article.descriptionEn, content: article.contentEn },
+    "zh": { title: article.titleEn, description: article.descriptionEn, content: article.contentEn },
   };
 
   const translation = langMap[language];

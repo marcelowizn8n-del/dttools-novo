@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
-export type Language = "pt-BR" | "en" | "es" | "fr";
+export type Language = "pt-BR" | "en" | "es" | "fr" | "de" | "zh";
 
 interface LanguageContextType {
   language: Language;
@@ -25,6 +25,8 @@ const LOCALE_MAP = {
   "en": "en-US",
   "es": "es-ES", 
   "fr": "fr-FR",
+  "de": "de-DE",
+  "zh": "zh-CN",
 };
 
 // Currency codes for each locale
@@ -33,6 +35,8 @@ const CURRENCY_CODES = {
   "en": "USD",
   "es": "USD",
   "fr": "EUR",
+  "de": "EUR",
+  "zh": "CNY",
 };
 
 // Translation dictionaries
@@ -681,20 +685,14 @@ const translations = {
     "library.read.article": "Lire l'article",
     "library.all": "Tous",
     "library.all.desc": "Tous les articles",
-    "library.category.empathize": "Empathiser",
-    "library.category.empathize.desc": "Comprendre les utilisateurs",
-    "library.category.define": "Définir",
-    "library.category.define.desc": "Définir les problèmes",
-    "library.category.ideate": "Idéer",
-    "library.category.ideate.desc": "Générer des solutions",
-    "library.category.prototype": "Prototyper",
-    "library.category.prototype.desc": "Construire des prototypes",
-    "library.category.test": "Tester",
-    "library.category.test.desc": "Valider les solutions",
-    "library.no.articles": "Aucun article trouvé",
-    "library.no.match": "Nous n'avons pas trouvé d'articles correspondant à votre recherche \"{term}\".",
-    "library.no.articles.category": "Il n'y a pas d'articles disponibles dans cette catégorie pour le moment.",
-    "library.clear.search": "Effacer la recherche",
+    "btn.start.free": " e5 85 8d e8 b4 b9 e5 bc 80 e5 a7 8b",
+    "btn.start.trial": " e5 bc 80 e5 a7 8b e5 85 8d e8 b4 b9 e8 af 95 e7 94 a8",
+    
+    // Currency
+    "currency.symbol": " a5",
+    "currency.month": "/ e6 9c 88",
+    "currency.year": "/ e5 b9 b4",
+    "currency.save": " e5 ad 98 e8 b4 b9 {percent}%",
   },
 };
 
@@ -710,6 +708,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (browserLang.startsWith("pt")) return "pt-BR";
     if (browserLang.startsWith("es")) return "es";
     if (browserLang.startsWith("fr")) return "fr";
+    if (browserLang.startsWith("de")) return "de";
+    if (browserLang.startsWith("zh")) return "zh";
     if (browserLang.startsWith("en")) return "en";
     return "pt-BR"; // Português como padrão para usuários brasileiros
   });
@@ -733,11 +733,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const convertPrice = (originalPriceInCents: number) => {
     // Currency conversion rates based on language/region
-    const conversionConfig = {
-      "pt-BR": { rate: 1 }, // Base currency (BRL)
-      "en": { rate: 0.31 }, // ~3.2x cheaper in USD
-      "es": { rate: 0.28 }, // ~3.6x cheaper in USD
-      "fr": { rate: 0.26 }, // ~3.8x cheaper in EUR
+    const conversionConfig: Record<Language, { rate: number }> = {
+      "pt-BR": { rate: 1 },   // Base currency (BRL)
+      "en": { rate: 0.31 },   // ~3.2x cheaper in USD
+      "es": { rate: 0.28 },   // ~3.6x cheaper in USD
+      "fr": { rate: 0.26 },   // ~3.8x cheaper in EUR
+      "de": { rate: 0.26 },   // Align with EUR region for now
+      "zh": { rate: 0.31 },   // Align with USD-based pricing for now
     };
 
     const config = conversionConfig[language];

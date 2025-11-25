@@ -134,6 +134,9 @@ function getTranslatedTestimonial(testimonial: Testimonial, language: Language) 
     "en": testimonial.testimonialEn,
     "es": testimonial.testimonialEs,
     "fr": testimonial.testimonialFr,
+    // Fallbacks: use English testimonial when a specific translation is not available
+    "de": testimonial.testimonialEn,
+    "zh": testimonial.testimonialEn,
   };
 
   return langMap[language] || testimonial.testimonialPt;
