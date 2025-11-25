@@ -152,7 +152,9 @@ export default function LandingPage() {
     queryKey: ["/api/testimonials"],
   });
 
-  const isEnglish = language === 'en';
+  // For sections that only have Portuguese and English hardcoded,
+  // treat German (de) and Chinese (zh) as "English variant" for now
+  const isEnglish = language === 'en' || language === 'de' || language === 'zh';
 
   const handlePhaseClick = (phaseId: number) => {
     if (isAuthenticated) {
