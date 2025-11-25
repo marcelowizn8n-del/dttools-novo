@@ -178,7 +178,7 @@ export default function Header() {
           </nav>
 
           {/* Full nav (xl+): com textos, usada em telas grandes */}
-          <nav className="hidden xl:flex items-center gap-2 xl:gap-4 flex-1 justify-center max-w-3xl">
+          <nav className="hidden xl:flex items-center gap-4 xl:gap-6 flex-1 justify-center">
             <Link href="/projects">
               <Button variant="ghost" className="text-sm" data-testid="nav-projects">
                 <Users className="mr-1 h-4 w-4" />
