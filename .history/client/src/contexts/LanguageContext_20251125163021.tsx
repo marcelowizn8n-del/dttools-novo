@@ -118,77 +118,6 @@ const translations = {
     "landing.start.trial": "Começar Teste Grátis",
     "landing.explore.library": "Explorar Biblioteca",
     
-    // Landing - AI MVP Generator
-    "landing.mvp.badge": "NOVO",
-    "landing.mvp.title": "Gere seu MVP Completo com IA",
-    "landing.mvp.subtitle": "Em 5-10 minutos, nossa IA cria um projeto completo de negócio para você: logo profissional, personas, landing page, estratégia de redes sociais, modelo de negócio e muito mais!",
-    "landing.mvp.button": "Criar Meu MVP Agora",
-    "landing.mvp.feature.logo": "Logo Profissional",
-    "landing.mvp.feature.personas": "Personas de Usuários",
-    "landing.mvp.feature.landing": "Landing Page",
-    "landing.mvp.feature.social": "Estratégia de Redes Sociais",
-    "landing.mvp.feature.bmc": "Business Model Canvas",
-
-    // Landing - Double Diamond + AI
-    "landing.dd.badge": "FRAMEWORK AVANÇADO",
-    "landing.dd.title": "Double Diamond + IA",
-    "landing.dd.subtitle": "O framework mais completo para inovação: combina descoberta de problemas e desenvolvimento de soluções com automação total de IA.",
-    "landing.dd.button": "Começar Grátis",
-    "landing.dd.mini.title": "MVP Completo em Minutos",
-    "landing.dd.mini.subtitle": "IA gera declarações POV, definição de problemas, ideias criativas com análise DFV automática e protótipos completos.",
-    "landing.dd.feature.pov": "Declarações POV",
-    "landing.dd.feature.problem": "Definição Problema",
-    "landing.dd.feature.aiIdeas": "Ideias com IA",
-    "landing.dd.feature.dfv": "Análise DFV",
-    "landing.dd.feature.prototypes": "Protótipos Auto",
-
-    // Landing - Double Diamond Details
-    "landing.dd.discovery.title": "Diamante da Descoberta",
-    "landing.dd.discovery.text": "Explore o espaço do problema profundamente antes de pular para soluções.",
-    "landing.dd.discovery.item1": "Pesquisa de usuários",
-    "landing.dd.discovery.item2": "Definição do problema",
-    "landing.dd.delivery.title": "Diamante da Entrega",
-    "landing.dd.delivery.text": "Crie, teste e refine soluções iterativamente.",
-    "landing.dd.delivery.item1": "Ideação & DFV",
-    "landing.dd.delivery.item2": "Prototipagem & Testes",
-    "landing.dd.footer": "🎯 Perfeito para startups, times de inovação e gerentes de produto",
-
-    // Landing - DVF Benchmarking
-    "landing.dvf.badge": "DIFERENCIAL COMPETITIVO",
-    "landing.dvf.title": "Sistema DVF de Benchmarking",
-    "landing.dvf.subtitle": "A única plataforma com sistema DVF (Desejabilidade, Viabilidade, Exequibilidade) integrado para avaliação estratégica de ideias e benchmarking competitivo com padrões da indústria.",
-    "landing.dvf.d.title": "Desejabilidade",
-    "landing.dvf.d.text": "As pessoas realmente querem esta solução? Validação do usuário e análise de demanda do mercado.",
-    "landing.dvf.v.title": "Viabilidade",
-    "landing.dvf.v.text": "Isto é um negócio sustentável? Análise financeira e validação do modelo de negócio.",
-    "landing.dvf.f.title": "Exequibilidade",
-    "landing.dvf.f.text": "Conseguimos realmente construir isto? Capacidades técnicas e avaliação de recursos.",
-    "landing.dvf.card.title": "Benchmarking Inteligente",
-    "landing.dvf.card.desirability": "Desejabilidade",
-    "landing.dvf.card.viability": "Viabilidade",
-    "landing.dvf.card.feasibility": "Exequibilidade",
-    "landing.dvf.card.overall": "Pontuação Geral",
-    "landing.dvf.card.aboveAverage": "✓ Acima da Média da Indústria",
-    "landing.dvf.cta.button": "Experimente o Benchmarking",
-    "landing.dvf.cta.subtitle": "Não precisa se registrar • Análise estratégica instantânea",
-    "landing.dvf.footer": "🎯 Perfeito para startups, times de inovação e gerentes de produto",
-
-    // Landing - Features Grid
-    "landing.features.process.title": "Processo Guiado",
-    "landing.features.process.desc": "Siga um processo estruturado através das 5 fases do Design Thinking",
-    "landing.features.collab.title": "Colaboração em Tempo Real",
-    "landing.features.collab.desc": "Trabalhe com sua equipe simultaneamente em projetos complexos",
-    "landing.features.library.title": "Biblioteca de Conhecimento",
-    "landing.features.library.desc": "Acesse centenas de artigos, templates e melhores práticas",
-    "landing.features.metrics.title": "Métricas e Progresso",
-    "landing.features.metrics.desc": "Acompanhe o progresso dos projetos com dashboards detalhados",
-    "landing.features.multilang.title": "Suporte Multi-idioma",
-    "landing.features.multilang.desc": "Interface disponível em português, inglês, espanhol, francês e mais idiomas",
-    "landing.features.export.title": "Exportação Profissional",
-    "landing.features.export.desc": "Exporte seus projetos em PDF, PNG e CSV para apresentações",
-    "landing.features.kanban.title": "Sistema Kanban Integrado",
-    "landing.features.kanban.desc": "Gerencie suas ideias e atividades com boards Kanban visual e intuitivo",
-
     // Pricing Page
     "pricing.title": "Escolha o Plano Ideal para Você",
     "pricing.subtitle": "Transforme suas ideias em soluções inovadoras com as ferramentas mais avançadas de Design Thinking. Comece grátis e evolua conforme suas necessidades.",
@@ -385,77 +314,7 @@ const translations = {
     "landing.ready.subtitle": "Join thousands of innovators using DTTools to create breakthrough solutions",
     "landing.start.trial": "Start Free Trial",
     "landing.explore.library": "Explore Library",
-
-    // Landing - AI MVP Generator
-    "landing.mvp.badge": "NEW",
-    "landing.mvp.title": "Generate Complete MVP with AI",
-    "landing.mvp.subtitle": "In 5-10 minutes, our AI creates a complete business project for you: professional logo, personas, landing page, social media strategy, business model and much more!",
-    "landing.mvp.button": "Create My MVP Now",
-    "landing.mvp.feature.logo": "Professional Logo",
-    "landing.mvp.feature.personas": "User Personas",
-    "landing.mvp.feature.landing": "Landing Page",
-    "landing.mvp.feature.social": "Social Media Strategy",
-    "landing.mvp.feature.bmc": "Business Model Canvas",
-
-    // Landing - Double Diamond + AI
-    "landing.dd.badge": "ADVANCED FRAMEWORK",
-    "landing.dd.title": "Double Diamond + AI",
-    "landing.dd.subtitle": "The most complete framework for innovation: combines problem discovery and solution development with full AI automation.",
-    "landing.dd.button": "Start Free",
-    "landing.dd.mini.title": "Complete MVP in Minutes",
-    "landing.dd.mini.subtitle": "AI generates POV statements, problem definitions, creative ideas with automatic DFV analysis, and complete prototypes.",
-    "landing.dd.feature.pov": "POV Statements",
-    "landing.dd.feature.problem": "Problem Definition",
-    "landing.dd.feature.aiIdeas": "AI Ideas",
-    "landing.dd.feature.dfv": "DFV Analysis",
-    "landing.dd.feature.prototypes": "Auto Prototypes",
-
-    // Landing - Double Diamond Details
-    "landing.dd.discovery.title": "Discovery Diamond",
-    "landing.dd.discovery.text": "Explore the problem space deeply before jumping to solutions.",
-    "landing.dd.discovery.item1": "User research",
-    "landing.dd.discovery.item2": "Problem definition",
-    "landing.dd.delivery.title": "Delivery Diamond",
-    "landing.dd.delivery.text": "Create, test and refine solutions iteratively.",
-    "landing.dd.delivery.item1": "Ideation & DFV",
-    "landing.dd.delivery.item2": "Prototyping & Testing",
-    "landing.dd.footer": "🎯 Perfect for startups, innovation teams, and product managers",
-
-    // Landing - DVF Benchmarking
-    "landing.dvf.badge": "COMPETITIVE ADVANTAGE",
-    "landing.dvf.title": "DVF Benchmarking System",
-    "landing.dvf.subtitle": "The only platform with an integrated DVF (Desirability, Viability, Feasibility) system for strategic idea evaluation and competitive benchmarking against industry standards.",
-    "landing.dvf.d.title": "Desirability",
-    "landing.dvf.d.text": "Do people really want this solution? User validation and market demand analysis.",
-    "landing.dvf.v.title": "Viability",
-    "landing.dvf.v.text": "Is this a sustainable business? Financial analysis and business model validation.",
-    "landing.dvf.f.title": "Feasibility",
-    "landing.dvf.f.text": "Can we actually build this? Technical capabilities and resource assessment.",
-    "landing.dvf.card.title": "Smart Benchmarking",
-    "landing.dvf.card.desirability": "Desirability",
-    "landing.dvf.card.viability": "Viability",
-    "landing.dvf.card.feasibility": "Feasibility",
-    "landing.dvf.card.overall": "Overall Score",
-    "landing.dvf.card.aboveAverage": "✓ Above Industry Average",
-    "landing.dvf.cta.button": "Try Benchmarking Tool",
-    "landing.dvf.cta.subtitle": "No registration required • Instant strategic analysis",
-    "landing.dvf.footer": "🎯 Perfect for startups, innovation teams, and product managers",
-
-    // Landing - Features Grid
-    "landing.features.process.title": "Guided Process",
-    "landing.features.process.desc": "Follow a structured process through the 5 phases of Design Thinking",
-    "landing.features.collab.title": "Real-time Collaboration",
-    "landing.features.collab.desc": "Work with your team simultaneously on complex projects",
-    "landing.features.library.title": "Knowledge Library",
-    "landing.features.library.desc": "Access hundreds of articles, templates and best practices",
-    "landing.features.metrics.title": "Metrics & Progress",
-    "landing.features.metrics.desc": "Track project progress with detailed dashboards",
-    "landing.features.multilang.title": "Multi-language Support",
-    "landing.features.multilang.desc": "Interface available in Portuguese, English, Spanish, French and more languages",
-    "landing.features.export.title": "Professional Export",
-    "landing.features.export.desc": "Export your projects in PDF, PNG and CSV for presentations",
-    "landing.features.kanban.title": "Integrated Kanban System",
-    "landing.features.kanban.desc": "Manage your ideas and activities with visual and intuitive Kanban boards",
+    
     // Pricing Page
     "pricing.title": "Choose the Perfect Plan for You",
     "pricing.subtitle": "Transform your ideas into innovative solutions with the most advanced Design Thinking tools. Start free and evolve as your needs grow.",
@@ -826,10 +685,14 @@ const translations = {
     "library.read.article": "Lire l'article",
     "library.all": "Tous",
     "library.all.desc": "Tous les articles",
-    "library.no.articles": "No se encontraron artículos",
-    "library.no.match": "No encontramos artículos que coincidan con tu búsqueda \"{term}\".",
-    "library.no.articles.category": "No hay artículos disponibles en esta categoría en este momento.",
-    "library.clear.search": "Limpiar búsqueda",
+    "btn.start.free": " e5 85 8d e8 b4 b9 e5 bc 80 e5 a7 8b",
+    "btn.start.trial": " e5 bc 80 e5 a7 8b e5 85 8d e8 b4 b9 e8 af 95 e7 94 a8",
+    
+    // Currency
+    "currency.symbol": " a5",
+    "currency.month": "/ e6 9c 88",
+    "currency.year": "/ e5 b9 b4",
+    "currency.save": " e5 ad 98 e8 b4 b9 {percent}%",
   },
 };
 
@@ -856,10 +719,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language]);
 
   const t = (key: string, params?: Record<string, string>): string => {
-    // Safely get translations for the current language, falling back to English
-    const langTranslations = (translations as any)[language] || (translations as any)["en"];
-    let translation = (langTranslations as any)[key] || (translations["en"] as any)[key] || key;
-
+    let translation = (translations[language] as any)[key] || (translations["en"] as any)[key] || key;
+    
     // Replace parameters
     if (params) {
       Object.entries(params).forEach(([param, value]) => {

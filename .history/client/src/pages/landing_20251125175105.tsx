@@ -399,20 +399,23 @@ export default function LandingPage() {
                         <Target className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-lg font-bold text-gray-900">
-                        {t("landing.dd.discovery.title")}
+                        {isEnglish ? "Discovery Diamond" : "Diamante da Descoberta"}
                       </h4>
                     </div>
                     <p className="text-gray-600 text-sm leading-relaxed mb-3">
-                      {t("landing.dd.discovery.text")}
+                      {isEnglish 
+                        ? "Explore the problem space deeply before jumping to solutions."
+                        : "Explore o espaço do problema profundamente antes de pular para soluções."
+                      }
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.discovery.item1")}</span>
+                        <span className="text-gray-700">{isEnglish ? "User research" : "Pesquisa de usuários"}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.discovery.item2")}</span>
+                        <span className="text-gray-700">{isEnglish ? "Problem definition" : "Definição do problema"}</span>
                       </li>
                     </ul>
                   </div>
@@ -424,20 +427,23 @@ export default function LandingPage() {
                         <Zap className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-lg font-bold text-gray-900">
-                        {t("landing.dd.delivery.title")}
+                        {isEnglish ? "Delivery Diamond" : "Diamante da Entrega"}
                       </h4>
                     </div>
                     <p className="text-gray-600 text-sm leading-relaxed mb-3">
-                      {t("landing.dd.delivery.text")}
+                      {isEnglish 
+                        ? "Create, test and refine solutions iteratively."
+                        : "Crie, teste e refine soluções iterativamente."
+                      }
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.delivery.item1")}</span>
+                        <span className="text-gray-700">{isEnglish ? "Ideation & DFV" : "Ideação & DFV"}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.delivery.item2")}</span>
+                        <span className="text-gray-700">{isEnglish ? "Prototyping & Testing" : "Prototipagem & Testes"}</span>
                       </li>
                     </ul>
                   </div>
@@ -445,7 +451,10 @@ export default function LandingPage() {
 
                 <div className="mt-6 pt-6 border-t border-gray-200 text-center">
                   <p className="text-sm text-gray-500">
-                    {t("landing.dd.footer")}
+                    {isEnglish 
+                      ? "🎯 Perfect for startups, innovation teams, and product managers"
+                      : "🎯 Perfeito para startups, times de inovação e gerentes de produto"
+                    }
                   </p>
                 </div>
               </CardContent>
@@ -466,43 +475,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Zap,
-                titleKey: "landing.features.process.title",
-                descKey: "landing.features.process.desc",
-              },
-              {
-                icon: Users,
-                titleKey: "landing.features.collab.title",
-                descKey: "landing.features.collab.desc",
-              },
-              {
-                icon: BookOpen,
-                titleKey: "landing.features.library.title",
-                descKey: "landing.features.library.desc",
-              },
-              {
-                icon: TrendingUp,
-                titleKey: "landing.features.metrics.title",
-                descKey: "landing.features.metrics.desc",
-              },
-              {
-                icon: Globe,
-                titleKey: "landing.features.multilang.title",
-                descKey: "landing.features.multilang.desc",
-              },
-              {
-                icon: CheckCircle,
-                titleKey: "landing.features.export.title",
-                descKey: "landing.features.export.desc",
-              },
-              {
-                icon: Trello,
-                titleKey: "landing.features.kanban.title",
-                descKey: "landing.features.kanban.desc",
-              },
-            ].map((feature, index) => {
+            {features.map((feature, index) => {
               const Icon = feature.icon;
               
               return (
@@ -512,12 +485,12 @@ export default function LandingPage() {
                       <Icon className="w-6 h-6 text-blue-600" />
                     </div>
                     <CardTitle className="text-xl font-semibold">
-                      {t(feature.titleKey)}
+                      {isEnglish ? feature.titleEn : feature.title}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CardDescription className="text-gray-600 leading-relaxed">
-                      {t(feature.descKey)}
+                      {isEnglish ? feature.descriptionEn : feature.description}
                     </CardDescription>
                   </CardContent>
                 </Card>

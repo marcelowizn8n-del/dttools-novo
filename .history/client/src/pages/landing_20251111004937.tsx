@@ -134,9 +134,6 @@ function getTranslatedTestimonial(testimonial: Testimonial, language: Language) 
     "en": testimonial.testimonialEn,
     "es": testimonial.testimonialEs,
     "fr": testimonial.testimonialFr,
-    // Fallbacks: use English testimonial when a specific translation is not available
-    "de": testimonial.testimonialEn,
-    "zh": testimonial.testimonialEn,
   };
 
   return langMap[language] || testimonial.testimonialPt;
@@ -152,9 +149,7 @@ export default function LandingPage() {
     queryKey: ["/api/testimonials"],
   });
 
-  // For sections that only have Portuguese and English hardcoded,
-  // treat German (de) and Chinese (zh) as "English variant" for now
-  const isEnglish = language === 'en' || language === 'de' || language === 'zh';
+  const isEnglish = language === 'en';
 
   const handlePhaseClick = (phaseId: number) => {
     if (isAuthenticated) {
@@ -221,26 +216,26 @@ export default function LandingPage() {
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <h3 className="text-3xl font-bold text-gray-900">
-                        {t("landing.mvp.title")}
+                        {isEnglish ? "Generate Complete MVP with AI" : "Gere seu MVP Completo com IA"}
                       </h3>
                       <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold text-sm px-3 py-1">
-                        {t("landing.mvp.badge")}
+                        {isEnglish ? "NEW" : "NOVO"}
                       </Badge>
                     </div>
                     <p className="text-gray-600 text-lg mb-4 leading-relaxed">
-                      {t("landing.mvp.subtitle")}
+                      {isEnglish 
+                        ? "In 5-10 minutes, our AI creates a complete business project for you: professional logo, personas, landing page, social media strategy, business model and much more!"
+                        : "Em 5-10 minutos, nossa IA cria um projeto completo de negócio para você: logo profissional, personas, landing page, estratégia de redes sociais, modelo de negócio e muito mais!"
+                      }
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {[
-                        "landing.mvp.feature.logo",
-                        "landing.mvp.feature.personas",
-                        "landing.mvp.feature.landing",
-                        "landing.mvp.feature.social",
-                        "landing.mvp.feature.bmc",
-                      ].map((key) => (
-                        <Badge key={key} variant="secondary" className="bg-gray-100 text-gray-700">
+                      {(isEnglish 
+                        ? ["Professional Logo", "User Personas", "Landing Page", "Social Media Strategy", "Business Model Canvas"]
+                        : ["Logo Profissional", "Personas de Usuários", "Landing Page", "Estratégia Social Media", "Business Model Canvas"]
+                      ).map((feature) => (
+                        <Badge key={feature} variant="secondary" className="bg-gray-100 text-gray-700">
                           <CheckCircle className="w-3 h-3 mr-1 text-green-600" />
-                          {t(key)}
+                          {feature}
                         </Badge>
                       ))}
                     </div>
@@ -254,7 +249,7 @@ export default function LandingPage() {
                       data-testid="button-create-ai-mvp-landing"
                     >
                       <Rocket className="mr-3 h-7 w-7" />
-                      {t("landing.mvp.button")}
+                      {isEnglish ? "Create My MVP Now" : "Criar Meu MVP Agora"}
                       <ArrowRight className="ml-3 h-6 w-6" />
                     </Button>
                   </Link>
@@ -333,13 +328,16 @@ export default function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 text-sm px-4 py-1">
-              ✨ {t("landing.dd.badge")}
+              ✨ {isEnglish ? "ADVANCED FRAMEWORK" : "FRAMEWORK AVANÇADO"}
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              {t("landing.dd.title")}
+              {isEnglish ? "Double Diamond + AI" : "Double Diamond + IA"}
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              {t("landing.dd.subtitle")}
+              {isEnglish 
+                ? "The most complete framework for innovation: combines problem discovery and solution development with full AI automation."
+                : "O framework mais completo para inovação: combina descoberta de problemas e desenvolvimento de soluções com automação total de IA."
+              }
             </p>
           </div>
 
@@ -353,22 +351,24 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <h3 className="text-2xl md:text-3xl font-bold mb-3">
-                        {t("landing.dd.mini.title")}
+                        {isEnglish 
+                          ? "Complete MVP in Minutes" 
+                          : "MVP Completo em Minutos"}
                       </h3>
                       <p className="text-blue-100 text-lg mb-4 leading-relaxed">
-                        {t("landing.dd.mini.subtitle")}
+                        {isEnglish 
+                          ? "AI generates POV statements, problem definitions, creative ideas with automatic DFV analysis, and complete prototypes."
+                          : "IA gera declarações POV, definição de problemas, ideias criativas com análise DFV automática e protótipos completos."
+                        }
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {[
-                          "landing.dd.feature.pov",
-                          "landing.dd.feature.problem",
-                          "landing.dd.feature.aiIdeas",
-                          "landing.dd.feature.dfv",
-                          "landing.dd.feature.prototypes",
-                        ].map((key) => (
-                          <Badge key={key} className="bg-white/90 text-purple-700 hover:bg-white">
+                        {(isEnglish 
+                          ? ["POV Statements", "Problem Definition", "AI Ideas", "DFV Analysis", "Auto Prototypes"]
+                          : ["Declarações POV", "Definição Problema", "Ideias com IA", "Análise DFV", "Protótipos Auto"]
+                        ).map((feature) => (
+                          <Badge key={feature} className="bg-white/90 text-purple-700 hover:bg-white">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            {t(key)}
+                            {feature}
                           </Badge>
                         ))}
                       </div>
@@ -382,7 +382,7 @@ export default function LandingPage() {
                         data-testid="button-double-diamond-cta"
                       >
                         <Rocket className="mr-3 h-7 w-7" />
-                        {t("landing.dd.button")}
+                        {isEnglish ? "Start Free" : "Começar Grátis"}
                         <ArrowRight className="ml-3 h-6 w-6" />
                       </Button>
                     </Link>
@@ -399,20 +399,23 @@ export default function LandingPage() {
                         <Target className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-lg font-bold text-gray-900">
-                        {t("landing.dd.discovery.title")}
+                        {isEnglish ? "Discovery Diamond" : "Diamante da Descoberta"}
                       </h4>
                     </div>
                     <p className="text-gray-600 text-sm leading-relaxed mb-3">
-                      {t("landing.dd.discovery.text")}
+                      {isEnglish 
+                        ? "Explore the problem space deeply before jumping to solutions."
+                        : "Explore o espaço do problema profundamente antes de pular para soluções."
+                      }
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.discovery.item1")}</span>
+                        <span className="text-gray-700">{isEnglish ? "User research" : "Pesquisa de usuários"}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.discovery.item2")}</span>
+                        <span className="text-gray-700">{isEnglish ? "Problem definition" : "Definição do problema"}</span>
                       </li>
                     </ul>
                   </div>
@@ -424,20 +427,23 @@ export default function LandingPage() {
                         <Zap className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-lg font-bold text-gray-900">
-                        {t("landing.dd.delivery.title")}
+                        {isEnglish ? "Delivery Diamond" : "Diamante da Entrega"}
                       </h4>
                     </div>
                     <p className="text-gray-600 text-sm leading-relaxed mb-3">
-                      {t("landing.dd.delivery.text")}
+                      {isEnglish 
+                        ? "Create, test and refine solutions iteratively."
+                        : "Crie, teste e refine soluções iterativamente."
+                      }
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.delivery.item1")}</span>
+                        <span className="text-gray-700">{isEnglish ? "Ideation & DFV" : "Ideação & DFV"}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{t("landing.dd.delivery.item2")}</span>
+                        <span className="text-gray-700">{isEnglish ? "Prototyping & Testing" : "Prototipagem & Testes"}</span>
                       </li>
                     </ul>
                   </div>
@@ -445,7 +451,10 @@ export default function LandingPage() {
 
                 <div className="mt-6 pt-6 border-t border-gray-200 text-center">
                   <p className="text-sm text-gray-500">
-                    {t("landing.dd.footer")}
+                    {isEnglish 
+                      ? "🎯 Perfect for startups, innovation teams, and product managers"
+                      : "🎯 Perfeito para startups, times de inovação e gerentes de produto"
+                    }
                   </p>
                 </div>
               </CardContent>
@@ -466,43 +475,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Zap,
-                titleKey: "landing.features.process.title",
-                descKey: "landing.features.process.desc",
-              },
-              {
-                icon: Users,
-                titleKey: "landing.features.collab.title",
-                descKey: "landing.features.collab.desc",
-              },
-              {
-                icon: BookOpen,
-                titleKey: "landing.features.library.title",
-                descKey: "landing.features.library.desc",
-              },
-              {
-                icon: TrendingUp,
-                titleKey: "landing.features.metrics.title",
-                descKey: "landing.features.metrics.desc",
-              },
-              {
-                icon: Globe,
-                titleKey: "landing.features.multilang.title",
-                descKey: "landing.features.multilang.desc",
-              },
-              {
-                icon: CheckCircle,
-                titleKey: "landing.features.export.title",
-                descKey: "landing.features.export.desc",
-              },
-              {
-                icon: Trello,
-                titleKey: "landing.features.kanban.title",
-                descKey: "landing.features.kanban.desc",
-              },
-            ].map((feature, index) => {
+            {features.map((feature, index) => {
               const Icon = feature.icon;
               
               return (
@@ -512,12 +485,12 @@ export default function LandingPage() {
                       <Icon className="w-6 h-6 text-blue-600" />
                     </div>
                     <CardTitle className="text-xl font-semibold">
-                      {t(feature.titleKey)}
+                      {isEnglish ? feature.titleEn : feature.title}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CardDescription className="text-gray-600 leading-relaxed">
-                      {t(feature.descKey)}
+                      {isEnglish ? feature.descriptionEn : feature.description}
                     </CardDescription>
                   </CardContent>
                 </Card>
@@ -532,13 +505,16 @@ export default function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-purple-100 text-purple-700 hover:bg-purple-200">
-              🚀 {t("landing.dvf.badge")}
+              🚀 DIFERENCIAL COMPETITIVO
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              {t("landing.dvf.title")}
+              Sistema DVF de Benchmarking
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              {t("landing.dvf.subtitle")}
+              {isEnglish ? 
+                "The only platform with an integrated DVF (Desirability, Viability, Feasibility) system for strategic idea evaluation and competitive benchmarking against industry standards." :
+                "A única plataforma com sistema DVF (Desejabilidade, Viabilidade, Exequibilidade) integrado para avaliação estratégica de ideias e benchmarking competitivo com padrões da indústria."
+              }
             </p>
           </div>
 
@@ -552,10 +528,13 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {t("landing.dvf.d.title")}
+                      {isEnglish ? "Desirability" : "Desejabilidade"}
                     </h3>
                     <p className="text-gray-600">
-                      {t("landing.dvf.d.text")}
+                      {isEnglish ? 
+                        "Do people really want this solution? User validation and market demand analysis." :
+                        "As pessoas realmente querem esta solução? Validação do usuário e análise de demanda do mercado."
+                      }
                     </p>
                   </div>
                 </div>
@@ -566,10 +545,13 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {t("landing.dvf.v.title")}
+                      {isEnglish ? "Viability" : "Viabilidade"}
                     </h3>
                     <p className="text-gray-600">
-                      {t("landing.dvf.v.text")}
+                      {isEnglish ? 
+                        "Is this a sustainable business? Financial analysis and business model validation." :
+                        "Isto é um negócio sustentável? Análise financeira e validação do modelo de negócio."
+                      }
                     </p>
                   </div>
                 </div>
@@ -580,10 +562,13 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {t("landing.dvf.f.title")}
+                      {isEnglish ? "Feasibility" : "Exequibilidade"}
                     </h3>
                     <p className="text-gray-600">
-                      {t("landing.dvf.f.text")}
+                      {isEnglish ? 
+                        "Can we actually build this? Technical capabilities and resource assessment." :
+                        "Conseguimos realmente construir isto? Capacidades técnicas e avaliação de recursos."
+                      }
                     </p>
                   </div>
                 </div>
@@ -596,14 +581,14 @@ export default function LandingPage() {
                 <div className="mb-6">
                   <BarChart3 className="w-16 h-16 text-blue-600 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900">
-                    {t("landing.dvf.card.title")}
+                    {isEnglish ? "Smart Benchmarking" : "Benchmarking Inteligente"}
                   </h3>
                 </div>
                 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">
-                      {t("landing.dvf.card.desirability")}
+                      {isEnglish ? "Desirability" : "Desejabilidade"}
                     </span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -615,7 +600,7 @@ export default function LandingPage() {
                   
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">
-                      {t("landing.dvf.card.viability")}
+                      {isEnglish ? "Viability" : "Viabilidade"}
                     </span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -627,7 +612,7 @@ export default function LandingPage() {
                   
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">
-                      {t("landing.dvf.card.feasibility")}
+                      {isEnglish ? "Feasibility" : "Exequibilidade"}
                     </span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -640,11 +625,11 @@ export default function LandingPage() {
 
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <div className="text-sm text-gray-600 mb-1">
-                    {t("landing.dvf.card.overall")}
+                    {isEnglish ? "Overall Score" : "Pontuação Geral"}
                   </div>
                   <div className="text-2xl font-bold text-blue-600">3.8/5</div>
                   <div className="text-xs text-green-600 font-medium">
-                    {t("landing.dvf.card.aboveAverage")}
+                    {isEnglish ? "✓ Above Industry Average" : "✓ Acima da Média da Indústria"}
                   </div>
                 </div>
               </div>
@@ -655,12 +640,15 @@ export default function LandingPage() {
           <div className="text-center">
             <Link href="/benchmarking">
               <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-6" data-testid="button-try-benchmarking">
-                {t("landing.dvf.cta.button")}
+                {isEnglish ? "Try Benchmarking Tool" : "Experimente o Benchmarking"}
                 <BarChart3 className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <p className="text-sm text-gray-500 mt-2">
-              {t("landing.dvf.cta.subtitle")}
+              {isEnglish ? 
+                "No registration required • Instant strategic analysis" :
+                "Não precisa se registrar • Análise estratégica instantânea"
+              }
             </p>
           </div>
         </div>

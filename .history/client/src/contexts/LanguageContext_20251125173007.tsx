@@ -142,17 +142,6 @@ const translations = {
     "landing.dd.feature.dfv": "Análise DFV",
     "landing.dd.feature.prototypes": "Protótipos Auto",
 
-    // Landing - Double Diamond Details
-    "landing.dd.discovery.title": "Diamante da Descoberta",
-    "landing.dd.discovery.text": "Explore o espaço do problema profundamente antes de pular para soluções.",
-    "landing.dd.discovery.item1": "Pesquisa de usuários",
-    "landing.dd.discovery.item2": "Definição do problema",
-    "landing.dd.delivery.title": "Diamante da Entrega",
-    "landing.dd.delivery.text": "Crie, teste e refine soluções iterativamente.",
-    "landing.dd.delivery.item1": "Ideação & DFV",
-    "landing.dd.delivery.item2": "Prototipagem & Testes",
-    "landing.dd.footer": "🎯 Perfeito para startups, times de inovação e gerentes de produto",
-
     // Landing - DVF Benchmarking
     "landing.dvf.badge": "DIFERENCIAL COMPETITIVO",
     "landing.dvf.title": "Sistema DVF de Benchmarking",
@@ -172,22 +161,6 @@ const translations = {
     "landing.dvf.cta.button": "Experimente o Benchmarking",
     "landing.dvf.cta.subtitle": "Não precisa se registrar • Análise estratégica instantânea",
     "landing.dvf.footer": "🎯 Perfeito para startups, times de inovação e gerentes de produto",
-
-    // Landing - Features Grid
-    "landing.features.process.title": "Processo Guiado",
-    "landing.features.process.desc": "Siga um processo estruturado através das 5 fases do Design Thinking",
-    "landing.features.collab.title": "Colaboração em Tempo Real",
-    "landing.features.collab.desc": "Trabalhe com sua equipe simultaneamente em projetos complexos",
-    "landing.features.library.title": "Biblioteca de Conhecimento",
-    "landing.features.library.desc": "Acesse centenas de artigos, templates e melhores práticas",
-    "landing.features.metrics.title": "Métricas e Progresso",
-    "landing.features.metrics.desc": "Acompanhe o progresso dos projetos com dashboards detalhados",
-    "landing.features.multilang.title": "Suporte Multi-idioma",
-    "landing.features.multilang.desc": "Interface disponível em português, inglês, espanhol, francês e mais idiomas",
-    "landing.features.export.title": "Exportação Profissional",
-    "landing.features.export.desc": "Exporte seus projetos em PDF, PNG e CSV para apresentações",
-    "landing.features.kanban.title": "Sistema Kanban Integrado",
-    "landing.features.kanban.desc": "Gerencie suas ideias e atividades com boards Kanban visual e intuitivo",
 
     // Pricing Page
     "pricing.title": "Escolha o Plano Ideal para Você",
@@ -410,17 +383,6 @@ const translations = {
     "landing.dd.feature.dfv": "DFV Analysis",
     "landing.dd.feature.prototypes": "Auto Prototypes",
 
-    // Landing - Double Diamond Details
-    "landing.dd.discovery.title": "Discovery Diamond",
-    "landing.dd.discovery.text": "Explore the problem space deeply before jumping to solutions.",
-    "landing.dd.discovery.item1": "User research",
-    "landing.dd.discovery.item2": "Problem definition",
-    "landing.dd.delivery.title": "Delivery Diamond",
-    "landing.dd.delivery.text": "Create, test and refine solutions iteratively.",
-    "landing.dd.delivery.item1": "Ideation & DFV",
-    "landing.dd.delivery.item2": "Prototyping & Testing",
-    "landing.dd.footer": "🎯 Perfect for startups, innovation teams, and product managers",
-
     // Landing - DVF Benchmarking
     "landing.dvf.badge": "COMPETITIVE ADVANTAGE",
     "landing.dvf.title": "DVF Benchmarking System",
@@ -440,22 +402,6 @@ const translations = {
     "landing.dvf.cta.button": "Try Benchmarking Tool",
     "landing.dvf.cta.subtitle": "No registration required • Instant strategic analysis",
     "landing.dvf.footer": "🎯 Perfect for startups, innovation teams, and product managers",
-
-    // Landing - Features Grid
-    "landing.features.process.title": "Guided Process",
-    "landing.features.process.desc": "Follow a structured process through the 5 phases of Design Thinking",
-    "landing.features.collab.title": "Real-time Collaboration",
-    "landing.features.collab.desc": "Work with your team simultaneously on complex projects",
-    "landing.features.library.title": "Knowledge Library",
-    "landing.features.library.desc": "Access hundreds of articles, templates and best practices",
-    "landing.features.metrics.title": "Metrics & Progress",
-    "landing.features.metrics.desc": "Track project progress with detailed dashboards",
-    "landing.features.multilang.title": "Multi-language Support",
-    "landing.features.multilang.desc": "Interface available in Portuguese, English, Spanish, French and more languages",
-    "landing.features.export.title": "Professional Export",
-    "landing.features.export.desc": "Export your projects in PDF, PNG and CSV for presentations",
-    "landing.features.kanban.title": "Integrated Kanban System",
-    "landing.features.kanban.desc": "Manage your ideas and activities with visual and intuitive Kanban boards",
     // Pricing Page
     "pricing.title": "Choose the Perfect Plan for You",
     "pricing.subtitle": "Transform your ideas into innovative solutions with the most advanced Design Thinking tools. Start free and evolve as your needs grow.",
