@@ -320,6 +320,7 @@ function ProjectCard({ project }: { project: Project }) {
 function CreateProjectDialog() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   const form = useForm<InsertProject>({
     resolver: zodResolver(insertProjectSchema),
@@ -334,7 +335,7 @@ function CreateProjectDialog() {
       const response = await apiRequest("POST", "/api/projects", data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (project: Project) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
         title: "Projeto criado!",
@@ -342,6 +343,9 @@ function CreateProjectDialog() {
       });
       setIsOpen(false);
       form.reset();
+      if (project?.id) {
+        setLocation(`/projects/${project.id}`);
+      }
     },
     onError: () => {
       toast({

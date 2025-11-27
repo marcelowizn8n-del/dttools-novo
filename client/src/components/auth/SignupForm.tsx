@@ -14,27 +14,18 @@ import { Link } from "wouter";
 const signupSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
-  confirmEmail: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Senhas não coincidem",
-  path: ["confirmPassword"],
-}).refine((data) => data.email === data.confirmEmail, {
-  message: "Emails não coincidem",
-  path: ["confirmEmail"],
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
 interface SignupFormProps {
-  onSuccess?: (userData: Omit<SignupFormData, 'confirmPassword' | 'confirmEmail'>) => void;
+  onSuccess?: (userData: SignupFormData) => void;
 }
 
 export function SignupForm({ onSuccess }: SignupFormProps) {
   const [error, setError] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignupFormData>({
@@ -42,9 +33,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     defaultValues: {
       name: "",
       email: "",
-      confirmEmail: "",
       password: "",
-      confirmPassword: "",
     },
   });
 
@@ -68,7 +57,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       setError("");
       setIsLoading(true);
       
-      // Call signup API directly
+      // Call signup API diretamente com campos essenciais
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -87,7 +76,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         throw new Error(errorData.error || 'Erro ao criar conta');
       }
 
-      // Success - redirect to dashboard
+      onSuccess?.(data);
+
+      // Sucesso - redirecionar para o dashboard
       window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar conta");
@@ -146,24 +137,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             )}
           </div>
 
-          {/* Confirmar Email */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmEmail">Confirmar Email</Label>
-            <Input
-              id="confirmEmail"
-              type="email"
-              placeholder="Digite o email novamente"
-              data-testid="input-confirm-email"
-              {...form.register("confirmEmail")}
-            />
-            {form.formState.errors.confirmEmail && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {form.formState.errors.confirmEmail.message}
-              </p>
-            )}
-          </div>
-
           {/* Senha */}
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
@@ -206,36 +179,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
               <p className="text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
                 {form.formState.errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {/* Confirmar Senha */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Digite a senha novamente"
-                data-testid="input-confirm-password"
-                {...form.register("confirmPassword")}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                data-testid="button-toggle-confirm-password"
-              >
-                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
-            {form.formState.errors.confirmPassword && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {form.formState.errors.confirmPassword.message}
               </p>
             )}
           </div>

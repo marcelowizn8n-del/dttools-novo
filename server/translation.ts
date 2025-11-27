@@ -76,6 +76,49 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
   }
 }
 
+export async function translateLongContent(
+  portugueseText: string
+): Promise<TranslationResult> {
+  const MAX_CHUNK_SIZE = 2500;
+
+  if (!portugueseText || portugueseText.trim() === "") {
+    return { en: "", es: "", fr: "" };
+  }
+
+  if (portugueseText.length <= MAX_CHUNK_SIZE) {
+    return translateText(portugueseText, "content");
+  }
+
+  const chunks: string[] = [];
+  let remaining = portugueseText;
+
+  while (remaining.length > 0) {
+    if (remaining.length <= MAX_CHUNK_SIZE) {
+      chunks.push(remaining);
+      break;
+    }
+
+    let splitIndex = remaining.lastIndexOf("\n", MAX_CHUNK_SIZE);
+    if (splitIndex <= 0) {
+      splitIndex = MAX_CHUNK_SIZE;
+    }
+
+    const chunk = remaining.slice(0, splitIndex);
+    chunks.push(chunk);
+    remaining = remaining.slice(splitIndex);
+  }
+
+  const results = await Promise.all(
+    chunks.map((chunk) => translateText(chunk, "content"))
+  );
+
+  return {
+    en: results.map((r) => r.en).join(""),
+    es: results.map((r) => r.es).join(""),
+    fr: results.map((r) => r.fr).join(""),
+  };
+}
+
 export async function translateArticle(article: {
   title: string;
   description: string;
@@ -84,7 +127,7 @@ export async function translateArticle(article: {
   const [titleTranslations, descTranslations, contentTranslations] = await Promise.all([
     translateText(article.title, "title"),
     translateText(article.description, "description"),
-    translateText(article.content, "content")
+    translateLongContent(article.content)
   ]);
 
   return {

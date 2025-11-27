@@ -502,8 +502,8 @@ Seja específico, construtivo e ofereça insights acionáveis. Responda em portu
       {
         phase: 1,
         phaseName: "Empatizar",
-        completeness: Math.min(100, empathy * 25),
-        quality: empathy > 2 ? 85 : empathy > 0 ? 65 : 30,
+        completeness: empathy === 0 ? 0 : Math.min(100, empathy * 25),
+        quality: empathy === 0 ? 0 : empathy > 2 ? 85 : 65,
         insights: empathy > 0 ? [`${empathy} ferramentas de empatia criadas`, "Base sólida para entender usuários"] : ["Fase iniciada, continuar coletando dados"],
         gaps: empathy < 2 ? ["Ampliar métodos de pesquisa empática"] : ["Considerar entrevistas adicionais"],
         recommendations: empathy === 0 ? ["Começar com mapas de empatia"] : ["Analisar padrões nos dados coletados"],
@@ -512,8 +512,8 @@ Seja específico, construtivo e ofereça insights acionáveis. Responda em portu
       {
         phase: 2,
         phaseName: "Definir",
-        completeness: Math.min(100, define * 30),
-        quality: define > 0 ? 70 : 25,
+        completeness: define === 0 ? 0 : Math.min(100, define * 30),
+        quality: define === 0 ? 0 : 70,
         insights: define > 0 ? ["Problema começando a ser definido"] : ["Aguardando definição do problema"],
         gaps: define === 0 ? ["Criar declarações POV"] : ["Expandir definição do problema"],
         recommendations: ["Sintetizar insights da fase anterior"],
@@ -522,30 +522,30 @@ Seja específico, construtivo e ofereça insights acionáveis. Responda em portu
       {
         phase: 3,
         phaseName: "Idear",
-        completeness: Math.min(100, ideate * 20),
-        quality: ideate > 0 ? 60 : 20,
+        completeness: ideate === 0 ? 0 : Math.min(100, ideate * 20),
+        quality: ideate === 0 ? 0 : 60,
         insights: ideate > 0 ? ["Processo criativo iniciado"] : ["Aguardando ideação"],
-        gaps: ["Gerar mais diversidade de ideias"],
+        gaps: ideate === 0 ? ["Gerar ideias iniciais"] : ["Gerar mais diversidade de ideias"],
         recommendations: ["Usar técnicas de brainstorming"],
         strengths: ideate > 0 ? ["Criatividade aplicada"] : ["Potencial criativo"]
       },
       {
         phase: 4,
         phaseName: "Prototipar",
-        completeness: Math.min(100, prototype * 25),
-        quality: prototype > 0 ? 65 : 15,
+        completeness: prototype === 0 ? 0 : Math.min(100, prototype * 25),
+        quality: prototype === 0 ? 0 : 65,
         insights: prototype > 0 ? ["Ideias sendo materializadas"] : ["Aguardando prototipagem"],
-        gaps: ["Criar protótipos testáveis"],
+        gaps: prototype === 0 ? ["Criar primeiros protótipos"] : ["Criar protótipos testáveis"],
         recommendations: ["Focar em protótipos rápidos"],
         strengths: prototype > 0 ? ["Pensamento tangível"] : ["Preparado para prototipar"]
       },
       {
         phase: 5,
         phaseName: "Testar",
-        completeness: Math.min(100, test * 30),
-        quality: test > 0 ? 70 : 10,
+        completeness: test === 0 ? 0 : Math.min(100, test * 30),
+        quality: test === 0 ? 0 : 70,
         insights: test > 0 ? ["Validação com usuários iniciada"] : ["Aguardando testes"],
-        gaps: ["Testar com usuários reais"],
+        gaps: test === 0 ? ["Planejar primeiros testes com usuários"] : ["Testar com usuários reais"],
         recommendations: ["Planejar sessões de teste"],
         strengths: test > 0 ? ["Foco na validação"] : ["Estrutura para testes"]
       }
