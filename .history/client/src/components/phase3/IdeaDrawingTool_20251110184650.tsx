@@ -69,7 +69,6 @@ export default function IdeaDrawingTool({ projectId }: IdeaDrawingToolProps) {
   const { toast } = useToast();
   const stageRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   
   // Drawing state
   const [tool, setTool] = useState<string>("pen");
@@ -189,28 +188,32 @@ export default function IdeaDrawingTool({ projectId }: IdeaDrawingToolProps) {
     }
   };
 
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  // Função para calcular dimensões responsivas
+  const getCanvasDimensions = () => {
+    if (typeof window === 'undefined') return { width: 1200, height: 600 };
+    
+    const containerWidth = window.innerWidth - 320; // Deixa espaço para sidebar (280px) + padding (40px)
+    const maxWidth = Math.max(800, Math.min(containerWidth, 1400)); // Mínimo 800px, máximo 1400px
+    
+    if (window.innerWidth < 768) {
+      return {
+        width: Math.max(300, Math.min(window.innerWidth - 32, 600)),
+        height: 400
+      };
+    }
+    return { width: maxWidth, height: 600 };
+  };
 
-  // Handler para resize baseado no container visível
+  const [canvasSize, setCanvasSize] = useState(getCanvasDimensions);
+
+  // Handler para resize
   useEffect(() => {
-    const updateSize = () => {
-      if (!canvasContainerRef.current) return;
-
-      const containerWidth = canvasContainerRef.current.clientWidth || 800;
-      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-      const width = Math.max(300, Math.min(containerWidth, 1400));
-      const height = isMobile ? 400 : 600;
-
-      setCanvasSize({ width, height });
+    const handleResize = () => {
+      setCanvasSize(getCanvasDimensions());
     };
-
-    updateSize();
-    window.addEventListener("resize", updateSize);
-
-    return () => {
-      window.removeEventListener("resize", updateSize);
-    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Helper functions for pages
@@ -618,8 +621,8 @@ export default function IdeaDrawingTool({ projectId }: IdeaDrawingToolProps) {
     const canvasData = {
       pages: pages,
       currentPageId: currentPageId,
-      width: canvasSize.width,
-      height: canvasSize.height,
+      width: 800,
+      height: 600,
     };
 
     // Generate thumbnail
@@ -1226,18 +1229,13 @@ export default function IdeaDrawingTool({ projectId }: IdeaDrawingToolProps) {
           </div>
 
           {/* Canvas */}
-          <div
-            ref={canvasContainerRef}
-            className="border rounded-lg overflow-hidden bg-white"
-            data-testid="drawing-canvas-container"
-          >
+          <div className="border rounded-lg overflow-hidden bg-white" data-testid="drawing-canvas-container">
             <Stage
               width={canvasSize.width}
               height={canvasSize.height}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
               onTouchStart={handleMouseDown}
               onTouchMove={handleMouseMove}
               onTouchEnd={handleMouseUp}

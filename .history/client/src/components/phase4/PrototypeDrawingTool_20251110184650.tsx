@@ -69,7 +69,6 @@ export default function PrototypeDrawingTool({ projectId }: PrototypeDrawingTool
   const { toast } = useToast();
   const stageRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   
   // Drawing state
   const [tool, setTool] = useState<string>("pen");
@@ -189,28 +188,30 @@ export default function PrototypeDrawingTool({ projectId }: PrototypeDrawingTool
     }
   };
 
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  // Função para calcular dimensões responsivas
+  const getCanvasDimensions = () => {
+    if (typeof window === 'undefined') return { width: 800, height: 600 };
+    
+    const containerWidth = window.innerWidth - 64; // padding
+    if (window.innerWidth < 768) {
+      return {
+        width: Math.max(300, Math.min(containerWidth, 600)),
+        height: 400
+      };
+    }
+    return { width: 800, height: 600 };
+  };
 
-  // Handler para resize baseado no container visível
+  const [canvasSize, setCanvasSize] = useState(getCanvasDimensions);
+
+  // Handler para resize
   useEffect(() => {
-    const updateSize = () => {
-      if (!canvasContainerRef.current) return;
-
-      const containerWidth = canvasContainerRef.current.clientWidth || 800;
-      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-      const width = Math.max(300, Math.min(containerWidth, 1400));
-      const height = isMobile ? 400 : 600;
-
-      setCanvasSize({ width, height });
+    const handleResize = () => {
+      setCanvasSize(getCanvasDimensions());
     };
-
-    updateSize();
-    window.addEventListener("resize", updateSize);
-
-    return () => {
-      window.removeEventListener("resize", updateSize);
-    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Helper functions for pages
@@ -618,8 +619,8 @@ export default function PrototypeDrawingTool({ projectId }: PrototypeDrawingTool
     const canvasData = {
       pages: pages,
       currentPageId: currentPageId,
-      width: canvasSize.width,
-      height: canvasSize.height,
+      width: 800,
+      height: 600,
     };
 
     // Generate thumbnail
@@ -1107,7 +1108,6 @@ export default function PrototypeDrawingTool({ projectId }: PrototypeDrawingTool
             <Card>
               <CardContent className="p-2 md:p-4">
                 <div 
-                  ref={canvasContainerRef}
                   className="border-2 border-dashed border-gray-300 rounded-lg max-w-full"
                   style={{ 
                     touchAction: 'none',
@@ -1125,7 +1125,6 @@ export default function PrototypeDrawingTool({ projectId }: PrototypeDrawingTool
                     onTouchMove={handleMouseMove}
                     onTouchEnd={handleMouseUp}
                     onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
                   >
                     <Layer>
                       {getCurrentElements().map(renderElement)}

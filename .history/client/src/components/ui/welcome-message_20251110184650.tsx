@@ -1,7 +1,6 @@
 import { Info, Sparkles, Target, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 interface WelcomeMessageProps {
   userName?: string;
@@ -10,11 +9,6 @@ interface WelcomeMessageProps {
 }
 
 export function WelcomeMessage({ userName, onDismiss, className }: WelcomeMessageProps) {
-  const { t } = useLanguage();
-  const title = userName
-    ? t("dashboard.welcome.title", { name: userName })
-    : t("dashboard.welcome.title.generic");
-
   return (
     <Card className={`border-l-4 border-l-blue-600 bg-gradient-to-r from-blue-50 to-indigo-50 ${className}`}>
       <CardContent className="p-6">
@@ -24,10 +18,11 @@ export function WelcomeMessage({ userName, onDismiss, className }: WelcomeMessag
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {title}! 👋
+              Bem-vindo{userName ? `, ${userName}` : ""}! 👋
             </h3>
             <p className="text-gray-700 mb-4 leading-relaxed">
-              {t("dashboard.welcome.intro")}
+              O <span className="font-semibold text-blue-600">DTTools</span> é sua plataforma de <strong>Design Thinking assistida por IA</strong>. 
+              Vamos te guiar passo a passo na criação de soluções inovadoras para seus problemas de negócio.
             </p>
 
             <div className="space-y-3">
@@ -36,11 +31,9 @@ export function WelcomeMessage({ userName, onDismiss, className }: WelcomeMessag
                   <Target className="w-3.5 h-3.5 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">
-                    {t("dashboard.welcome.section.what.title")}
-                  </p>
+                  <p className="font-semibold text-gray-800 text-sm">O que você vai fazer:</p>
                   <p className="text-sm text-gray-600">
-                    {t("dashboard.welcome.section.what.text")}
+                    Criar projetos de Design Thinking completos, seguindo as 5 fases do processo (Empatizar, Definir, Idear, Prototipar, Testar)
                   </p>
                 </div>
               </div>
@@ -50,11 +43,9 @@ export function WelcomeMessage({ userName, onDismiss, className }: WelcomeMessag
                   <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">
-                    {t("dashboard.welcome.section.how.title")}
-                  </p>
+                  <p className="font-semibold text-gray-800 text-sm">Como a IA te ajuda:</p>
                   <p className="text-sm text-gray-600">
-                    {t("dashboard.welcome.section.how.text")}
+                    Em cada etapa, você receberá orientações, exemplos práticos e insights gerados por IA para facilitar seu trabalho
                   </p>
                 </div>
               </div>
@@ -64,11 +55,9 @@ export function WelcomeMessage({ userName, onDismiss, className }: WelcomeMessag
                   <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">
-                    {t("dashboard.welcome.section.gain.title")}
-                  </p>
+                  <p className="font-semibold text-gray-800 text-sm">O que você vai ganhar:</p>
                   <p className="text-sm text-gray-600">
-                    {t("dashboard.welcome.section.gain.text")}
+                    Soluções validadas, insights sobre seus usuários, ideias priorizadas e protótipos testáveis – tudo organizado e documentado
                   </p>
                 </div>
               </div>
@@ -77,7 +66,8 @@ export function WelcomeMessage({ userName, onDismiss, className }: WelcomeMessag
             <Alert className="mt-4 bg-white/60 border-blue-300">
               <Info className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-sm text-gray-700">
-                {t("dashboard.welcome.tip")}
+                <strong>Não sabe por onde começar?</strong> Use nossa ferramenta de <strong>Geração Automática de MVP</strong> acima. 
+                Em 5-10 minutos, a IA cria um projeto completo para você explorar e aprender!
               </AlertDescription>
             </Alert>
 
@@ -87,7 +77,7 @@ export function WelcomeMessage({ userName, onDismiss, className }: WelcomeMessag
                 className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium underline"
                 data-testid="button-dismiss-welcome"
               >
-                {t("dashboard.welcome.dismiss")}
+                Entendi, não mostrar novamente
               </button>
             )}
           </div>
