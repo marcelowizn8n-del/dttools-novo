@@ -354,6 +354,7 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params.id;
   const { user } = useAuth();
+  const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
 
   const { data: project, isLoading } = useQuery<Project>({
     queryKey: ["/api/projects", projectId],
@@ -395,6 +396,7 @@ export default function ProjectDetailPage() {
   });
 
   const handlePhaseChange = (phaseNumber: number) => {
+    setSelectedPhase(phaseNumber);
     console.log('Phase change requested:', { 
       phaseNumber, 
       currentPhase: project?.currentPhase, 
@@ -457,7 +459,9 @@ export default function ProjectDetailPage() {
     );
   }
 
-    return (
+  const effectivePhase = selectedPhase ?? project.currentPhase ?? 1;
+
+  return (
     <div className="project-detail">
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
@@ -607,7 +611,7 @@ export default function ProjectDetailPage() {
                   <PhaseCard
                     key={phaseNumber}
                     phaseNumber={phaseNumber}
-                    isActive={(project.currentPhase || 1) === phaseNumber}
+                    isActive={effectivePhase === phaseNumber}
                     isCompleted={(project.currentPhase || 1) > phaseNumber}
                     onClick={() => handlePhaseChange(phaseNumber)}
                     isUpdating={updatePhaseMutation.isPending}
@@ -643,6 +647,18 @@ export default function ProjectDetailPage() {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+
+            {/* Ferramentas da Fase Selecionada */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {`Ferramentas da Fase ${effectivePhase}`}
+              </h2>
+              {effectivePhase === 1 && <Phase1Tools projectId={project.id} />}
+              {effectivePhase === 2 && <Phase2Tools projectId={project.id} />}
+              {effectivePhase === 3 && <Phase3Tools projectId={project.id} />}
+              {effectivePhase === 4 && <Phase4Tools projectId={project.id} />}
+              {effectivePhase === 5 && <Phase5Tools projectId={project.id} />}
             </div>
 
             {/* DFV Assessment Section */}
