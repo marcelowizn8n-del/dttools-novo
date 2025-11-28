@@ -199,7 +199,7 @@ export default function IdeaDrawingTool({ projectId }: IdeaDrawingToolProps) {
       const containerWidth = canvasContainerRef.current.clientWidth || 800;
       const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-      const width = Math.max(300, Math.min(containerWidth, 1400));
+      const width = Math.max(300, containerWidth);
       const height = isMobile ? 400 : 600;
 
       setCanvasSize({ width, height });
@@ -1228,7 +1228,7 @@ export default function IdeaDrawingTool({ projectId }: IdeaDrawingToolProps) {
           {/* Canvas */}
           <div
             ref={canvasContainerRef}
-            className="border rounded-lg overflow-hidden bg-white"
+            className="w-full border rounded-lg overflow-hidden bg-white"
             data-testid="drawing-canvas-container"
           >
             <Stage

@@ -199,7 +199,7 @@ export default function PrototypeDrawingTool({ projectId }: PrototypeDrawingTool
       const containerWidth = canvasContainerRef.current.clientWidth || 800;
       const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-      const width = Math.max(300, Math.min(containerWidth, 1400));
+      const width = Math.max(300, containerWidth);
       const height = isMobile ? 400 : 600;
 
       setCanvasSize({ width, height });
@@ -1108,7 +1108,7 @@ export default function PrototypeDrawingTool({ projectId }: PrototypeDrawingTool
               <CardContent className="p-2 md:p-4">
                 <div 
                   ref={canvasContainerRef}
-                  className="border-2 border-dashed border-gray-300 rounded-lg max-w-full"
+                  className="w-full border-2 border-dashed border-gray-300 rounded-lg max-w-full"
                   style={{ 
                     touchAction: 'none',
                     overflow: 'visible',
