@@ -241,8 +241,8 @@ export default function AddonsPage() {
                   <CardContent className="flex-1 flex flex-col justify-between pt-0 space-y-4">
                     <p className="text-sm text-muted-foreground mb-2">{addon.description}</p>
 
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="text-xs text-muted-foreground">
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-xs text-muted-foreground max-w-xs sm:max-w-[220px]">
                         {addon.key === "double_diamond_pro" &&
                           currentMaxDoubleDiamond !== null &&
                           currentMaxDoubleDiamond !== undefined && (
@@ -259,7 +259,7 @@ export default function AddonsPage() {
                             </span>
                           )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 sm:justify-end">
                         {isActive ? (
                           <>
                             <Button variant="outline" size="sm" disabled>
