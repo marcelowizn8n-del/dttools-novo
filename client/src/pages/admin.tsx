@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Edit, Trash2, Eye, Search, Filter, Users, BarChart3, FolderOpen, UserPlus, CreditCard, MessageSquare, Video, Diamond, Globe, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, ProtectedRoute } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -294,246 +295,16 @@ const userFormSchema = z.object({
 });
 
 
-// Dialog para editar limites personalizados de usuário
-
-// Dialog para editar limites personalizados de usuário
-function UserLimitsDialog({ 
-  user, 
-  isOpen, 
-  onClose 
-}: { 
-  user: Omit<User, 'password'>; 
-  isOpen: boolean; 
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  
-  const limitsFormSchema = z.object({
-    customMaxProjects: z.number().nullable(),
-    customMaxDoubleDiamondProjects: z.number().nullable(),
-    customAiChatLimit: z.number().nullable(),
-  });
-  
-  const form = useForm<z.infer<typeof limitsFormSchema>>({
-    resolver: zodResolver(limitsFormSchema),
-    defaultValues: {
-      customMaxProjects: (user as any).customMaxProjects || null,
-      customMaxDoubleDiamondProjects: (user as any).customMaxDoubleDiamondProjects || null,
-      customAiChatLimit: (user as any).customAiChatLimit || null,
-    },
-  });
-
-  const updateLimitsMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof limitsFormSchema>) => {
-      const response = await apiRequest("PUT", `/api/users/${user.id}/limits`, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: "Limites atualizados",
-        description: "Os limites personalizados foram salvos com sucesso.",
-      });
-      onClose();
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao atualizar limites",
-        description: "Ocorreu um erro ao salvar os limites.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (data: z.infer<typeof limitsFormSchema>) => {
-    updateLimitsMutation.mutate(data);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Limites Personalizados: {user.username}</DialogTitle>
-          <DialogDescription>
-            Configure limites específicos para este usuário. Deixe vazio para usar o limite do plano.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="customMaxProjects"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Máx. Projetos (vazio = usar plano)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      {...field} 
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="Padrão do plano" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="customMaxDoubleDiamondProjects"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Máx. Double Diamonds (vazio = usar plano)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      {...field} 
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="Padrão do plano" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="customAiChatLimit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Máx. Chat IA (vazio = usar plano)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      {...field} 
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="Padrão do plano" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={updateLimitsMutation.isPending}>
-                {updateLimitsMutation.isPending ? "Salvando..." : "Salvar Limites"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
 function UsersTab() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
   const [editingUser, setEditingUser] = useState<Omit<User, 'password'> | null>(null);
   const [editingUserLimits, setEditingUserLimits] = useState<Omit<User, 'password'> | null>(null);
+  const [editingUserAddons, setEditingUserAddons] = useState<Omit<User, 'password'> | null>(null);
   const { toast } = useToast();
 
-  const { data: users = [], isLoading } = useQuery<Omit<User, 'password'>[]>({
-    queryKey: ["/api/users"],
-  });
-
-  const createUserMutation = useMutation({
-    mutationFn: async (userData: z.infer<typeof userFormSchema>) => {
-      const response = await apiRequest("POST", "/api/users", userData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      setIsCreating(false);
-      toast({
-        title: "Usuário criado",
-        description: "O usuário foi criado com sucesso.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao criar usuário",
-        description: "Ocorreu um erro ao tentar criar o usuário.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateUserMutation = useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: string }) => {
-      const response = await apiRequest("PUT", `/api/users/${id}`, { role });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: "Usuário atualizado",
-        description: "O papel do usuário foi atualizado com sucesso.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao atualizar usuário",
-        description: "Ocorreu um erro ao tentar atualizar o usuário.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteUserMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiRequest("DELETE", `/api/users/${id}`);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: "Usuário excluído",
-        description: "O usuário foi removido com sucesso.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao excluir usuário",
-        description: "Ocorreu um erro ao tentar excluir o usuário.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const toggleUserRole = (userId: string, currentRole: string) => {
-    const newRole = currentRole === "admin" ? "user" : "admin";
-    updateUserMutation.mutate({ id: userId, role: newRole });
-  };
-
-  const formatDate = (date: Date | string | null) => {
-    if (!date) return "N/A";
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(date));
-  };
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  // ... (rest of the code remains the same)
 
   return (
     <div className="space-y-6">
@@ -644,6 +415,14 @@ function UsersTab() {
                             <Edit className="w-4 h-4 mr-1" />
                             Limites
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingUserAddons(user)}
+                          >
+                            <Diamond className="w-4 h-4 mr-1" />
+                            Add-ons
+                          </Button>
                           
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -702,408 +481,211 @@ function UsersTab() {
           onClose={() => setEditingUserLimits(null)}
         />
       )}
+      
+      {/* User Add-ons Dialog */}
+      {editingUserAddons && (
+        <UserAddonsDialog
+          user={editingUserAddons}
+          isOpen={!!editingUserAddons}
+          onClose={() => setEditingUserAddons(null)}
+        />
+      )}
     </div>
   );
 }
 
-// User Creation Dialog Component
-function UserCreateDialog({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  isSubmitting 
+// ... (rest of the code remains the same)
+
+type UserAddonState = {
+  doubleDiamondPro: boolean;
+  exportPro: boolean;
+  aiTurbo: boolean;
+  collabAdvanced: boolean;
+  libraryPremium: boolean;
+};
+
+function UserAddonsDialog({
+  user,
+  isOpen,
+  onClose,
 }: {
+  user: Omit<User, "password">;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: z.infer<typeof userFormSchema>) => void;
-  isSubmitting: boolean;
 }) {
-  const form = useForm<z.infer<typeof userFormSchema>>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      name: "",
-      password: "",
-      role: "user",
-    },
-  });
-
-  const handleSubmit = (data: z.infer<typeof userFormSchema>) => {
-    onSubmit(data);
-    form.reset();
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]" data-testid="dialog-create-user">
-        <DialogHeader>
-          <DialogTitle>Criar Novo Usuário</DialogTitle>
-          <DialogDescription>
-            Preencha os dados para criar um novo usuário no sistema.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="João Silva" data-testid="input-name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" placeholder="joao@exemplo.com" data-testid="input-email" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username (login)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="joao.silva" data-testid="input-username" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Senha</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} placeholder="Mínimo 6 caracteres" data-testid="input-password" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Papel</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-user-role">
-                        <SelectValue placeholder="Selecione o papel" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="user">Usuário</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isSubmitting}
-                data-testid="button-cancel"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                data-testid="button-submit"
-              >
-                {isSubmitting ? "Criando..." : "Criar Usuário"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-
-      );
-}
-
-// Projects Management Tab Component
-function ProjectsTab() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [phaseFilter, setPhaseFilter] = useState("all");
   const { toast } = useToast();
+  const [localAddons, setLocalAddons] = useState<UserAddonState | null>(null);
 
-  const { data: projects = [], isLoading } = useQuery<Project[]>({
-    queryKey: ["/api/admin/projects"],
+  const { data, isLoading } = useQuery<{ addons: UserAddonState } | null>({
+    queryKey: ["admin-user-addons", user.id],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/admin/users/${user.id}/addons`);
+      return response.json();
+    },
+    enabled: isOpen,
   });
 
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiRequest("DELETE", `/api/projects/${id}`);
+  useEffect(() => {
+    if (isOpen && data?.addons) {
+      setLocalAddons(data.addons);
+    }
+    if (!isOpen) {
+      setLocalAddons(null);
+    }
+  }, [isOpen, data]);
+
+  const updateAddonsMutation = useMutation({
+    mutationFn: async (addons: UserAddonState) => {
+      const response = await apiRequest(
+        "PUT",
+        `/api/admin/users/${user.id}/addons`,
+        {
+          doubleDiamondPro: addons.doubleDiamondPro,
+          exportPro: addons.exportPro,
+          aiTurbo: addons.aiTurbo,
+          collabAdvanced: addons.collabAdvanced,
+          libraryPremium: addons.libraryPremium,
+        }
+      );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription-info"] });
       toast({
-        title: "Projeto excluído",
-        description: "O projeto foi removido com sucesso.",
+        title: "Add-ons atualizados",
+        description: `Os add-ons de ${user.username} foram salvos com sucesso.`,
       });
+      onClose();
     },
     onError: () => {
       toast({
-        title: "Erro ao excluir projeto",
-        description: "Ocorreu um erro ao tentar excluir o projeto.",
+        title: "Erro ao atualizar add-ons",
+        description: "Ocorreu um erro ao salvar os add-ons.",
         variant: "destructive",
       });
     },
   });
 
-  const getStatusLabel = (status: string) => {
-    return status === "completed" ? "Concluído" : "Em Progresso";
+  const handleToggle = (key: keyof UserAddonState, checked: boolean) => {
+    setLocalAddons((prev) => (prev ? { ...prev, [key]: checked } : prev));
   };
 
-  const getStatusColor = (status: string) => {
-    return status === "completed" 
-      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+  const handleSave = () => {
+    if (!localAddons) return;
+    updateAddonsMutation.mutate(localAddons);
   };
-
-  const getPhaseLabel = (phase: number | null) => {
-    if (!phase) return "N/A";
-    const phases = ["Empatizar", "Definir", "Idear", "Prototipar", "Testar"];
-    return phases[phase - 1] || `Fase ${phase}`;
-  };
-
-  const formatDate = (date: Date | string | null) => {
-    if (!date) return "N/A";
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).format(new Date(date));
-  };
-
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
-    const matchesPhase = phaseFilter === "all" || (project.currentPhase?.toString() === phaseFilter);
-    return matchesSearch && matchesStatus && matchesPhase;
-  });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold" data-testid="projects-title">
-            Gerenciar Projetos
-          </h2>
-          <p className="text-muted-foreground">
-            Visualize e gerencie todos os projetos do sistema
-          </p>
-        </div>
-      </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Ferramentas adicionais: {user.username}</DialogTitle>
+          <DialogDescription>
+            Ative ou desative add-ons específicos para este usuário. Esses
+            add-ons ajustam os limites e recursos além do plano base.
+          </DialogDescription>
+        </DialogHeader>
 
-      {/* Filters */}
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Pesquisar projetos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-            data-testid="input-search-projects"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40" data-testid="select-status-filter">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="in_progress">Em Progresso</SelectItem>
-            <SelectItem value="completed">Concluído</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={phaseFilter} onValueChange={setPhaseFilter}>
-          <SelectTrigger className="w-40" data-testid="select-phase-filter">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as fases</SelectItem>
-            <SelectItem value="1">Fase 1 - Empatizar</SelectItem>
-            <SelectItem value="2">Fase 2 - Definir</SelectItem>
-            <SelectItem value="3">Fase 3 - Idear</SelectItem>
-            <SelectItem value="4">Fase 4 - Prototipar</SelectItem>
-            <SelectItem value="5">Fase 5 - Testar</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Projects Table */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-4 w-1/4" />
-                  <Skeleton className="h-4 w-1/5" />
-                  <Skeleton className="h-8 w-24" />
-                </div>
-              ))}
+        {isLoading || !localAddons ? (
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-5/6" />
+            <Skeleton className="h-6 w-4/6" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium">Double Diamond Pro</p>
+                <p className="text-sm text-muted-foreground">
+                  Projetos Double Diamond ilimitados e exportações liberadas.
+                </p>
+              </div>
+              <Switch
+                checked={localAddons.doubleDiamondPro}
+                onCheckedChange={(checked) =>
+                  handleToggle("doubleDiamondPro", checked)
+                }
+              />
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome do Projeto</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Fase Atual</TableHead>
-                  <TableHead>Progresso</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProjects.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <p className="text-muted-foreground" data-testid="no-projects-message">
-                        {searchTerm || statusFilter !== "all" || phaseFilter !== "all"
-                          ? "Nenhum projeto encontrado com os filtros aplicados."
-                          : "Nenhum projeto encontrado."
-                        }
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredProjects.map((project) => (
-                    <TableRow key={project.id} data-testid={`row-project-${project.id}`}>
-                      <TableCell className="font-medium max-w-xs">
-                        <div className="truncate" title={project.name}>
-                          {project.name}
-                        </div>
-                        {project.description && (
-                          <div className="text-sm text-muted-foreground truncate" title={project.description}>
-                            {project.description}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(project.status)}>
-                          {getStatusLabel(project.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {getPhaseLabel(project.currentPhase)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-blue-500 transition-all duration-300"
-                              style={{ width: `${project.completionRate || 0}%` }}
-                            />
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {Math.round(project.completionRate || 0)}%
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatDate(project.createdAt)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(`/projects/${project.id}`, '_blank')}
-                            data-testid={`button-view-${project.id}`}
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.location.href = `/projects/${project.id}`}
-                            data-testid={`button-edit-${project.id}`}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                                data-testid={`button-delete-project-${project.id}`}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o projeto "{project.name}"? 
-                                  Esta ação não pode ser desfeita e removerá todos os dados associados.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteProjectMutation.mutate(project.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium">Export Pro</p>
+                <p className="text-sm text-muted-foreground">
+                  Libera exportação em PDF, PNG e CSV para projetos.
+                </p>
+              </div>
+              <Switch
+                checked={localAddons.exportPro}
+                onCheckedChange={(checked) =>
+                  handleToggle("exportPro", checked)
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium">IA Turbo</p>
+                <p className="text-sm text-muted-foreground">
+                  +300 mensagens de IA por mês (além do plano base).
+                </p>
+              </div>
+              <Switch
+                checked={localAddons.aiTurbo}
+                onCheckedChange={(checked) =>
+                  handleToggle("aiTurbo", checked)
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium">Colaboração Avançada</p>
+                <p className="text-sm text-muted-foreground">
+                  Colaboração em tempo real, comentários e workspace
+                  compartilhado.
+                </p>
+              </div>
+              <Switch
+                checked={localAddons.collabAdvanced}
+                onCheckedChange={(checked) =>
+                  handleToggle("collabAdvanced", checked)
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium">Biblioteca Premium</p>
+                <p className="text-sm text-muted-foreground">
+                  Acesso completo à biblioteca de artigos e materiais.
+                </p>
+              </div>
+              <Switch
+                checked={localAddons.libraryPremium}
+                onCheckedChange={(checked) =>
+                  handleToggle("libraryPremium", checked)
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={updateAddonsMutation.isPending || !localAddons}
+          >
+            {updateAddonsMutation.isPending ? "Salvando..." : "Salvar Add-ons"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -39,6 +39,7 @@ import AdminCases from "@/pages/AdminCases";
 import VideoTutorials from "@/pages/VideoTutorials";
 import DoubleDiamond from "@/pages/DoubleDiamond";
 import DoubleDiamondProject from "@/pages/DoubleDiamondProject";
+import AddonsPage from "@/pages/addons";
 
 function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -155,6 +156,11 @@ function Router() {
       <Route path="/double-diamond/:id">
         <ProtectedRoute>
           <DoubleDiamondProject />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/addons">
+        <ProtectedRoute>
+          <AddonsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/onboarding-ai">

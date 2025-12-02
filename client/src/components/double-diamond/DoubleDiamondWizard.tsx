@@ -19,6 +19,8 @@ const doubleDiamondSchema = z.object({
   sectorId: z.string().optional(),
   successCaseId: z.string().optional(),
   customSuccessCase: z.string().optional(),
+  customSuccessCaseUrl: z.string().optional(),
+  customSuccessCasePdfUrl: z.string().optional(),
   targetAudience: z.string().min(10, "Descreva o público-alvo (mínimo 10 caracteres)"),
   problemStatement: z.string().min(20, "Descreva o problema (mínimo 20 caracteres)")
 });
@@ -62,6 +64,8 @@ export function DoubleDiamondWizard({ onComplete }: DoubleDiamondWizardProps) {
       sectorId: "",
       successCaseId: "",
       customSuccessCase: "",
+      customSuccessCaseUrl: "",
+      customSuccessCasePdfUrl: "",
       targetAudience: "",
       problemStatement: ""
     }
@@ -279,6 +283,48 @@ export function DoubleDiamondWizard({ onComplete }: DoubleDiamondWizardProps) {
               </FormControl>
               <FormDescription>
                 Se seu case não está na lista, digite aqui o nome da empresa/produto de referência
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* URL de referência do Case */}
+        <FormField
+          control={form.control}
+          name="customSuccessCaseUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL de Referência (site, artigo, vídeo)</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Cole aqui o link com mais detalhes sobre o case"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Opcional: link para material online sobre esse case de sucesso.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* PDF de referência do Case */}
+        <FormField
+          control={form.control}
+          name="customSuccessCasePdfUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL do PDF de Referência</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Cole aqui o link do PDF (Google Drive, Dropbox, etc.)"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Opcional: link para um PDF com material de apoio sobre esse case.
               </FormDescription>
               <FormMessage />
             </FormItem>

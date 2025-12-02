@@ -344,6 +344,21 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
 
+// User Add-ons - per-feature upgrades (Double Diamond Pro, Export Pro, IA Turbo, etc.)
+export const userAddons = pgTable("user_addons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  addonKey: text("addon_key").notNull(), // 'double_diamond_pro', 'export_pro', 'ai_turbo', etc.
+  status: text("status").notNull().default("active"), // active, canceled, expired, trialing
+  source: text("source").notNull().default("stripe"), // stripe, admin, manual
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  billingPeriod: text("billing_period"), // monthly, yearly, null for one-time/unknown
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 // Articles for Design Thinking library
 export const articles = pgTable("articles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -518,6 +533,12 @@ export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions
   updatedAt: true,
 });
 
+export const insertUserAddonSchema = createInsertSchema(userAddons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCanvasDrawingSchema = createInsertSchema(canvasDrawings).omit({
   id: true,
   createdAt: true,
@@ -592,6 +613,9 @@ export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema
 
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+
+export type UserAddon = typeof userAddons.$inferSelect;
+export type InsertUserAddon = z.infer<typeof insertUserAddonSchema>;
 
 export type CanvasDrawing = typeof canvasDrawings.$inferSelect;
 export type InsertCanvasDrawing = z.infer<typeof insertCanvasDrawingSchema>;
@@ -1137,6 +1161,8 @@ export const doubleDiamondProjects = pgTable("double_diamond_projects", {
   sectorId: varchar("sector_id").references(() => industrySectors.id),
   successCaseId: varchar("success_case_id").references(() => successCases.id), // Case to mirror (Airbnb, Uber, etc.)
   customSuccessCase: text("custom_success_case"), // User's custom success case (if not in list)
+  customSuccessCaseUrl: text("custom_success_case_url"), // Optional URL with additional reference materials
+  customSuccessCasePdfUrl: text("custom_success_case_pdf_url"), // Optional URL to a reference PDF
   targetAudience: text("target_audience"), // User's minimal description of audience
   problemStatement: text("problem_statement"), // User's initial problem description
   

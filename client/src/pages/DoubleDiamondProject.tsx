@@ -28,6 +28,8 @@ interface DoubleDiamondProject {
   sectorId?: string | null;
   successCaseId?: string | null;
   customSuccessCase?: string | null;
+  customSuccessCaseUrl?: string | null;
+  customSuccessCasePdfUrl?: string | null;
   targetAudience?: string | null;
   problemStatement?: string | null;
   discoverStatus: string;
@@ -63,6 +65,8 @@ const initialBriefingSchema = z.object({
   sectorId: z.string().optional(),
   successCaseId: z.string().optional(),
   customSuccessCase: z.string().optional(),
+  customSuccessCaseUrl: z.string().optional(),
+  customSuccessCasePdfUrl: z.string().optional(),
   targetAudience: z.string().min(10, "Descreva o público-alvo (mínimo 10 caracteres)"),
   problemStatement: z.string().min(20, "Descreva o problema (mínimo 20 caracteres)"),
 });
@@ -141,6 +145,8 @@ export default function DoubleDiamondProject() {
       sectorId: project?.sectorId || "",
       successCaseId: project?.successCaseId || "",
       customSuccessCase: project?.customSuccessCase || "",
+      customSuccessCaseUrl: project?.customSuccessCaseUrl || "",
+      customSuccessCasePdfUrl: project?.customSuccessCasePdfUrl || "",
       targetAudience: project?.targetAudience || "",
       problemStatement: project?.problemStatement || "",
     },
@@ -154,6 +160,8 @@ export default function DoubleDiamondProject() {
       sectorId: project.sectorId || "",
       successCaseId: project.successCaseId || "",
       customSuccessCase: project.customSuccessCase || "",
+      customSuccessCaseUrl: project.customSuccessCaseUrl || "",
+      customSuccessCasePdfUrl: project.customSuccessCasePdfUrl || "",
       targetAudience: project.targetAudience || "",
       problemStatement: project.problemStatement || "",
     });
@@ -558,6 +566,40 @@ export default function DoubleDiamondProject() {
                     <FormLabel>Ou descreva um case de sucesso personalizado</FormLabel>
                     <FormControl>
                       <Textarea className="min-h-[60px]" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={briefingForm.control}
+                name="customSuccessCaseUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL de referência do case</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Link para site, artigo ou vídeo sobre o case"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={briefingForm.control}
+                name="customSuccessCasePdfUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL do PDF de referência</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Link para o PDF (Google Drive, Dropbox, etc.)"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   Video,
-  TrendingUp
+  TrendingUp,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -149,6 +150,20 @@ export default function Header() {
                 </Button>
               </Link>
             )}
+            {isAuthenticated && (
+              <Link href="/addons">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  data-testid="nav-addons-compact"
+                  title="Ferramentas adicionais"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="sr-only">Ferramentas adicionais</span>
+                </Button>
+              </Link>
+            )}
             <Link href="/pricing">
               <Button
                 variant="ghost"
@@ -219,6 +234,14 @@ export default function Header() {
                 <Button variant="ghost" className="text-sm" data-testid="nav-double-diamond">
                   <TrendingUp className="mr-1 h-4 w-4" />
                   Double Diamond
+                </Button>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link href="/addons">
+                <Button variant="ghost" className="text-sm" data-testid="nav-addons">
+                  <Sparkles className="mr-1 h-4 w-4" />
+                  Ferramentas adicionais
                 </Button>
               </Link>
             )}
@@ -316,6 +339,14 @@ export default function Header() {
                     <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-double-diamond" onClick={() => setIsMobileMenuOpen(false)}>
                       <TrendingUp className="mr-2 h-4 w-4" />
                       Double Diamond
+                    </Button>
+                  </Link>
+                )}
+                {isAuthenticated && (
+                  <Link href="/addons">
+                    <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-addons" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Ferramentas adicionais
                     </Button>
                   </Link>
                 )}

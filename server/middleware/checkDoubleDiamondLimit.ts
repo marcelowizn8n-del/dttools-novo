@@ -1,7 +1,11 @@
 /**
- * Middleware to check if user has reached their Double Diamond project limit
- * Free users: 3 projects max
- * Paid users: unlimited
+ * Middleware to check if user has reached their Double Diamond project limit.
+ * Regras:
+ * - Admin: ilimitado
+ * - Add-on "double_diamond_pro": ilimitado
+ * - Se houver subscriptionPlan.maxDoubleDiamondProjects, usa esse valor (null/negativo = ilimitado)
+ * - Se não houver plano ou for plano gratuito, usa FREE_PLAN_DOUBLE_DIAMOND_LIMIT
+ * - customMaxDoubleDiamondProjects (campo do usuário) sobrescreve o limite do plano se não for null
  */
 
 import { Request, Response, NextFunction } from "express";
@@ -56,71 +60,63 @@ export async function checkDoubleDiamondLimit(
     const userDoubleDiamondProjects = await storage.getDoubleDiamondProjects(userId);
     const currentUsage = userDoubleDiamondProjects.length;
 
-    // Check if user has a subscription plan
-    if (!userData.subscriptionPlanId) {
-      // Free user - check limit of 3
-      if (currentUsage >= FREE_PLAN_DOUBLE_DIAMOND_LIMIT) {
-        return res.status(403).json({
-          error: `Você atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond do plano gratuito. Faça upgrade para criar projetos ilimitados.`,
-          code: "DOUBLE_DIAMOND_LIMIT_REACHED",
-          currentUsage,
-          limit: FREE_PLAN_DOUBLE_DIAMOND_LIMIT,
-          planName: "Gratuito",
-          upgradeUrl: "/pricing",
-        });
-      }
-      // User is within free limit - allow
+    // Verificar add-ons ativos (Double Diamond Pro pode liberar limite)
+    const activeAddons = await storage.getActiveUserAddons(userId);
+    const addonKeys = new Set(activeAddons.map((a: any) => a.addonKey));
+    const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
+
+    if (hasDoubleDiamondPro) {
+      console.log(`✅ User ${userId} has Double Diamond Pro add-on - unlimited projects`);
       return next();
     }
 
-    // Get subscription plan details
-    const plan = await db
-      .select()
-      .from(subscriptionPlans)
-      .where(eq(subscriptionPlans.id, userData.subscriptionPlanId))
-      .limit(1);
-
-    if (!plan || plan.length === 0) {
-      // Plan not found - treat as free user
-      if (currentUsage >= FREE_PLAN_DOUBLE_DIAMOND_LIMIT) {
-        return res.status(403).json({
-          error: `Você atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond. Faça upgrade para criar projetos ilimitados.`,
-          code: "DOUBLE_DIAMOND_LIMIT_REACHED",
-          currentUsage,
-          limit: FREE_PLAN_DOUBLE_DIAMOND_LIMIT,
-          planName: "Gratuito",
-          upgradeUrl: "/pricing",
-        });
-      }
-      return next();
+    // Buscar plano de assinatura, se existir
+    let planData: any | null = null;
+    if (userData.subscriptionPlanId) {
+      const plan = await db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.id, userData.subscriptionPlanId))
+        .limit(1);
+      planData = plan && plan.length > 0 ? plan[0] : null;
     }
 
-    const planData = plan[0];
-    
-    // Check if plan has maxDoubleDiamondProjects field (if we add it later)
-    // For now, paid plans = unlimited, free = 3
-    const isFreePlan = planData.name === "free" || planData.priceMonthly === 0;
-    
-    if (isFreePlan) {
-      // Free plan - limit of 3
-      if (currentUsage >= FREE_PLAN_DOUBLE_DIAMOND_LIMIT) {
-        return res.status(403).json({
-          error: `Você atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond do plano ${planData.displayName}. Faça upgrade para criar projetos ilimitados.`,
-          code: "DOUBLE_DIAMOND_LIMIT_REACHED",
-          currentUsage,
-          limit: FREE_PLAN_DOUBLE_DIAMOND_LIMIT,
-          planName: planData.displayName,
-          upgradeUrl: "/pricing",
-        });
-      }
-    }
-    // Paid plans have unlimited Double Diamond projects
+    // Limite personalizado do usuário (se definido e >= 0, sobrescreve plano)
+    const userCustomLimitRaw = (userData as any).customMaxDoubleDiamondProjects as number | null | undefined;
+    const userCustomLimit = typeof userCustomLimitRaw === "number" && userCustomLimitRaw >= 0
+      ? userCustomLimitRaw
+      : null;
 
-    // User is within limits - allow
+    // Limite vindo do plano (se houver)
+    let planLimit: number | null = null;
+    if (!planData) {
+      // Sem plano: trata como gratuito
+      planLimit = FREE_PLAN_DOUBLE_DIAMOND_LIMIT;
+    } else if (typeof planData.maxDoubleDiamondProjects === "number") {
+      // maxDoubleDiamondProjects < 0 ou null = ilimitado
+      planLimit = planData.maxDoubleDiamondProjects < 0 ? null : planData.maxDoubleDiamondProjects;
+    } else {
+      const isFreePlan = planData.name === "free" || planData.priceMonthly === 0;
+      planLimit = isFreePlan ? FREE_PLAN_DOUBLE_DIAMOND_LIMIT : null;
+    }
+
+    const effectiveLimit = userCustomLimit !== null ? userCustomLimit : planLimit;
+
+    if (effectiveLimit !== null && currentUsage >= effectiveLimit) {
+      return res.status(403).json({
+        error: `Você atingiu o limite de ${effectiveLimit} projetos Double Diamond do seu plano. Faça upgrade ou adquira o add-on Double Diamond Pro para criar mais projetos.`,
+        code: "DOUBLE_DIAMOND_LIMIT_REACHED",
+        currentUsage,
+        limit: effectiveLimit,
+        planName: planData?.displayName ?? (userData.subscriptionPlanId ? "Plano atual" : "Gratuito"),
+        upgradeUrl: "/pricing",
+      });
+    }
+
+    // Usuário dentro do limite - permitir criação
     next();
   } catch (error) {
     console.error("Error checking Double Diamond limit:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
-

@@ -1,6 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
+// Helper to normalize numeric limits: null/undefined or negative values become null (unlimited)
+function normalizeLimit(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  if (value < 0) return null;
+  return value;
+}
+
 // Extend Request interface to include subscription info
 declare module 'express-serve-static-core' {
   interface Request {
@@ -12,6 +19,8 @@ declare module 'express-serve-static-core' {
         maxUsersPerTeam: number | null;
         aiChatLimit: number | null;
         libraryArticlesCount: number | null;
+        maxDoubleDiamondProjects: number | null;
+        maxDoubleDiamondExports: number | null;
         canCollaborate: boolean;
         canExportPDF: boolean;
         canExportPNG: boolean;
@@ -19,6 +28,14 @@ declare module 'express-serve-static-core' {
         hasPermissionManagement: boolean;
         hasSharedWorkspace: boolean;
         hasCommentsAndFeedback: boolean;
+      };
+      addons?: {
+        doubleDiamondPro: boolean;
+        exportPro: boolean;
+        aiTurbo: boolean;
+        collabAdvanced: boolean;
+        libraryPremium: boolean;
+        raw: any[];
       };
     };
   }
@@ -30,22 +47,41 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
     // User not authenticated - apply free plan limits
     const freePlan = await storage.getSubscriptionPlanByName("free");
     if (freePlan) {
+      const planMaxProjects = normalizeLimit(freePlan.maxProjects);
+      const planMaxPersonas = normalizeLimit(freePlan.maxPersonasPerProject);
+      const planMaxUsers = normalizeLimit(freePlan.maxUsersPerTeam);
+      const planAiChat = normalizeLimit(freePlan.aiChatLimit);
+      const planLibraryArticles = normalizeLimit(freePlan.libraryArticlesCount);
+      const planMaxDoubleDiamondProjects = normalizeLimit(freePlan.maxDoubleDiamondProjects);
+      const planMaxDoubleDiamondExports = normalizeLimit(freePlan.maxDoubleDiamondExports);
+      const exportFormats = Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats : [];
+
       req.subscription = {
         plan: freePlan,
         limits: {
-          maxProjects: freePlan.maxProjects,
-          maxPersonasPerProject: freePlan.maxPersonasPerProject,
-          maxUsersPerTeam: freePlan.maxUsersPerTeam,
-          aiChatLimit: freePlan.aiChatLimit,
-          libraryArticlesCount: freePlan.libraryArticlesCount,
+          maxProjects: planMaxProjects,
+          maxPersonasPerProject: planMaxPersonas,
+          maxUsersPerTeam: planMaxUsers,
+          aiChatLimit: planAiChat,
+          libraryArticlesCount: planLibraryArticles,
+          maxDoubleDiamondProjects: planMaxDoubleDiamondProjects,
+          maxDoubleDiamondExports: planMaxDoubleDiamondExports,
           canCollaborate: freePlan.hasCollaboration ?? false,
-          canExportPDF: (Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("pdf") : false),
-          canExportPNG: (Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("png") : false),
-          canExportCSV: (Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("csv") : false),
+          canExportPDF: exportFormats.includes("pdf"),
+          canExportPNG: exportFormats.includes("png"),
+          canExportCSV: exportFormats.includes("csv"),
           hasPermissionManagement: freePlan.hasPermissionManagement ?? false,
           hasSharedWorkspace: freePlan.hasSharedWorkspace ?? false,
           hasCommentsAndFeedback: freePlan.hasCommentsAndFeedback ?? false,
-        }
+        },
+        addons: {
+          doubleDiamondPro: false,
+          exportPro: false,
+          aiTurbo: false,
+          collabAdvanced: false,
+          libraryPremium: false,
+          raw: [],
+        },
       };
     }
     return next();
@@ -64,22 +100,95 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
     }
 
     if (plan) {
+      const user = await storage.getUser(req.user.id);
+
+      const planMaxProjects = normalizeLimit(plan.maxProjects);
+      const planMaxPersonas = normalizeLimit(plan.maxPersonasPerProject);
+      const planMaxUsers = normalizeLimit(plan.maxUsersPerTeam);
+      const planAiChat = normalizeLimit(plan.aiChatLimit);
+      const planLibraryArticles = normalizeLimit(plan.libraryArticlesCount);
+      const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
+      const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
+
+      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
+      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
+      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
+      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
+
+      const activeAddons = await storage.getActiveUserAddons(req.user.id);
+      const addonKeys = new Set(activeAddons.map((a) => a.addonKey));
+
+      const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
+      const hasExportPro = addonKeys.has("export_pro");
+      const hasAiTurbo = addonKeys.has("ai_turbo");
+      const hasCollabAdvanced = addonKeys.has("collab_advanced");
+      const hasLibraryPremium = addonKeys.has("library_premium");
+
+      let maxProjects = userMaxProjects !== null ? userMaxProjects : planMaxProjects;
+      let aiChatLimit = userAiChatLimit !== null ? userAiChatLimit : planAiChat;
+      let maxDoubleDiamondProjects = userMaxDoubleDiamondProjects !== null ? userMaxDoubleDiamondProjects : planMaxDoubleDiamondProjects;
+      let maxDoubleDiamondExports = userMaxDoubleDiamondExports !== null ? userMaxDoubleDiamondExports : planMaxDoubleDiamondExports;
+      let libraryArticlesCount = planLibraryArticles;
+
+      // Apply add-on effects
+      if (hasAiTurbo) {
+        // Extra 300 AI messages; null continues to mean unlimited
+        aiChatLimit = aiChatLimit !== null ? aiChatLimit + 300 : null;
+      }
+
+      if (hasDoubleDiamondPro) {
+        // Unlimited Double Diamond projects/exports for this add-on
+        maxDoubleDiamondProjects = null;
+        maxDoubleDiamondExports = null;
+      }
+
+      if (hasLibraryPremium) {
+        // Full access to library
+        libraryArticlesCount = null;
+      }
+
+      const exportFormats = Array.isArray(plan.exportFormats) ? plan.exportFormats : [];
+      let canExportPDF = exportFormats.includes("pdf");
+      let canExportPNG = exportFormats.includes("png");
+      let canExportCSV = exportFormats.includes("csv");
+
+      if (hasExportPro || hasDoubleDiamondPro) {
+        canExportPDF = true;
+        canExportPNG = true;
+        canExportCSV = true;
+      }
+
+      const canCollaborate = (plan.hasCollaboration ?? false) || hasCollabAdvanced;
+      const hasSharedWorkspace = (plan.hasSharedWorkspace ?? false) || hasCollabAdvanced;
+      const hasCommentsAndFeedback = (plan.hasCommentsAndFeedback ?? false) || hasCollabAdvanced;
+      const hasPermissionManagement = plan.hasPermissionManagement ?? false;
+
       req.subscription = {
         plan,
         limits: {
-          maxProjects: plan.maxProjects,
-          maxPersonasPerProject: plan.maxPersonasPerProject,
-          maxUsersPerTeam: plan.maxUsersPerTeam,
-          aiChatLimit: plan.aiChatLimit,
-          libraryArticlesCount: plan.libraryArticlesCount,
-          canCollaborate: plan.hasCollaboration ?? false,
-          canExportPDF: (Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("pdf") : false),
-          canExportPNG: (Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("png") : false),
-          canExportCSV: (Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("csv") : false),
-          hasPermissionManagement: plan.hasPermissionManagement ?? false,
-          hasSharedWorkspace: plan.hasSharedWorkspace ?? false,
-          hasCommentsAndFeedback: plan.hasCommentsAndFeedback ?? false,
-        }
+          maxProjects,
+          maxPersonasPerProject: planMaxPersonas,
+          maxUsersPerTeam: planMaxUsers,
+          aiChatLimit,
+          libraryArticlesCount,
+          maxDoubleDiamondProjects,
+          maxDoubleDiamondExports,
+          canCollaborate,
+          canExportPDF,
+          canExportPNG,
+          canExportCSV,
+          hasPermissionManagement,
+          hasSharedWorkspace,
+          hasCommentsAndFeedback,
+        },
+        addons: {
+          doubleDiamondPro: hasDoubleDiamondPro,
+          exportPro: hasExportPro,
+          aiTurbo: hasAiTurbo,
+          collabAdvanced: hasCollabAdvanced,
+          libraryPremium: hasLibraryPremium,
+          raw: activeAddons,
+        },
       };
     }
 
@@ -234,11 +343,13 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
     return res.json({
       plan: freePlan,
       limits: freePlan ? {
-        maxProjects: freePlan.maxProjects,
-        maxPersonasPerProject: freePlan.maxPersonasPerProject,
-        maxUsersPerTeam: freePlan.maxUsersPerTeam,
-        aiChatLimit: freePlan.aiChatLimit,
-        libraryArticlesCount: freePlan.libraryArticlesCount,
+        maxProjects: normalizeLimit(freePlan.maxProjects),
+        maxPersonasPerProject: normalizeLimit(freePlan.maxPersonasPerProject),
+        maxUsersPerTeam: normalizeLimit(freePlan.maxUsersPerTeam),
+        aiChatLimit: normalizeLimit(freePlan.aiChatLimit),
+        libraryArticlesCount: normalizeLimit(freePlan.libraryArticlesCount),
+        maxDoubleDiamondProjects: normalizeLimit(freePlan.maxDoubleDiamondProjects),
+        maxDoubleDiamondExports: normalizeLimit(freePlan.maxDoubleDiamondExports),
         canCollaborate: freePlan.hasCollaboration ?? false,
         canExportPDF: (Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("pdf") : false),
         canExportPNG: (Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("png") : false),
@@ -247,6 +358,14 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
         hasSharedWorkspace: freePlan.hasSharedWorkspace ?? false,
         hasCommentsAndFeedback: freePlan.hasCommentsAndFeedback ?? false,
       } : null,
+      addons: {
+        doubleDiamondPro: false,
+        exportPro: false,
+        aiTurbo: false,
+        collabAdvanced: false,
+        libraryPremium: false,
+        raw: [],
+      },
       usage: {
         projects: 0,
         aiChatThisMonth: 0,
@@ -266,24 +385,101 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
 
     // Calculate current usage
     const userProjects = await storage.getProjects(req.user.id);
+    const user = await storage.getUser(req.user.id);
+    const activeAddons = plan ? await storage.getActiveUserAddons(req.user.id) : [];
+
+    let limits: any = null;
+    let addonsInfo: any = null;
+
+    if (plan) {
+      const planMaxProjects = normalizeLimit(plan.maxProjects);
+      const planMaxPersonas = normalizeLimit(plan.maxPersonasPerProject);
+      const planMaxUsers = normalizeLimit(plan.maxUsersPerTeam);
+      const planAiChat = normalizeLimit(plan.aiChatLimit);
+      const planLibraryArticles = normalizeLimit(plan.libraryArticlesCount);
+      const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
+      const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
+
+      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
+      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
+      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
+      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
+
+      const addonKeys = new Set(activeAddons.map((a: any) => a.addonKey));
+
+      const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
+      const hasExportPro = addonKeys.has("export_pro");
+      const hasAiTurbo = addonKeys.has("ai_turbo");
+      const hasCollabAdvanced = addonKeys.has("collab_advanced");
+      const hasLibraryPremium = addonKeys.has("library_premium");
+
+      let maxProjects = userMaxProjects !== null ? userMaxProjects : planMaxProjects;
+      let aiChatLimit = userAiChatLimit !== null ? userAiChatLimit : planAiChat;
+      let maxDoubleDiamondProjects = userMaxDoubleDiamondProjects !== null ? userMaxDoubleDiamondProjects : planMaxDoubleDiamondProjects;
+      let maxDoubleDiamondExports = userMaxDoubleDiamondExports !== null ? userMaxDoubleDiamondExports : planMaxDoubleDiamondExports;
+      let libraryArticlesCount = planLibraryArticles;
+
+      if (hasAiTurbo) {
+        aiChatLimit = aiChatLimit !== null ? aiChatLimit + 300 : null;
+      }
+
+      if (hasDoubleDiamondPro) {
+        maxDoubleDiamondProjects = null;
+        maxDoubleDiamondExports = null;
+      }
+
+      if (hasLibraryPremium) {
+        libraryArticlesCount = null;
+      }
+
+      const exportFormats = Array.isArray(plan.exportFormats) ? plan.exportFormats : [];
+      let canExportPDF = exportFormats.includes("pdf");
+      let canExportPNG = exportFormats.includes("png");
+      let canExportCSV = exportFormats.includes("csv");
+
+      if (hasExportPro || hasDoubleDiamondPro) {
+        canExportPDF = true;
+        canExportPNG = true;
+        canExportCSV = true;
+      }
+
+      const canCollaborate = (plan.hasCollaboration ?? false) || hasCollabAdvanced;
+      const hasSharedWorkspace = (plan.hasSharedWorkspace ?? false) || hasCollabAdvanced;
+      const hasCommentsAndFeedback = (plan.hasCommentsAndFeedback ?? false) || hasCollabAdvanced;
+      const hasPermissionManagement = plan.hasPermissionManagement ?? false;
+
+      limits = {
+        maxProjects,
+        maxPersonasPerProject: planMaxPersonas,
+        maxUsersPerTeam: planMaxUsers,
+        aiChatLimit,
+        libraryArticlesCount,
+        maxDoubleDiamondProjects,
+        maxDoubleDiamondExports,
+        canCollaborate,
+        canExportPDF,
+        canExportPNG,
+        canExportCSV,
+        hasPermissionManagement,
+        hasSharedWorkspace,
+        hasCommentsAndFeedback,
+      };
+
+      addonsInfo = {
+        doubleDiamondPro: hasDoubleDiamondPro,
+        exportPro: hasExportPro,
+        aiTurbo: hasAiTurbo,
+        collabAdvanced: hasCollabAdvanced,
+        libraryPremium: hasLibraryPremium,
+        raw: activeAddons,
+      };
+    }
 
     res.json({
       plan,
       subscription: userSubscription,
-      limits: plan ? {
-        maxProjects: plan.maxProjects,
-        maxPersonasPerProject: plan.maxPersonasPerProject,
-        maxUsersPerTeam: plan.maxUsersPerTeam,
-        aiChatLimit: plan.aiChatLimit,
-        libraryArticlesCount: plan.libraryArticlesCount,
-        canCollaborate: plan.hasCollaboration ?? false,
-        canExportPDF: (Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("pdf") : false),
-        canExportPNG: (Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("png") : false),
-        canExportCSV: (Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("csv") : false),
-        hasPermissionManagement: plan.hasPermissionManagement ?? false,
-        hasSharedWorkspace: plan.hasSharedWorkspace ?? false,
-        hasCommentsAndFeedback: plan.hasCommentsAndFeedback ?? false,
-      } : null,
+      limits,
+      addons: addonsInfo,
       usage: {
         projects: userProjects.length,
         aiChatThisMonth: 0, // Placeholder

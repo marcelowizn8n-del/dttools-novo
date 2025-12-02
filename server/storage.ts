@@ -17,6 +17,7 @@ import {
   type VideoTutorial, type InsertVideoTutorial,
   type SubscriptionPlan, type InsertSubscriptionPlan,
   type UserSubscription, type InsertUserSubscription,
+  type UserAddon, type InsertUserAddon,
   type CanvasDrawing, type InsertCanvasDrawing,
   type PhaseCard, type InsertPhaseCard,
   type Benchmark, type InsertBenchmark,
@@ -39,6 +40,7 @@ import {
   projects, empathyMaps, personas, interviews, observations,
   povStatements, hmwQuestions, ideas, prototypes, testPlans, testResults,
   userProgress, users, articles, testimonials, videoTutorials, subscriptionPlans, userSubscriptions,
+  userAddons,
   canvasDrawings, phaseCards, benchmarks, benchmarkAssessments,
   dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis,
   projectBackups, helpArticles, industrySectors, successCases, aiGeneratedAssets,
@@ -178,6 +180,14 @@ export interface IStorage {
   createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
   updateUserSubscription(id: string, subscription: Partial<InsertUserSubscription>): Promise<UserSubscription | undefined>;
   cancelUserSubscription(id: string): Promise<boolean>;
+
+  // User Add-ons
+  getUserAddons(userId: string): Promise<UserAddon[]>;
+  getActiveUserAddons(userId: string): Promise<UserAddon[]>;
+  createUserAddon(addon: InsertUserAddon): Promise<UserAddon>;
+  updateUserAddon(id: string, addon: Partial<InsertUserAddon>): Promise<UserAddon | undefined>;
+  deleteUserAddon(id: string): Promise<boolean>;
+  updateUserAddonsByStripeSubscription(stripeSubscriptionId: string, addon: Partial<InsertUserAddon>): Promise<boolean>;
 
   // Benchmarking
   getBenchmarks(projectId: string): Promise<Benchmark[]>;
@@ -1012,7 +1022,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined> {
-    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.name, name));
+    const [plan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(sql`${subscriptionPlans.name} ILIKE ${name}`)
+      .limit(1);
     return plan;
   }
 
@@ -1067,6 +1081,47 @@ export class DatabaseStorage implements IStorage {
     const result = await db.update(userSubscriptions)
       .set({ status: 'cancelled' })
       .where(eq(userSubscriptions.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // User Add-ons
+  async getUserAddons(userId: string): Promise<UserAddon[]> {
+    return await db.select().from(userAddons)
+      .where(eq(userAddons.userId, userId))
+      .orderBy(desc(userAddons.createdAt));
+  }
+
+  async getActiveUserAddons(userId: string): Promise<UserAddon[]> {
+    return await db.select().from(userAddons)
+      .where(and(
+        eq(userAddons.userId, userId),
+        eq(userAddons.status, 'active')
+      ))
+      .orderBy(desc(userAddons.createdAt));
+  }
+
+  async createUserAddon(addon: InsertUserAddon): Promise<UserAddon> {
+    const [newAddon] = await db.insert(userAddons).values(addon).returning();
+    return newAddon;
+  }
+
+  async updateUserAddon(id: string, addon: Partial<InsertUserAddon>): Promise<UserAddon | undefined> {
+    const [updatedAddon] = await db.update(userAddons)
+      .set({ ...addon, updatedAt: new Date() })
+      .where(eq(userAddons.id, id))
+      .returning();
+    return updatedAddon;
+  }
+
+  async deleteUserAddon(id: string): Promise<boolean> {
+    const result = await db.delete(userAddons).where(eq(userAddons.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async updateUserAddonsByStripeSubscription(stripeSubscriptionId: string, addon: Partial<InsertUserAddon>): Promise<boolean> {
+    const result = await db.update(userAddons)
+      .set({ ...addon, updatedAt: new Date() })
+      .where(eq(userAddons.stripeSubscriptionId, stripeSubscriptionId));
     return (result.rowCount || 0) > 0;
   }
 

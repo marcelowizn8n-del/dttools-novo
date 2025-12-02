@@ -166,7 +166,7 @@ app.use(session({
     secure: 'auto', // Use secure cookies in production
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: isProduction ? 'lax' : 'none' // Lax for production, none for development
+    sameSite: 'lax' // Lax for all environments to ensure cookies are accepted in local dev
   }
 }));
 
