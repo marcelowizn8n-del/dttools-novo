@@ -136,7 +136,14 @@ const authLimiter = rateLimit({
 });
 
 // Increase limits for image uploads (base64 encoded images can be large)
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({
+  limit: '50mb',
+  verify: (req: Request, res: Response, buf: Buffer, encoding: string) => {
+    if (req.originalUrl === '/api/stripe-webhook') {
+      (req as any).rawBody = buf;
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 // Validate required environment variables

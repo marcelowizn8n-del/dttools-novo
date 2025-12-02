@@ -278,8 +278,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (process.env.NODE_ENV === "development") {
           event = req.body as Stripe.Event;
         } else {
+          const rawBody = (req as any).rawBody ?? req.body;
           event = stripe.webhooks.constructEvent(
-            req.body,
+            rawBody,
             sig ?? "",
             process.env.STRIPE_WEBHOOK_SECRET ?? ""
           );
