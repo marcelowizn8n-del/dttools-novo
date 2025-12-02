@@ -157,10 +157,10 @@ export default function Header() {
                   size="icon"
                   className="h-9 w-9"
                   data-testid="nav-addons-compact"
-                  title="Ferramentas adicionais"
+                  title={t("nav.addons")}
                 >
                   <Sparkles className="h-4 w-4" />
-                  <span className="sr-only">Ferramentas adicionais</span>
+                  <span className="sr-only">{t("nav.addons")}</span>
                 </Button>
               </Link>
             )}
@@ -241,7 +241,7 @@ export default function Header() {
               <Link href="/addons">
                 <Button variant="ghost" className="text-sm" data-testid="nav-addons">
                   <Sparkles className="mr-1 h-4 w-4" />
-                  Ferramentas adicionais
+                  {t("nav.addons")}
                 </Button>
               </Link>
             )}

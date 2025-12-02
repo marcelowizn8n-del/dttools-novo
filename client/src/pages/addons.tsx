@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Diamond, Cpu, Users, BookOpen, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SubscriptionInfo {
   plan?: {
@@ -37,44 +38,43 @@ const ADDONS_CONFIG = [
   {
     key: "double_diamond_pro",
     field: "doubleDiamondPro" as const,
-    title: "Double Diamond Pro",
-    description:
-      "Projetos Double Diamond ilimitados e exportações liberadas para o sistema principal.",
+    titleKey: "addons.item.doubleDiamondPro.title",
+    descriptionKey: "addons.item.doubleDiamondPro.description",
     icon: Diamond,
   },
   {
     key: "export_pro",
     field: "exportPro" as const,
-    title: "Export Pro",
-    description: "Libera exportação em PDF, PNG e CSV para seus projetos.",
+    titleKey: "addons.item.exportPro.title",
+    descriptionKey: "addons.item.exportPro.description",
     icon: Sparkles,
   },
   {
     key: "ai_turbo",
     field: "aiTurbo" as const,
-    title: "IA Turbo",
-    description: "+300 mensagens de IA por mês, além do limite do seu plano.",
+    titleKey: "addons.item.aiTurbo.title",
+    descriptionKey: "addons.item.aiTurbo.description",
     icon: Cpu,
   },
   {
     key: "collab_advanced",
     field: "collabAdvanced" as const,
-    title: "Colaboração Avançada",
-    description:
-      "Colaboração em tempo real, comentários, feedbacks e workspace compartilhado.",
+    titleKey: "addons.item.collabAdvanced.title",
+    descriptionKey: "addons.item.collabAdvanced.description",
     icon: Users,
   },
   {
     key: "library_premium",
     field: "libraryPremium" as const,
-    title: "Biblioteca Premium",
-    description: "Acesso completo à biblioteca de artigos, vídeos e materiais premium.",
+    titleKey: "addons.item.libraryPremium.title",
+    descriptionKey: "addons.item.libraryPremium.description",
     icon: BookOpen,
   },
 ];
 
 export default function AddonsPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data, isLoading } = useQuery<SubscriptionInfo | null>({
     queryKey: ["/api/subscription-info"],
@@ -93,16 +93,16 @@ export default function AddonsPage() {
         window.location.href = result.url;
       } else {
         toast({
-          title: "Não foi possível iniciar o checkout",
-          description: "Verifique a configuração de pagamento do add-on.",
+          title: t("addons.toast.checkout.missingConfig.title"),
+          description: t("addons.toast.checkout.missingConfig.description"),
           variant: "destructive",
         });
       }
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao iniciar checkout",
-        description: error?.message || "Tente novamente em alguns instantes.",
+        title: t("addons.toast.checkout.error.title"),
+        description: error?.message || t("addons.toast.checkout.error.description"),
         variant: "destructive",
       });
     },
@@ -119,10 +119,10 @@ export default function AddonsPage() {
     },
     onSuccess: (result: any) => {
       toast({
-        title: "Cancelamento solicitado",
+        title: t("addons.toast.cancel.success.title"),
         description:
           result?.message ||
-          "O add-on será cancelado ao final do período atual de cobrança.",
+          t("addons.toast.cancel.success.description.default"),
       });
       // Dados serão atualizados quando o webhook do Stripe rodar;
       // ainda assim atualizamos subscription-info para refletir qualquer mudança imediata.
@@ -134,8 +134,9 @@ export default function AddonsPage() {
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao cancelar add-on",
-        description: error?.message || "Tente novamente em alguns instantes.",
+        title: t("addons.toast.cancel.error.title"),
+        description:
+          error?.message || t("addons.toast.cancel.error.description"),
         variant: "destructive",
       });
     },
@@ -160,9 +161,9 @@ export default function AddonsPage() {
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Ferramentas adicionais</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">{t("addons.header.title")}</h1>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Veja quais add-ons estão ativos na sua conta e como eles ampliam os recursos do seu plano.
+                {t("addons.header.subtitle")}
               </p>
             </div>
           </div>
@@ -172,15 +173,15 @@ export default function AddonsPage() {
         <Card className="mb-8">
           <CardHeader className="flex flex-row items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-lg">Seu plano atual</CardTitle>
+              <CardTitle className="text-lg">{t("addons.currentPlan.title")}</CardTitle>
               <CardDescription>
                 {plan ? (
                   <>
                     {plan.displayName || plan.name || "Plano atual"}
-                    {plan.priceMonthly === 0 && " (Gratuito)"}
+                    {plan.priceMonthly === 0 && ` ${t("addons.currentPlan.freeSuffix")}`}
                   </>
                 ) : (
-                  "Carregando informações do plano..."
+                  t("addons.currentPlan.loading")
                 )}
               </CardDescription>
             </div>
@@ -224,14 +225,14 @@ export default function AddonsPage() {
                       </div>
                       <div>
                         <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                          {addon.title}
+                          {t(addon.titleKey)}
                           {isActive ? (
                             <Badge variant="default" className="bg-green-500 text-white flex items-center gap-1">
-                              <CheckCircle2 className="h-3 w-3" /> Ativo
+                              <CheckCircle2 className="h-3 w-3" /> {t("addons.status.active")}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="flex items-center gap-1">
-                              <XCircle className="h-3 w-3" /> Não ativo
+                              <XCircle className="h-3 w-3" /> {t("addons.status.inactive")}
                             </Badge>
                           )}
                         </CardTitle>
@@ -239,7 +240,7 @@ export default function AddonsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col justify-between pt-0 space-y-4">
-                    <p className="text-sm text-muted-foreground mb-2">{addon.description}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t(addon.descriptionKey)}</p>
 
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-xs text-muted-foreground max-w-xs sm:max-w-[220px]">
@@ -263,7 +264,7 @@ export default function AddonsPage() {
                         {isActive ? (
                           <>
                             <Button variant="outline" size="sm" disabled>
-                              Ativo
+                              {t("addons.status.active")}
                             </Button>
                             <Button
                               variant="ghost"
@@ -274,8 +275,8 @@ export default function AddonsPage() {
                               disabled={cancelAddonSubscription.isPending}
                             >
                               {cancelAddonSubscription.isPending
-                                ? "Cancelando..."
-                                : "Cancelar add-on"}
+                                ? t("addons.button.canceling")
+                                : t("addons.button.cancel")}
                             </Button>
                           </>
                         ) : (
@@ -284,7 +285,7 @@ export default function AddonsPage() {
                             onClick={() => createAddonCheckout.mutate({ addonKey: addon.key })}
                             disabled={createAddonCheckout.isPending}
                           >
-                            Ativar via Stripe
+                            {t("addons.button.activate")}
                           </Button>
                         )}
                       </div>
