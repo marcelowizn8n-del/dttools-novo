@@ -39,7 +39,8 @@ import {
   insertSuccessCaseSchema,
   insertAiGeneratedAssetSchema,
   insertDoubleDiamondProjectSchema,
-  doubleDiamondExports
+  doubleDiamondExports,
+  insertGuidingCriterionSchema
 } from "../shared/schema";
 import bcrypt from "bcrypt";
 import Stripe from "stripe";
@@ -1354,6 +1355,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete HMW question" });
+    }
+  });
+
+  // Phase 2: Define - Guiding Criteria (Critérios Norteadores)
+  app.get("/api/projects/:projectId/guiding-criteria", requireAuth, async (req, res) => {
+    try {
+      const criteria = await storage.getGuidingCriteria(req.params.projectId);
+      res.json(criteria);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch guiding criteria" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/guiding-criteria", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertGuidingCriterionSchema.parse({
+        ...req.body,
+        projectId: req.params.projectId,
+      });
+      const criterion = await storage.createGuidingCriterion(validatedData);
+      res.status(201).json(criterion);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid guiding criterion data" });
+    }
+  });
+
+  app.put("/api/guiding-criteria/:id", requireAuth, async (req, res) => {
+    try {
+      const existing = await storage.getGuidingCriterion(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+
+      const validatedData = insertGuidingCriterionSchema
+        .omit({ projectId: true })
+        .partial()
+        .parse(req.body);
+
+      const criterion = await storage.updateGuidingCriterion(req.params.id, validatedData);
+      if (!criterion) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+      res.json(criterion);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid guiding criterion data" });
+    }
+  });
+
+  app.delete("/api/guiding-criteria/:id", requireAuth, async (req, res) => {
+    try {
+      const existing = await storage.getGuidingCriterion(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+
+      const success = await storage.deleteGuidingCriterion(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete guiding criterion" });
     }
   });
 
@@ -3185,6 +3248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         testResults.push(...results);
       }
 
+      const guidingCriteria = await storage.getGuidingCriteria(projectId);
+
       const analysisData = {
         project,
         empathyMaps,
@@ -3196,7 +3261,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ideas,
         prototypes,
         testPlans,
-        testResults
+        testResults,
+        guidingCriteria,
+        language: (req.body as any)?.language,
       };
 
       const analysis = await designThinkingAI.analyzeCompleteProject(analysisData);
@@ -3663,19 +3730,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting lovability metric:", error);
       res.status(500).json({ error: "Failed to delete lovability metric" });
-    }
-  });
-
-  // Project Analytics Routes
-  // GET /api/project-analytics/:projectId
-  app.get("/api/project-analytics/:projectId", requireAuth, async (req, res) => {
-    try {
-      const { projectId } = req.params;
-      const analytics = await storage.getProjectAnalytics(projectId);
-      res.json(analytics);
-    } catch (error) {
-      console.error("Error fetching project analytics:", error);
-      res.status(500).json({ error: "Failed to fetch project analytics" });
     }
   });
 

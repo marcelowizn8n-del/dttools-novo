@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertIdeaSchema, type Idea, type InsertIdea } from "@shared/schema";
+import { insertIdeaSchema, type Idea, type InsertIdea, type GuidingCriterion } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Filter } from "lucide-react";
 
 interface EditIdeaDialogProps {
   idea: Idea;
@@ -26,10 +28,15 @@ interface IdeaFormData {
   feasibility?: number;
   impact?: number;
   status: string;
+  guidingCriteriaIds?: string[];
 }
 
 export default function EditIdeaDialog({ idea, projectId, isOpen, onOpenChange }: EditIdeaDialogProps) {
   const { toast } = useToast();
+
+  const { data: criteria } = useQuery<GuidingCriterion[]>({
+    queryKey: ["/api/projects", projectId, "guiding-criteria"],
+  });
 
   const form = useForm<IdeaFormData>({
     resolver: zodResolver(insertIdeaSchema.pick({
@@ -39,6 +46,7 @@ export default function EditIdeaDialog({ idea, projectId, isOpen, onOpenChange }
       feasibility: true,
       impact: true,
       status: true,
+      guidingCriteriaIds: true,
     })),
     defaultValues: {
       title: idea.title || "",
@@ -47,6 +55,7 @@ export default function EditIdeaDialog({ idea, projectId, isOpen, onOpenChange }
       feasibility: idea.feasibility || undefined,
       impact: idea.impact || undefined,
       status: idea.status || "idea",
+      guidingCriteriaIds: (idea as any).guidingCriteriaIds || [],
     },
   });
 
@@ -106,6 +115,55 @@ export default function EditIdeaDialog({ idea, projectId, isOpen, onOpenChange }
                 </FormItem>
               )}
             />
+
+            {criteria && criteria.length > 0 && (
+              <FormField
+                control={form.control}
+                name="guidingCriteriaIds"
+                render={({ field }) => {
+                  const value: string[] = Array.isArray(field.value) ? field.value : [];
+
+                  const toggleId = (id: string) => {
+                    if (value.includes(id)) {
+                      field.onChange(value.filter((v) => v !== id));
+                    } else {
+                      field.onChange([...value, id]);
+                    }
+                  };
+
+                  return (
+                    <FormItem>
+                      <div className="flex items-center justify-between mb-1">
+                        <FormLabel className="text-sm font-medium flex items-center gap-2">
+                          <Filter className="w-4 h-4 text-blue-600" />
+                          Critérios norteadores relacionados (opcional)
+                        </FormLabel>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-2">
+                        Atualize a ligação desta ideia com os critérios definidos na Fase 2.
+                      </p>
+                      <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-blue-100 rounded-md p-2 bg-white">
+                        {criteria.map((criterion) => (
+                          <label
+                            key={criterion.id}
+                            className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none"
+                          >
+                            <Checkbox
+                              checked={value.includes(criterion.id)}
+                              onCheckedChange={() => toggleId(criterion.id)}
+                            />
+                            <span className="max-w-xs truncate" title={criterion.title}>
+                              {criterion.title}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            )}
 
             <FormField
               control={form.control}

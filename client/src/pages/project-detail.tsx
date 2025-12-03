@@ -1,7 +1,7 @@
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Users, Target, Lightbulb, Wrench, TestTube, Calendar, BarChart3, Brain, Columns3, Edit2, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, Target, Lightbulb, Wrench, TestTube, Calendar, BarChart3, Brain, Columns3, Edit2, FileText, Loader2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import type { Project, DvfAssessment } from "@shared/schema";
+import type { Project, DvfAssessment, GuidingCriterion } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import TeamManagement from "@/components/TeamManagement";
 import Phase1Tools from "@/components/phase1/Phase1Tools";
@@ -180,6 +180,86 @@ function EditProjectDialog({ project, projectId }: { project: Project; projectId
         </Form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function GuidingCriteriaSummaryCard({ projectId }: { projectId: string }) {
+  const { data: criteria, isLoading, isError } = useQuery<GuidingCriterion[]>({
+    queryKey: ["/api/projects", projectId, "guiding-criteria"],
+    enabled: !!projectId,
+  });
+
+  if (isLoading || isError || !criteria || criteria.length === 0) {
+    return null;
+  }
+
+  const topCriteria = criteria.slice(0, 3);
+
+  const importanceClass = (importance: string | null | undefined) => {
+    if (importance === "high") return "bg-red-100 text-red-800";
+    if (importance === "low") return "bg-gray-100 text-gray-800";
+    return "bg-blue-100 text-blue-800";
+  };
+
+  const importanceLabel = (importance: string | null | undefined) => {
+    if (importance === "high") return "Alta importância";
+    if (importance === "low") return "Baixa importância";
+    return "Importância média";
+  };
+
+  return (
+    <Card className="mt-4">
+      <CardHeader className="pb-3 flex items-start gap-3">
+        <div className="p-2 rounded-full bg-blue-100 text-blue-700">
+          <Filter className="w-4 h-4" />
+        </div>
+        <div className="flex-1">
+          <CardTitle className="text-base font-semibold text-gray-900">
+            Critérios norteadores do projeto
+          </CardTitle>
+          <CardDescription className="text-sm text-gray-600">
+            Principais princípios que devem orientar decisões nas próximas fases.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {topCriteria.map((criterion) => (
+          <div key={criterion.id} className="flex items-start gap-3">
+            <div>
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${importanceClass(
+                  criterion.importance
+                )}`}
+              >
+                {importanceLabel(criterion.importance)}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm text-gray-900 truncate" title={criterion.title}>
+                  {criterion.title}
+                </span>
+                {criterion.category && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
+                    {criterion.category}
+                  </span>
+                )}
+              </div>
+              {criterion.description && (
+                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                  {criterion.description}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+        {criteria.length > 3 && (
+          <p className="text-xs text-gray-500 mt-1">
+            +{criteria.length - 3} critérios adicionais disponíveis na Fase 2.
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -563,6 +643,8 @@ export default function ProjectDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        <GuidingCriteriaSummaryCard projectId={project.id} />
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="phases" className="space-y-6">

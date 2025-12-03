@@ -19,6 +19,7 @@ import {
   type UserSubscription, type InsertUserSubscription,
   type UserAddon, type InsertUserAddon,
   type CanvasDrawing, type InsertCanvasDrawing,
+  type GuidingCriterion, type InsertGuidingCriterion,
   type PhaseCard, type InsertPhaseCard,
   type Benchmark, type InsertBenchmark,
   type BenchmarkAssessment, type InsertBenchmarkAssessment,
@@ -42,7 +43,7 @@ import {
   userProgress, users, articles, testimonials, videoTutorials, subscriptionPlans, userSubscriptions,
   userAddons,
   canvasDrawings, phaseCards, benchmarks, benchmarkAssessments,
-  dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis,
+  dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, guidingCriteria,
   projectBackups, helpArticles, industrySectors, successCases, aiGeneratedAssets,
   analyticsEvents, projectMembers, projectInvites, projectComments, 
   doubleDiamondProjects, doubleDiamondExports
@@ -94,6 +95,12 @@ export interface IStorage {
   createHmwQuestion(hmw: InsertHmwQuestion): Promise<HmwQuestion>;
   updateHmwQuestion(id: string, hmw: Partial<InsertHmwQuestion>): Promise<HmwQuestion | undefined>;
   deleteHmwQuestion(id: string): Promise<boolean>;
+
+  getGuidingCriteria(projectId: string): Promise<GuidingCriterion[]>;
+  getGuidingCriterion(id: string): Promise<GuidingCriterion | undefined>;
+  createGuidingCriterion(criterion: InsertGuidingCriterion): Promise<GuidingCriterion>;
+  updateGuidingCriterion(id: string, criterion: Partial<InsertGuidingCriterion>): Promise<GuidingCriterion | undefined>;
+  deleteGuidingCriterion(id: string): Promise<boolean>;
 
   // Phase 3: Ideate
   getIdeas(projectId: string): Promise<Idea[]>;
@@ -389,6 +396,9 @@ export class DatabaseStorage implements IStorage {
     
     // Delete HMW questions
     await deleteTable('hmwQuestions', () => db.delete(hmwQuestions).where(eq(hmwQuestions.projectId, id)));
+
+    // Delete guiding criteria
+    await deleteTable('guidingCriteria', () => db.delete(guidingCriteria).where(eq(guidingCriteria.projectId, id)));
     
     // Delete ideas
     await deleteTable('ideas', () => db.delete(ideas).where(eq(ideas.projectId, id)));
@@ -565,6 +575,7 @@ export class DatabaseStorage implements IStorage {
           try { await db.delete(observations).where(eq(observations.projectId, projectId)); } catch (e) {}
           try { await db.delete(povStatements).where(eq(povStatements.projectId, projectId)); } catch (e) {}
           try { await db.delete(hmwQuestions).where(eq(hmwQuestions.projectId, projectId)); } catch (e) {}
+          try { await db.delete(guidingCriteria).where(eq(guidingCriteria.projectId, projectId)); } catch (e) {}
           try { await db.delete(ideas).where(eq(ideas.projectId, projectId)); } catch (e) {}
           try { await db.delete(prototypes).where(eq(prototypes.projectId, projectId)); } catch (e) {}
           try { await db.delete(testPlans).where(eq(testPlans.projectId, projectId)); } catch (e) {}
@@ -829,6 +840,35 @@ export class DatabaseStorage implements IStorage {
 
   async deleteHmwQuestion(id: string): Promise<boolean> {
     const result = await db.delete(hmwQuestions).where(eq(hmwQuestions.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getGuidingCriteria(projectId: string): Promise<GuidingCriterion[]> {
+    return await db.select().from(guidingCriteria)
+      .where(eq(guidingCriteria.projectId, projectId))
+      .orderBy(desc(guidingCriteria.createdAt));
+  }
+
+  async getGuidingCriterion(id: string): Promise<GuidingCriterion | undefined> {
+    const [criterion] = await db.select().from(guidingCriteria).where(eq(guidingCriteria.id, id));
+    return criterion;
+  }
+
+  async createGuidingCriterion(criterion: InsertGuidingCriterion): Promise<GuidingCriterion> {
+    const [newCriterion] = await db.insert(guidingCriteria).values(criterion).returning();
+    return newCriterion;
+  }
+
+  async updateGuidingCriterion(id: string, criterion: Partial<InsertGuidingCriterion>): Promise<GuidingCriterion | undefined> {
+    const [updatedCriterion] = await db.update(guidingCriteria)
+      .set({ ...criterion, updatedAt: new Date() })
+      .where(eq(guidingCriteria.id, id))
+      .returning();
+    return updatedCriterion;
+  }
+
+  async deleteGuidingCriterion(id: string): Promise<boolean> {
+    const result = await db.delete(guidingCriteria).where(eq(guidingCriteria.id, id));
     return (result.rowCount || 0) > 0;
   }
 

@@ -176,6 +176,8 @@ export const ideas = pgTable("ideas", {
   iterationNotes: text("iteration_notes"), // Notes for "change_it" decisions
   status: text("status").default("idea"), // idea, selected, prototype, tested
   canvasData: jsonb("canvas_data"), // Fabric.js canvas data for drawings/sketches
+  // Linked Guiding Criteria (Phase 2) - store array of guiding_criteria IDs
+  guidingCriteriaIds: jsonb("guiding_criteria_ids").default([]),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -620,6 +622,9 @@ export type InsertUserAddon = z.infer<typeof insertUserAddonSchema>;
 export type CanvasDrawing = typeof canvasDrawings.$inferSelect;
 export type InsertCanvasDrawing = z.infer<typeof insertCanvasDrawingSchema>;
 
+export type GuidingCriterion = typeof guidingCriteria.$inferSelect;
+export type InsertGuidingCriterion = z.infer<typeof insertGuidingCriterionSchema>;
+
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 
 // AI Analysis Types
@@ -635,6 +640,8 @@ export interface ProjectAnalysisData {
   prototypes: Prototype[];
   testPlans: TestPlan[];
   testResults: TestResult[];
+  guidingCriteria: GuidingCriterion[];
+  language?: string;
 }
 
 export interface PhaseAnalysis {
@@ -671,6 +678,26 @@ export interface AIProjectAnalysis {
     longTerm: string[];
   };
 }
+
+// Phase 2: Define - Guiding Criteria (Critérios Norteadores)
+export const guidingCriteria = pgTable("guiding_criteria", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category"),
+  importance: text("importance").default("medium"),
+  tags: jsonb("tags").default([]),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const insertGuidingCriterionSchema = createInsertSchema(guidingCriteria).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 // Kanban Phase Cards - Cards that can move between project phases
 export const phaseCards = pgTable("phase_cards", {

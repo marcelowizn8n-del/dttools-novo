@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Edit2, Trash2, Lightbulb, ThumbsUp, Star, TrendingUp, Tag, AlertTriangle } from "lucide-react";
+import { Plus, Edit2, Trash2, Lightbulb, ThumbsUp, Star, TrendingUp, Tag, AlertTriangle, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,16 +13,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertIdeaSchema, type Idea, type InsertIdea } from "@shared/schema";
+import { insertIdeaSchema, type Idea, type InsertIdea, type GuidingCriterion } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import EditIdeaDialog from "./EditIdeaDialog";
 import { ContextualTooltip } from "@/components/ui/contextual-tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface IdeaToolProps {
   projectId: string;
 }
 
-function IdeaCard({ idea, projectId }: { idea: Idea; projectId: string }) {
+function IdeaCard({ idea, projectId, criteria }: { idea: Idea; projectId: string; criteria?: GuidingCriterion[] }) {
   const { toast } = useToast();
   const [isVoting, setIsVoting] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -91,6 +92,12 @@ function IdeaCard({ idea, projectId }: { idea: Idea; projectId: string }) {
     prototype: "Protótipo",
     tested: "Testada"
   };
+
+  const linkedCriteria = Array.isArray((idea as any).guidingCriteriaIds)
+    ? (criteria || []).filter((criterion) =>
+        ((idea as any).guidingCriteriaIds as string[]).includes(criterion.id)
+      )
+    : [];
 
   return (
     <Card className="w-full" data-testid={`card-idea-${idea.id}`}>
@@ -183,6 +190,26 @@ function IdeaCard({ idea, projectId }: { idea: Idea; projectId: string }) {
             {idea.description}
           </p>
         </div>
+
+        {linkedCriteria.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <h4 className="font-medium text-xs text-gray-700 mb-2 flex items-center gap-2">
+              <Filter className="w-3 h-3 text-blue-600" />
+              Critérios norteadores relacionados
+            </h4>
+            <div className="flex flex-wrap gap-1">
+              {linkedCriteria.map((criterion) => (
+                <Badge
+                  key={criterion.id}
+                  variant="secondary"
+                  className="text-[10px] max-w-[10rem] truncate"
+                >
+                  {criterion.title}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* DVF Analysis Section */}
         {(idea.desirability || idea.viability || idea.feasibility || idea.dvfScore) && (
@@ -331,6 +358,10 @@ function CreateIdeaDialog({ projectId }: { projectId: string }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
+  const { data: criteria } = useQuery<GuidingCriterion[]>({
+    queryKey: ["/api/projects", projectId, "guiding-criteria"],
+  });
+
   const form = useForm<Omit<InsertIdea, 'projectId'>>({
     resolver: zodResolver(insertIdeaSchema.omit({ 
       projectId: true,
@@ -353,6 +384,7 @@ function CreateIdeaDialog({ projectId }: { projectId: string }) {
       priorityRank: undefined,
       iterationNotes: "",
       status: "idea",
+      guidingCriteriaIds: [],
     },
   });
 
@@ -444,6 +476,55 @@ function CreateIdeaDialog({ projectId }: { projectId: string }) {
                 </FormItem>
               )}
             />
+
+            {criteria && criteria.length > 0 && (
+              <FormField
+                control={form.control}
+                name="guidingCriteriaIds"
+                render={({ field }) => {
+                  const value: string[] = Array.isArray(field.value) ? field.value : [];
+
+                  const toggleId = (id: string) => {
+                    if (value.includes(id)) {
+                      field.onChange(value.filter((v) => v !== id));
+                    } else {
+                      field.onChange([...value, id]);
+                    }
+                  };
+
+                  return (
+                    <FormItem>
+                      <div className="flex items-center justify-between mb-1">
+                        <FormLabel className="text-sm font-medium flex items-center gap-2">
+                          <Filter className="w-4 h-4 text-blue-600" />
+                          Critérios norteadores relacionados (opcional)
+                        </FormLabel>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-2">
+                        Marque quais critérios da Fase 2 esta ideia ajuda a atender. Isso facilita priorização e análise.
+                      </p>
+                      <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-blue-100 rounded-md p-2 bg-white">
+                        {criteria.map((criterion) => (
+                          <label
+                            key={criterion.id}
+                            className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none"
+                          >
+                            <Checkbox
+                              checked={value.includes(criterion.id)}
+                              onCheckedChange={(checked) => toggleId(criterion.id)}
+                            />
+                            <span className="max-w-xs truncate" title={criterion.title}>
+                              {criterion.title}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -754,6 +835,26 @@ export default function IdeaTool({ projectId }: IdeaToolProps) {
     queryKey: ["/api/projects", projectId, "ideas"],
   });
 
+  const { data: criteria } = useQuery<GuidingCriterion[]>({
+    queryKey: ["/api/projects", projectId, "guiding-criteria"],
+  });
+
+  const [selectedCriteriaFilterIds, setSelectedCriteriaFilterIds] = useState<string[]>([]);
+
+  const toggleFilterCriterion = (id: string) => {
+    setSelectedCriteriaFilterIds((current) =>
+      current.includes(id) ? current.filter((v) => v !== id) : [...current, id]
+    );
+  };
+
+  const filteredIdeas = (ideas || []).filter((idea) => {
+    if (selectedCriteriaFilterIds.length === 0) return true;
+    const ideaCriteria: string[] = Array.isArray((idea as any).guidingCriteriaIds)
+      ? ((idea as any).guidingCriteriaIds as string[])
+      : [];
+    return ideaCriteria.some((id) => selectedCriteriaFilterIds.includes(id));
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -807,26 +908,85 @@ export default function IdeaTool({ projectId }: IdeaToolProps) {
         <CreateIdeaDialog projectId={projectId} />
       </div>
 
-      {ideas && ideas.length > 0 ? (
+      {criteria && criteria.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-semibold text-gray-900">
+                Critérios norteadores (da Fase 2)
+              </h3>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600 mb-3">
+            Use estes critérios como filtros para avaliar, combinar e priorizar as ideias geradas aqui.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {criteria.map((criterion) => {
+              const isSelected = selectedCriteriaFilterIds.includes(criterion.id);
+              return (
+                <Badge
+                  key={criterion.id}
+                  variant={isSelected ? "default" : "secondary"}
+                  className={`text-xs max-w-xs truncate cursor-pointer ${
+                    isSelected ? "bg-blue-600 text-white" : ""
+                  }`}
+                  onClick={() => toggleFilterCriterion(criterion.id)}
+                >
+                  {criterion.title}
+                </Badge>
+              );
+            })}
+            {selectedCriteriaFilterIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedCriteriaFilterIds([])}
+                className="text-xs text-blue-700 underline ml-2"
+              >
+                Limpar filtros
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {filteredIdeas.length > 0 ? (
         <div className="grid gap-6">
-          {ideas
+          {filteredIdeas
             .sort((a, b) => (b.votes || 0) - (a.votes || 0)) // Sort by votes descending
             .map((idea: Idea) => (
             <IdeaCard
               key={idea.id}
               idea={idea}
               projectId={projectId}
+              criteria={criteria}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
           <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma ideia cadastrada</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {ideas && ideas.length > 0 && selectedCriteriaFilterIds.length > 0
+              ? "Nenhuma ideia corresponde aos critérios selecionados"
+              : "Nenhuma ideia cadastrada"}
+          </h3>
           <p className="text-gray-600 mb-6">
-            Comece gerando suas primeiras ideias para resolver os problemas identificados nas fases anteriores.
+            {ideas && ideas.length > 0 && selectedCriteriaFilterIds.length > 0
+              ? "Ajuste ou limpe os filtros de critérios para ver outras ideias."
+              : "Comece gerando suas primeiras ideias para resolver os problemas identificados nas fases anteriores."}
           </p>
-          <CreateIdeaDialog projectId={projectId} />
+          {ideas && ideas.length > 0 && selectedCriteriaFilterIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedCriteriaFilterIds([])}
+              className="text-sm text-blue-700 underline"
+            >
+              Limpar filtros
+            </button>
+          ) : (
+            <CreateIdeaDialog projectId={projectId} />
+          )}
         </div>
       )}
     </div>

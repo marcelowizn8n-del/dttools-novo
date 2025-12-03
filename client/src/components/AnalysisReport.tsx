@@ -25,7 +25,7 @@ import {
   Zap,
   AlertCircle
 } from "lucide-react";
-import type { AIProjectAnalysis, Project } from "@shared/schema";
+import type { AIProjectAnalysis, Project, Idea, GuidingCriterion } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -54,7 +54,7 @@ const phaseColors = {
 
 export default function AnalysisReport({ projectId, onExportPDF }: AnalysisReportProps) {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [analysis, setAnalysis] = useState<AIProjectAnalysis | null>(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
@@ -67,23 +67,32 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
     },
   });
 
+  // Fetch ideas and guiding criteria for alignment matrix visualization
+  const { data: ideas } = useQuery<Idea[]>({
+    queryKey: ["/api/projects", projectId, "ideas"],
+  });
+
+  const { data: guidingCriteria } = useQuery<GuidingCriterion[]>({
+    queryKey: ["/api/projects", projectId, "guiding-criteria"],
+  });
+
   const generateAnalysis = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", `/api/projects/${projectId}/ai-analysis`, {});
+      const response = await apiRequest("POST", `/api/projects/${projectId}/ai-analysis`, { language });
       return await response.json();
     },
     onSuccess: (data: AIProjectAnalysis) => {
       setAnalysis(data);
       toast({
-        title: "Análise IA Gerada",
-        description: "A análise inteligente do seu projeto foi gerada com sucesso.",
+        title: t("analysis.toast.generated.title"),
+        description: t("analysis.toast.generated.description"),
       });
     },
     onError: (error) => {
       console.error('Error generating analysis:', error);
       toast({
-        title: "Erro na Análise",
-        description: "Não foi possível gerar a análise IA. Tente novamente.",
+        title: t("analysis.toast.error.title"),
+        description: t("analysis.toast.error.description"),
         variant: "destructive",
       });
     },
@@ -97,10 +106,10 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
   };
 
   const getQualityLabel = (score: number) => {
-    if (score >= 80) return "Excelente";
-    if (score >= 60) return "Bom";
-    if (score >= 40) return "Regular";
-    return "Needs Improvement";
+    if (score >= 80) return t("analysis.qualityLabel.excellent");
+    if (score >= 60) return t("analysis.qualityLabel.good");
+    if (score >= 40) return t("analysis.qualityLabel.fair");
+    return t("analysis.qualityLabel.needsImprovement");
   };
 
   const handleGenerateAnalysis = () => {
@@ -110,8 +119,8 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
   const handleExportPDF = async () => {
     if (!analysis || !project) {
       toast({
-        title: "Erro",
-        description: "Dados insuficientes para gerar PDF.",
+        title: t("analysis.toast.pdf.error.title"),
+        description: t("analysis.toast.pdf.error.description"),
         variant: "destructive",
       });
       return;
@@ -138,8 +147,8 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
       URL.revokeObjectURL(pdfUrl);
       
       toast({
-        title: "PDF Gerado",
-        description: "O relatório da análise IA foi baixado com sucesso.",
+        title: t("analysis.toast.pdf.success.title"),
+        description: t("analysis.toast.pdf.success.description"),
       });
 
       // Call external callback if provided
@@ -149,8 +158,8 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
-        title: "Erro no PDF",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
+        title: t("analysis.toast.pdf.error.title"),
+        description: t("analysis.toast.pdf.error.description"),
         variant: "destructive",
       });
     } finally {
@@ -195,9 +204,9 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">Análise Inteligente IA</CardTitle>
+                <CardTitle className="text-xl">{t("analysis.header.title")}</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Análise abrangente do seu projeto de Design Thinking
+                  {t("analysis.header.subtitle")}
                 </p>
               </div>
             </div>
@@ -209,11 +218,10 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
               <Brain className="w-10 h-10 text-purple-600" />
             </div>
             <h3 className="text-lg font-semibold mb-2">
-              Gere uma Análise IA Completa
+              {t("analysis.empty.title")}
             </h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Nossa IA especializada analisará todo o seu projeto de Design Thinking, identificando 
-              pontos fortes, oportunidades de melhoria e próximos passos recomendados.
+              {t("analysis.empty.description")}
             </p>
             <Button 
               onClick={handleGenerateAnalysis}
@@ -222,7 +230,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
               data-testid="button-generate-analysis"
             >
               <Brain className="w-4 h-4 mr-2" />
-              Gerar Análise IA
+              {t("analysis.empty.button.generate")}
             </Button>
           </div>
           
@@ -231,27 +239,27 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <TrendingUp className="w-6 h-6 text-blue-600" />
               </div>
-              <h4 className="font-medium mb-2">Score de Maturidade</h4>
+              <h4 className="font-medium mb-2">{t("analysis.empty.card.maturity.title")}</h4>
               <p className="text-sm text-muted-foreground">
-                Avaliação geral do projeto (1-10)
+                {t("analysis.empty.card.maturity.description")}
               </p>
             </div>
             <div className="text-center p-4">
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <AlertTriangle className="w-6 h-6 text-yellow-600" />
               </div>
-              <h4 className="font-medium mb-2">Pontos de Atenção</h4>
+              <h4 className="font-medium mb-2">{t("analysis.empty.card.attention.title")}</h4>
               <p className="text-sm text-muted-foreground">
-                Áreas que precisam de melhorias
+                {t("analysis.empty.card.attention.description")}
               </p>
             </div>
             <div className="text-center p-4">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <ClipboardList className="w-6 h-6 text-green-600" />
               </div>
-              <h4 className="font-medium mb-2">Recomendações</h4>
+              <h4 className="font-medium mb-2">{t("analysis.empty.card.recommendations.title")}</h4>
               <p className="text-sm text-muted-foreground">
-                Próximos passos prioritários
+                {t("analysis.empty.card.recommendations.description")}
               </p>
             </div>
           </div>
@@ -261,6 +269,32 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
   }
 
   // Analysis results display
+  const ideaList: Idea[] = (ideas || []) as Idea[];
+  const criteriaList: GuidingCriterion[] = (guidingCriteria || []) as GuidingCriterion[];
+
+  const alignmentRows = criteriaList.map((criterion) => {
+    const linkedIdeas = ideaList.filter((idea) => {
+      const ideaCriteriaIds: string[] = Array.isArray((idea as any).guidingCriteriaIds)
+        ? ((idea as any).guidingCriteriaIds as string[])
+        : [];
+      return ideaCriteriaIds.includes(criterion.id);
+    });
+
+    let coverageLevel: "none" | "low" | "high" = "none";
+    if (linkedIdeas.length === 0) {
+      coverageLevel = "none";
+    } else if (linkedIdeas.length === 1) {
+      coverageLevel = "low";
+    } else {
+      coverageLevel = "high";
+    }
+
+    return { criterion, linkedIdeas, coverageLevel };
+  });
+
+  const totalCriteriaCount = criteriaList.length;
+  const coveredCriteriaCount = alignmentRows.filter((row) => row.linkedIdeas.length > 0).length;
+
   const maturityColors = getMaturityColor(analysis.maturityScore ?? 0);
 
   return (
@@ -274,9 +308,9 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">Análise Inteligente IA</CardTitle>
+                <CardTitle className="text-xl">{t("analysis.header.title")}</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Análise gerada em {new Date().toLocaleDateString('pt-BR')}
+                  {t("analysis.header.generatedAt", { date: new Date().toLocaleDateString() })}
                 </p>
               </div>
             </div>
@@ -289,7 +323,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                 className="w-full sm:w-auto"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Reagerar
+                {t("analysis.actions.regenerate")}
               </Button>
               <Button 
                 onClick={handleExportPDF}
@@ -298,7 +332,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                 className="w-full sm:w-auto"
               >
                 <Download className="w-4 h-4 mr-2" />
-                {isExportingPDF ? "Gerando PDF..." : "Exportar PDF"}
+                {isExportingPDF ? t("analysis.actions.exportPdf.loading") : t("analysis.actions.exportPdf.label")}
               </Button>
             </div>
           </div>
@@ -310,12 +344,12 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
         <CardHeader>
           <CardTitle className="flex items-center">
             <ClipboardList className="w-5 h-5 mr-2" />
-            Resumo Executivo
+            {t("analysis.section.executiveSummary")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground leading-relaxed" data-testid="text-executive-summary">
-            {analysis.executiveSummary || 'Análise não disponível no momento.'}
+            {analysis.executiveSummary || t("analysis.fallback.noData")}
           </p>
         </CardContent>
       </Card>
@@ -326,7 +360,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
           <CardHeader>
             <CardTitle className="flex items-center">
               <Star className="w-5 h-5 mr-2" />
-              Score de Maturidade
+              {t("analysis.section.maturityScore")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -342,9 +376,13 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                 data-testid="progress-maturity"
               />
               <p className={`text-sm mt-2 font-medium ${maturityColors.text}`}>
-                {(analysis.maturityScore ?? 0) >= 8 ? 'Projeto Maduro' : 
-                 (analysis.maturityScore ?? 0) >= 6 ? 'Projeto Desenvolvido' :
-                 (analysis.maturityScore ?? 0) >= 4 ? 'Projeto em Desenvolvimento' : 'Projeto Inicial'}
+                {(analysis.maturityScore ?? 0) >= 8
+                  ? t("analysis.maturity.label.mature")
+                  : (analysis.maturityScore ?? 0) >= 6
+                  ? t("analysis.maturity.label.developed")
+                  : (analysis.maturityScore ?? 0) >= 4
+                  ? t("analysis.maturity.label.developing")
+                  : t("analysis.maturity.label.initial")}
               </p>
             </div>
           </CardContent>
@@ -354,13 +392,13 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
           <CardHeader>
             <CardTitle className="flex items-center">
               <CheckCircle2 className="w-5 h-5 mr-2" />
-              Consistência
+              {t("analysis.section.consistency")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Score Geral</span>
+                <span className="text-sm font-medium">{t("analysis.consistency.overallScore")}</span>
                 <Badge variant="secondary" data-testid="badge-consistency-score">
                   {analysis.consistency?.score ?? 0}%
                 </Badge>
@@ -386,14 +424,14 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
           <CardHeader>
             <CardTitle className="flex items-center">
               <Target className="w-5 h-5 mr-2" />
-              Alinhamento
+              {t("analysis.section.alignment")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">Problema-Solução</span>
+                  <span className="text-sm">{t("analysis.alignment.problemSolution")}</span>
                   <span className="text-sm font-medium" data-testid="text-problem-solution-alignment">
                     {analysis.alignment?.problemSolutionAlignment ?? 0}%
                   </span>
@@ -406,7 +444,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">Research-Insights</span>
+                  <span className="text-sm">{t("analysis.alignment.researchInsights")}</span>
                   <span className="text-sm font-medium" data-testid="text-research-insights-alignment">
                     {analysis.alignment?.researchInsightsAlignment ?? 0}%
                   </span>
@@ -422,12 +460,122 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
         </Card>
       </div>
 
+      {criteriaList.length > 0 && (
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center">
+                <Target className="w-5 h-5 mr-2" />
+                {t("analysis.alignmentMatrix.title")}
+              </span>
+              {totalCriteriaCount > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {t("analysis.alignmentMatrix.summary", {
+                    covered: String(coveredCriteriaCount),
+                    total: String(totalCriteriaCount),
+                  })}
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {ideaList.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t("analysis.alignmentMatrix.noIdeas")}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground mb-2">
+                  {t("analysis.alignmentMatrix.legend.main")}
+                  <span className="ml-1 inline-flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-red-200 border border-red-300" />
+                    {t("analysis.alignmentMatrix.legend.none")}
+                  </span>
+                  <span className="ml-2 inline-flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-amber-200 border border-amber-300" />
+                    {t("analysis.alignmentMatrix.legend.low")}
+                  </span>
+                  <span className="ml-2 inline-flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-emerald-200 border border-emerald-300" />
+                    {t("analysis.alignmentMatrix.legend.high")}
+                  </span>
+                </p>
+                <div className="space-y-2 max-h-96 overflow-auto pr-1">
+                  {alignmentRows.map((row) => {
+                    const baseClasses =
+                      row.coverageLevel === "none"
+                        ? "border-red-200 bg-red-50/60"
+                        : row.coverageLevel === "low"
+                        ? "border-amber-200 bg-amber-50/60"
+                        : "border-emerald-200 bg-emerald-50/60";
+
+                    const pillsText =
+                      row.coverageLevel === "none"
+                        ? t("analysis.alignmentMatrix.badge.none")
+                        : row.linkedIdeas.length === 1
+                        ? t("analysis.alignmentMatrix.badge.oneIdea")
+                        : t("analysis.alignmentMatrix.badge.manyIdeas", {
+                            count: String(row.linkedIdeas.length),
+                          });
+
+                    return (
+                      <div
+                        key={row.criterion.id}
+                        className={`rounded-lg border px-3 py-2 text-xs sm:text-sm ${baseClasses}`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-1">
+                          <div className="font-medium truncate" title={row.criterion.title}>
+                            {row.criterion.title}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {row.criterion.category && (
+                              <Badge variant="outline" className="text-[10px] sm:text-xs">
+                                {row.criterion.category}
+                              </Badge>
+                            )}
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] sm:text-xs"
+                              data-testid={`badge-criteria-coverage-${row.criterion.id}`}
+                            >
+                              {pillsText}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {row.linkedIdeas.length > 0 ? (
+                            row.linkedIdeas.map((idea) => (
+                              <Badge
+                                key={idea.id}
+                                variant="outline"
+                                className="text-[10px] sm:text-xs max-w-[10rem] truncate bg-white/70"
+                                title={idea.title}
+                              >
+                                {idea.title}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-[11px] sm:text-xs text-muted-foreground">
+                              {t("analysis.alignmentMatrix.noIdeasForCriterion")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Phase Analysis Grid */}
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
-            Análise por Fases
+            {t("analysis.section.phases")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -453,7 +601,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                   <CardContent className="space-y-3">
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>Completude</span>
+                        <span>{t("analysis.phases.completeness")}</span>
                         <span data-testid={`text-phase-${phase.phase}-completeness`}>
                           {phase.completeness}%
                         </span>
@@ -466,7 +614,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>Qualidade</span>
+                        <span>{t("analysis.phases.quality")}</span>
                         <span data-testid={`text-phase-${phase.phase}-quality`}>
                           {phase.quality}%
                         </span>
@@ -481,7 +629,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                       <div className="text-xs">
                         <div className="flex items-center text-green-600 mb-1">
                           <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Pontos Fortes
+                          {t("analysis.phases.strengths")}
                         </div>
                         <p className="text-muted-foreground">
                           {phase.strengths[0]}
@@ -492,7 +640,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
                       <div className="text-xs">
                         <div className="flex items-center text-orange-600 mb-1">
                           <AlertCircle className="w-3 h-3 mr-1" />
-                          Gaps
+                          {t("analysis.phases.gaps")}
                         </div>
                         <p className="text-muted-foreground">
                           {phase.gaps[0]}
@@ -513,7 +661,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
           <CardHeader>
             <CardTitle className="flex items-center">
               <Zap className="w-5 h-5 mr-2" />
-              Insights Principais
+              {t("analysis.section.insights")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -534,7 +682,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
           <CardHeader>
             <CardTitle className="flex items-center">
               <AlertTriangle className="w-5 h-5 mr-2" />
-              Pontos de Atenção
+              {t("analysis.section.attentionPoints")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -557,7 +705,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
         <CardHeader>
           <CardTitle className="flex items-center">
             <ArrowRight className="w-5 h-5 mr-2" />
-            Recomendações Estratégicas
+            {t("analysis.section.recommendations")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -565,7 +713,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
             <div>
               <h4 className="font-medium mb-3 flex items-center">
                 <div className="w-3 h-3 bg-red-500 rounded-full mr-2" />
-                Ações Imediatas
+                {t("analysis.recommendations.immediate")}
               </h4>
               <div className="space-y-2">
                 {(analysis.recommendations?.immediate || []).map((rec, index) => (
@@ -578,7 +726,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
             <div>
               <h4 className="font-medium mb-3 flex items-center">
                 <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />
-                Curto Prazo
+                {t("analysis.recommendations.shortTerm")}
               </h4>
               <div className="space-y-2">
                 {(analysis.recommendations?.shortTerm || []).map((rec, index) => (
@@ -591,7 +739,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
             <div>
               <h4 className="font-medium mb-3 flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-2" />
-                Longo Prazo
+                {t("analysis.recommendations.longTerm")}
               </h4>
               <div className="space-y-2">
                 {(analysis.recommendations?.longTerm || []).map((rec, index) => (
@@ -610,7 +758,7 @@ export default function AnalysisReport({ projectId, onExportPDF }: AnalysisRepor
         <CardHeader>
           <CardTitle className="flex items-center">
             <CheckCircle2 className="w-5 h-5 mr-2" />
-            Próximos Passos Prioritários
+            {t("analysis.section.nextSteps")}
           </CardTitle>
         </CardHeader>
         <CardContent>

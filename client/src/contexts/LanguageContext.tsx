@@ -350,6 +350,144 @@ const translations = {
     "library.no.match": "Não encontramos artigos que correspondam à sua pesquisa \"{term}\".",
     "library.no.articles.category": "Não há artigos disponíveis nesta categoria no momento.",
     "library.clear.search": "Limpar pesquisa",
+
+    // Phase 2 - Define / Guiding Criteria
+    "phase2.header.title": "Fase 2: Definir",
+    "phase2.header.subtitle": "Sintetize as descobertas em pontos de vista e oportunidades de design",
+    "phase2.tab.pov": "POV Statements",
+    "phase2.tab.hmw": "How Might We",
+    "phase2.tab.guidingCriteria": "Critérios norteadores",
+
+    "guidingCriteria.header.title": "Critérios norteadores",
+    "guidingCriteria.header.subtitle": "Defina os princípios que irão orientar decisões ao longo do projeto.",
+    "guidingCriteria.header.helper": "Use estes critérios como \"filtros\" para avaliar ideias, protótipos e decisões ao longo do projeto.",
+
+    "guidingCriteria.empty.title": "Nenhum critério norteador",
+    "guidingCriteria.empty.description": "Comece definindo critérios que não podem ser ignorados ao longo deste projeto.",
+
+    "guidingCriteria.dialog.create.button": "Novo critério norteador",
+    "guidingCriteria.dialog.create.button.loading": "Criando...",
+    "guidingCriteria.dialog.edit.button.save": "Salvar alterações",
+    "guidingCriteria.dialog.edit.button.saving": "Salvando...",
+
+    "guidingCriteria.dialog.create.title": "Criar critério norteador",
+    "guidingCriteria.dialog.create.description": "Registre os princípios que irão guiar decisões ao longo do projeto, garantindo alinhamento com os insights da Imersão.",
+    "guidingCriteria.dialog.edit.title": "Editar critério norteador",
+    "guidingCriteria.dialog.edit.description": "Atualize este critério para refletir melhor os aprendizados do projeto.",
+
+    "guidingCriteria.common.cancel": "Cancelar",
+
+    "guidingCriteria.form.title.label": "Título do critério",
+    "guidingCriteria.form.title.placeholder": "Ex: Foco total na experiência mobile-first",
+    "guidingCriteria.form.title.tooltip.title": "Critério norteador",
+    "guidingCriteria.form.title.tooltip.content": "Defina uma frase curta que resuma o princípio que deve ser respeitado em todo o projeto.",
+    "guidingCriteria.form.title.tooltip.example1": "Sempre priorizar a segurança do usuário final",
+    "guidingCriteria.form.title.tooltip.example2": "Garantir acessibilidade para pessoas com baixa visão",
+    "guidingCriteria.form.title.tooltip.example3": "Evitar sobrecarga cognitiva em fluxos críticos",
+
+    "guidingCriteria.form.description.label": "Descrição detalhada",
+    "guidingCriteria.form.description.placeholder": "Explique a origem desse critério, conectando-o com insights da fase de Imersão.",
+
+    "guidingCriteria.form.category.label": "Categoria",
+    "guidingCriteria.form.category.placeholder": "Ex: Usuário, Negócio, Técnico, Regulatória",
+
+    "guidingCriteria.form.importance.label": "Importância",
+    "guidingCriteria.form.importance.low": "Baixa",
+    "guidingCriteria.form.importance.medium": "Média",
+    "guidingCriteria.form.importance.high": "Alta",
+
+    "guidingCriteria.form.tags.label": "Tags (separadas por vírgula)",
+    "guidingCriteria.form.tags.placeholder": "Ex: jornada do usuário, acessibilidade, compliance",
+
+    "guidingCriteria.toast.delete.success.title": "Critério excluído",
+    "guidingCriteria.toast.delete.success.description": "O critério norteador foi removido com sucesso.",
+    "guidingCriteria.toast.delete.error.title": "Erro",
+    "guidingCriteria.toast.delete.error.description": "Não foi possível excluir o critério norteador.",
+
+    "guidingCriteria.toast.create.success.title": "Critério criado!",
+    "guidingCriteria.toast.create.success.description": "Seu critério norteador foi criado com sucesso.",
+    "guidingCriteria.toast.create.error.title": "Erro",
+    "guidingCriteria.toast.create.error.description": "Não foi possível criar o critério norteador.",
+
+    "guidingCriteria.toast.update.success.title": "Critério atualizado!",
+    "guidingCriteria.toast.update.success.description": "As alterações foram salvas com sucesso.",
+    "guidingCriteria.toast.update.error.title": "Erro",
+    "guidingCriteria.toast.update.error.description": "Não foi possível atualizar o critério norteador.",
+
+    "guidingCriteria.importance.badge.low": "Baixa importância",
+    "guidingCriteria.importance.badge.medium": "Importância média",
+    "guidingCriteria.importance.badge.high": "Alta importância",
+
+    "analysis.header.title": "Análise Inteligente IA",
+    "analysis.header.subtitle": "Análise abrangente do seu projeto de Design Thinking",
+    "analysis.header.generatedAt": "Análise gerada em {date}",
+
+    "analysis.toast.generated.title": "Análise IA Gerada",
+    "analysis.toast.generated.description": "A análise inteligente do seu projeto foi gerada com sucesso.",
+    "analysis.toast.error.title": "Erro na Análise",
+    "analysis.toast.error.description": "Não foi possível gerar a análise IA. Tente novamente.",
+
+    "analysis.toast.pdf.success.title": "PDF Gerado",
+    "analysis.toast.pdf.success.description": "O relatório da análise IA foi baixado com sucesso.",
+    "analysis.toast.pdf.error.title": "Erro no PDF",
+    "analysis.toast.pdf.error.description": "Não foi possível gerar o PDF. Tente novamente.",
+
+    "analysis.qualityLabel.excellent": "Excelente",
+    "analysis.qualityLabel.good": "Bom",
+    "analysis.qualityLabel.fair": "Regular",
+    "analysis.qualityLabel.needsImprovement": "Precisa melhorar",
+
+    "analysis.empty.title": "Gere uma Análise IA Completa",
+    "analysis.empty.description": "Nossa IA especializada analisará todo o seu projeto de Design Thinking, identificando pontos fortes, oportunidades de melhoria e próximos passos recomendados.",
+    "analysis.empty.button.generate": "Gerar Análise IA",
+
+    "analysis.empty.card.maturity.title": "Score de Maturidade",
+    "analysis.empty.card.maturity.description": "Avaliação geral do projeto (1-10)",
+    "analysis.empty.card.attention.title": "Pontos de Atenção",
+    "analysis.empty.card.attention.description": "Áreas que precisam de melhorias",
+    "analysis.empty.card.recommendations.title": "Recomendações",
+    "analysis.empty.card.recommendations.description": "Próximos passos prioritários",
+
+    "analysis.section.executiveSummary": "Resumo Executivo",
+    "analysis.section.maturityScore": "Score de Maturidade",
+    "analysis.section.consistency": "Consistência",
+    "analysis.section.alignment": "Alinhamento",
+    "analysis.section.phases": "Análise por Fases",
+    "analysis.section.insights": "Insights Principais",
+    "analysis.section.attentionPoints": "Pontos de Atenção",
+    "analysis.section.recommendations": "Recomendações Estratégicas",
+    "analysis.section.nextSteps": "Próximos Passos Prioritários",
+
+    "analysis.consistency.overallScore": "Score Geral",
+    "analysis.alignment.problemSolution": "Problema-Solução",
+    "analysis.alignment.researchInsights": "Research-Insights",
+
+    "analysis.phases.completeness": "Completude",
+    "analysis.phases.quality": "Qualidade",
+    "analysis.phases.strengths": "Pontos Fortes",
+    "analysis.phases.gaps": "Gaps",
+
+    "analysis.recommendations.immediate": "Ações Imediatas",
+    "analysis.recommendations.shortTerm": "Curto Prazo",
+    "analysis.recommendations.longTerm": "Longo Prazo",
+
+    "analysis.actions.regenerate": "Regerar",
+    "analysis.actions.exportPdf.label": "Exportar PDF",
+    "analysis.actions.exportPdf.loading": "Gerando PDF...",
+
+    "analysis.fallback.noData": "Análise não disponível no momento.",
+
+    "analysis.alignmentMatrix.title": "Mapa de Alinhamento Ideias × Critérios Norteadores",
+    "analysis.alignmentMatrix.summary": "{covered} de {total} critérios possuem pelo menos uma ideia associada",
+    "analysis.alignmentMatrix.noIdeas": "Ainda não há ideias cadastradas para este projeto. Gere algumas ideias na Fase 3 para visualizar o alinhamento com os critérios norteadores.",
+    "analysis.alignmentMatrix.legend.main": "Cada linha representa um critério norteador da Fase 2 e mostra quais ideias da Fase 3 estão explicitamente ligadas a ele. As cores indicam o nível de cobertura:",
+    "analysis.alignmentMatrix.legend.none": "Sem ideias",
+    "analysis.alignmentMatrix.legend.low": "Poucas ideias",
+    "analysis.alignmentMatrix.legend.high": "Bem coberto",
+    "analysis.alignmentMatrix.badge.none": "Sem ideias associadas",
+    "analysis.alignmentMatrix.badge.oneIdea": "1 ideia associada",
+    "analysis.alignmentMatrix.badge.manyIdeas": "{count} ideias associadas",
+    "analysis.alignmentMatrix.noIdeasForCriterion": "Nenhuma ideia associada ainda.",
   },
   
   "en": {
@@ -660,6 +798,144 @@ const translations = {
     "library.no.match": "We couldn't find articles matching your search \"{term}\".",
     "library.no.articles.category": "There are no articles available in this category at the moment.",
     "library.clear.search": "Clear search",
+
+    // Phase 2 - Define / Guiding Criteria
+    "phase2.header.title": "Phase 2: Define",
+    "phase2.header.subtitle": "Synthesize findings into points of view and design opportunities",
+    "phase2.tab.pov": "POV Statements",
+    "phase2.tab.hmw": "How Might We",
+    "phase2.tab.guidingCriteria": "Guiding Criteria",
+
+    "guidingCriteria.header.title": "Guiding Criteria",
+    "guidingCriteria.header.subtitle": "Define the principles that will guide decisions throughout the project.",
+    "guidingCriteria.header.helper": "Use these criteria as filters to evaluate ideas, prototypes and decisions along the project.",
+
+    "guidingCriteria.empty.title": "No guiding criteria",
+    "guidingCriteria.empty.description": "Start by defining criteria that cannot be ignored in this project.",
+
+    "guidingCriteria.dialog.create.button": "New guiding criterion",
+    "guidingCriteria.dialog.create.button.loading": "Creating...",
+    "guidingCriteria.dialog.edit.button.save": "Save changes",
+    "guidingCriteria.dialog.edit.button.saving": "Saving...",
+
+    "guidingCriteria.dialog.create.title": "Create guiding criterion",
+    "guidingCriteria.dialog.create.description": "Record the principles that will guide decisions throughout the project, ensuring alignment with the Discover/Empathize insights.",
+    "guidingCriteria.dialog.edit.title": "Edit guiding criterion",
+    "guidingCriteria.dialog.edit.description": "Update this criterion to better reflect the learnings of the project.",
+
+    "guidingCriteria.common.cancel": "Cancel",
+
+    "guidingCriteria.form.title.label": "Criterion title",
+    "guidingCriteria.form.title.placeholder": "E.g.: Strong focus on mobile-first experience",
+    "guidingCriteria.form.title.tooltip.title": "Guiding criterion",
+    "guidingCriteria.form.title.tooltip.content": "Define a short sentence that summarizes the principle that must be respected throughout the project.",
+    "guidingCriteria.form.title.tooltip.example1": "Always prioritize end-user safety",
+    "guidingCriteria.form.title.tooltip.example2": "Ensure accessibility for people with low vision",
+    "guidingCriteria.form.title.tooltip.example3": "Avoid cognitive overload in critical flows",
+
+    "guidingCriteria.form.description.label": "Detailed description",
+    "guidingCriteria.form.description.placeholder": "Explain where this criterion comes from, connecting it to insights from the Discover phase.",
+
+    "guidingCriteria.form.category.label": "Category",
+    "guidingCriteria.form.category.placeholder": "E.g.: User, Business, Technical, Regulatory",
+
+    "guidingCriteria.form.importance.label": "Importance",
+    "guidingCriteria.form.importance.low": "Low",
+    "guidingCriteria.form.importance.medium": "Medium",
+    "guidingCriteria.form.importance.high": "High",
+
+    "guidingCriteria.form.tags.label": "Tags (comma-separated)",
+    "guidingCriteria.form.tags.placeholder": "E.g.: user journey, accessibility, compliance",
+
+    "guidingCriteria.toast.delete.success.title": "Criterion deleted",
+    "guidingCriteria.toast.delete.success.description": "The guiding criterion was removed successfully.",
+    "guidingCriteria.toast.delete.error.title": "Error",
+    "guidingCriteria.toast.delete.error.description": "We couldn't delete the guiding criterion.",
+
+    "guidingCriteria.toast.create.success.title": "Criterion created!",
+    "guidingCriteria.toast.create.success.description": "Your guiding criterion was created successfully.",
+    "guidingCriteria.toast.create.error.title": "Error",
+    "guidingCriteria.toast.create.error.description": "We couldn't create the guiding criterion.",
+
+    "guidingCriteria.toast.update.success.title": "Criterion updated!",
+    "guidingCriteria.toast.update.success.description": "The changes were saved successfully.",
+    "guidingCriteria.toast.update.error.title": "Error",
+    "guidingCriteria.toast.update.error.description": "We couldn't update the guiding criterion.",
+
+    "guidingCriteria.importance.badge.low": "Low importance",
+    "guidingCriteria.importance.badge.medium": "Medium importance",
+    "guidingCriteria.importance.badge.high": "High importance",
+
+    "analysis.header.title": "AI Intelligent Analysis",
+    "analysis.header.subtitle": "Comprehensive analysis of your Design Thinking project",
+    "analysis.header.generatedAt": "Analysis generated on {date}",
+
+    "analysis.toast.generated.title": "AI Analysis Generated",
+    "analysis.toast.generated.description": "The intelligent analysis of your project was generated successfully.",
+    "analysis.toast.error.title": "Analysis Error",
+    "analysis.toast.error.description": "We couldn't generate the AI analysis. Please try again.",
+
+    "analysis.toast.pdf.success.title": "PDF Generated",
+    "analysis.toast.pdf.success.description": "The AI analysis report was downloaded successfully.",
+    "analysis.toast.pdf.error.title": "PDF Error",
+    "analysis.toast.pdf.error.description": "We couldn't generate the PDF. Please try again.",
+
+    "analysis.qualityLabel.excellent": "Excellent",
+    "analysis.qualityLabel.good": "Good",
+    "analysis.qualityLabel.fair": "Fair",
+    "analysis.qualityLabel.needsImprovement": "Needs improvement",
+
+    "analysis.empty.title": "Generate a Complete AI Analysis",
+    "analysis.empty.description": "Our specialized AI will analyze your entire Design Thinking project, identifying strengths, opportunities for improvement and recommended next steps.",
+    "analysis.empty.button.generate": "Generate AI Analysis",
+
+    "analysis.empty.card.maturity.title": "Maturity Score",
+    "analysis.empty.card.maturity.description": "Overall project evaluation (1–10)",
+    "analysis.empty.card.attention.title": "Attention Points",
+    "analysis.empty.card.attention.description": "Areas that need improvement",
+    "analysis.empty.card.recommendations.title": "Recommendations",
+    "analysis.empty.card.recommendations.description": "Priority next steps",
+
+    "analysis.section.executiveSummary": "Executive Summary",
+    "analysis.section.maturityScore": "Maturity Score",
+    "analysis.section.consistency": "Consistency",
+    "analysis.section.alignment": "Alignment",
+    "analysis.section.phases": "Phase Analysis",
+    "analysis.section.insights": "Key Insights",
+    "analysis.section.attentionPoints": "Attention Points",
+    "analysis.section.recommendations": "Strategic Recommendations",
+    "analysis.section.nextSteps": "Priority Next Steps",
+
+    "analysis.consistency.overallScore": "Overall score",
+    "analysis.alignment.problemSolution": "Problem–Solution",
+    "analysis.alignment.researchInsights": "Research–Insights",
+
+    "analysis.phases.completeness": "Completeness",
+    "analysis.phases.quality": "Quality",
+    "analysis.phases.strengths": "Strengths",
+    "analysis.phases.gaps": "Gaps",
+
+    "analysis.recommendations.immediate": "Immediate Actions",
+    "analysis.recommendations.shortTerm": "Short Term",
+    "analysis.recommendations.longTerm": "Long Term",
+
+    "analysis.actions.regenerate": "Regenerate",
+    "analysis.actions.exportPdf.label": "Export PDF",
+    "analysis.actions.exportPdf.loading": "Generating PDF...",
+
+    "analysis.fallback.noData": "Analysis not available at the moment.",
+
+    "analysis.alignmentMatrix.title": "Alignment Map – Ideas × Guiding Criteria",
+    "analysis.alignmentMatrix.summary": "{covered} of {total} criteria have at least one associated idea",
+    "analysis.alignmentMatrix.noIdeas": "There are no ideas for this project yet. Create some ideas in Phase 3 to visualize alignment with guiding criteria.",
+    "analysis.alignmentMatrix.legend.main": "Each row represents a guiding criterion from Phase 2 and shows which ideas from Phase 3 are explicitly linked to it. The colors indicate the coverage level:",
+    "analysis.alignmentMatrix.legend.none": "No ideas",
+    "analysis.alignmentMatrix.legend.low": "Few ideas",
+    "analysis.alignmentMatrix.legend.high": "Well covered",
+    "analysis.alignmentMatrix.badge.none": "No ideas associated",
+    "analysis.alignmentMatrix.badge.oneIdea": "1 idea associated",
+    "analysis.alignmentMatrix.badge.manyIdeas": "{count} ideas associated",
+    "analysis.alignmentMatrix.noIdeasForCriterion": "No ideas associated yet.",
   },
   
   "es": {
@@ -825,6 +1101,144 @@ const translations = {
     "library.no.match": "No encontramos artículos que coincidan con tu búsqueda \"{term}\".",
     "library.no.articles.category": "No hay artículos disponibles en esta categoría en este momento.",
     "library.clear.search": "Limpiar búsqueda",
+
+    // Fase 2 - Definir / Criterios orientadores
+    "phase2.header.title": "Fase 2: Definir",
+    "phase2.header.subtitle": "Sintetiza los hallazgos en puntos de vista y oportunidades de diseño",
+    "phase2.tab.pov": "POV Statements",
+    "phase2.tab.hmw": "How Might We",
+    "phase2.tab.guidingCriteria": "Criterios orientadores",
+
+    "guidingCriteria.header.title": "Criterios orientadores",
+    "guidingCriteria.header.subtitle": "Define los principios que guiarán las decisiones a lo largo del proyecto.",
+    "guidingCriteria.header.helper": "Usa estos criterios como filtros para evaluar ideas, prototipos y decisiones durante el proyecto.",
+
+    "guidingCriteria.empty.title": "Sin criterios orientadores",
+    "guidingCriteria.empty.description": "Comienza definiendo criterios que no pueden ignorarse en este proyecto.",
+
+    "guidingCriteria.dialog.create.button": "Nuevo criterio orientador",
+    "guidingCriteria.dialog.create.button.loading": "Creando...",
+    "guidingCriteria.dialog.edit.button.save": "Guardar cambios",
+    "guidingCriteria.dialog.edit.button.saving": "Guardando...",
+
+    "guidingCriteria.dialog.create.title": "Crear criterio orientador",
+    "guidingCriteria.dialog.create.description": "Registra los principios que guiarán las decisiones del proyecto, asegurando alineación con los insights de la fase de Descubrimiento.",
+    "guidingCriteria.dialog.edit.title": "Editar criterio orientador",
+    "guidingCriteria.dialog.edit.description": "Actualiza este criterio para reflejar mejor los aprendizajes del proyecto.",
+
+    "guidingCriteria.common.cancel": "Cancelar",
+
+    "guidingCriteria.form.title.label": "Título del criterio",
+    "guidingCriteria.form.title.placeholder": "Ej.: Foco total en la experiencia mobile-first",
+    "guidingCriteria.form.title.tooltip.title": "Criterio orientador",
+    "guidingCriteria.form.title.tooltip.content": "Define una frase corta que resuma el principio que debe respetarse en todo el proyecto.",
+    "guidingCriteria.form.title.tooltip.example1": "Priorizar siempre la seguridad del usuario final",
+    "guidingCriteria.form.title.tooltip.example2": "Garantizar accesibilidad para personas con baja visión",
+    "guidingCriteria.form.title.tooltip.example3": "Evitar sobrecarga cognitiva en flujos críticos",
+
+    "guidingCriteria.form.description.label": "Descripción detallada",
+    "guidingCriteria.form.description.placeholder": "Explica el origen de este criterio, conectándolo con insights de la fase de Descubrimiento.",
+
+    "guidingCriteria.form.category.label": "Categoría",
+    "guidingCriteria.form.category.placeholder": "Ej.: Usuario, Negocio, Técnico, Regulatorio",
+
+    "guidingCriteria.form.importance.label": "Importancia",
+    "guidingCriteria.form.importance.low": "Baja",
+    "guidingCriteria.form.importance.medium": "Media",
+    "guidingCriteria.form.importance.high": "Alta",
+
+    "guidingCriteria.form.tags.label": "Tags (separadas por coma)",
+    "guidingCriteria.form.tags.placeholder": "Ej.: journey del usuario, accesibilidad, compliance",
+
+    "guidingCriteria.toast.delete.success.title": "Criterio eliminado",
+    "guidingCriteria.toast.delete.success.description": "El criterio orientador se eliminó correctamente.",
+    "guidingCriteria.toast.delete.error.title": "Error",
+    "guidingCriteria.toast.delete.error.description": "No fue posible eliminar el criterio orientador.",
+
+    "guidingCriteria.toast.create.success.title": "¡Criterio creado!",
+    "guidingCriteria.toast.create.success.description": "Tu criterio orientador se creó correctamente.",
+    "guidingCriteria.toast.create.error.title": "Error",
+    "guidingCriteria.toast.create.error.description": "No fue posible crear el criterio orientador.",
+
+    "guidingCriteria.toast.update.success.title": "Criterio actualizado",
+    "guidingCriteria.toast.update.success.description": "Los cambios se guardaron correctamente.",
+    "guidingCriteria.toast.update.error.title": "Error",
+    "guidingCriteria.toast.update.error.description": "Nous ne pouvions pas mettre à jour le critère directeur.",
+
+    "guidingCriteria.importance.badge.low": "Importance faible",
+    "guidingCriteria.importance.badge.medium": "Importance moyenne",
+    "guidingCriteria.importance.badge.high": "Haute importance",
+
+    "analysis.header.title": "Análisis Inteligente con IA",
+    "analysis.header.subtitle": "Análisis integral de tu proyecto de Design Thinking",
+    "analysis.header.generatedAt": "Análisis generado el {date}",
+
+    "analysis.toast.generated.title": "Análisis IA generado",
+    "analysis.toast.generated.description": "El análisis inteligente de tu proyecto se generó correctamente.",
+    "analysis.toast.error.title": "Error en el análisis",
+    "analysis.toast.error.description": "No fue posible generar el análisis con IA. Inténtalo nuevamente.",
+
+    "analysis.toast.pdf.success.title": "PDF generado",
+    "analysis.toast.pdf.success.description": "El informe del análisis IA se descargó correctamente.",
+    "analysis.toast.pdf.error.title": "Error en el PDF",
+    "analysis.toast.pdf.error.description": "No fue posible generar el PDF. Inténtalo nuevamente.",
+
+    "analysis.qualityLabel.excellent": "Excelente",
+    "analysis.qualityLabel.good": "Bueno",
+    "analysis.qualityLabel.fair": "Regular",
+    "analysis.qualityLabel.needsImprovement": "Necesita mejorar",
+
+    "analysis.empty.title": "Genera un Análisis IA Completo",
+    "analysis.empty.description": "Nuestra IA especializada analizará todo tu proyecto de Design Thinking, identificando puntos fuertes, oportunidades de mejora y próximos pasos recomendados.",
+    "analysis.empty.button.generate": "Generar Análisis IA",
+
+    "analysis.empty.card.maturity.title": "Score de Madurez",
+    "analysis.empty.card.maturity.description": "Evaluación general del proyecto (1-10)",
+    "analysis.empty.card.attention.title": "Puntos de Atención",
+    "analysis.empty.card.attention.description": "Áreas que necesitan mejoras",
+    "analysis.empty.card.recommendations.title": "Recomendaciones",
+    "analysis.empty.card.recommendations.description": "Próximos pasos prioritarios",
+
+    "analysis.section.executiveSummary": "Resumen Ejecutivo",
+    "analysis.section.maturityScore": "Score de Madurez",
+    "analysis.section.consistency": "Consistencia",
+    "analysis.section.alignment": "Alineación",
+    "analysis.section.phases": "Análisis por Fases",
+    "analysis.section.insights": "Insights Principales",
+    "analysis.section.attentionPoints": "Puntos de Atención",
+    "analysis.section.recommendations": "Recomendaciones Estratégicas",
+    "analysis.section.nextSteps": "Próximos Pasos Prioritarios",
+
+    "analysis.consistency.overallScore": "Score general",
+    "analysis.alignment.problemSolution": "Problema-Solución",
+    "analysis.alignment.researchInsights": "Research-Insights",
+
+    "analysis.phases.completeness": "Completitud",
+    "analysis.phases.quality": "Calidad",
+    "analysis.phases.strengths": "Puntos fuertes",
+    "analysis.phases.gaps": "Gaps",
+
+    "analysis.recommendations.immediate": "Acciones inmediatas",
+    "analysis.recommendations.shortTerm": "Corto plazo",
+    "analysis.recommendations.longTerm": "Largo plazo",
+
+    "analysis.actions.regenerate": "Regenerar",
+    "analysis.actions.exportPdf.label": "Exportar PDF",
+    "analysis.actions.exportPdf.loading": "Generando PDF...",
+
+    "analysis.fallback.noData": "Análisis no disponible en este momento.",
+
+    "analysis.alignmentMatrix.title": "Mapa de alineación Ideas × Criterios orientadores",
+    "analysis.alignmentMatrix.summary": "{covered} de {total} criterios tienen al menos una idea asociada",
+    "analysis.alignmentMatrix.noIdeas": "Aún no hay ideas creadas para este proyecto. Genera ideas en la Fase 3 para visualizar la alineación con los criterios orientadores.",
+    "analysis.alignmentMatrix.legend.main": "Cada fila representa un criterio orientador de la Fase 2 y muestra qué ideas de la Fase 3 están explícitamente vinculadas a él. Los colores indican el nivel de cobertura:",
+    "analysis.alignmentMatrix.legend.none": "Sin ideas",
+    "analysis.alignmentMatrix.legend.low": "Pocas ideas",
+    "analysis.alignmentMatrix.legend.high": "Bien cubierto",
+    "analysis.alignmentMatrix.badge.none": "Sin ideas asociadas",
+    "analysis.alignmentMatrix.badge.oneIdea": "1 idea asociada",
+    "analysis.alignmentMatrix.badge.manyIdeas": "{count} ideas asociadas",
+    "analysis.alignmentMatrix.noIdeasForCriterion": "Aún no hay ideas asociadas.",
   },
   
   "fr": {
