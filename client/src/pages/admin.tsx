@@ -304,7 +304,7 @@ function UsersTab() {
   const [editingUserAddons, setEditingUserAddons] = useState<Omit<User, 'password'> | null>(null);
   const { toast } = useToast();
 
-  const { data: users = [], isLoading } = useQuery<Omit<User, "password">[]>({
+  const { data: users = [], isLoading: usersLoading } = useQuery<Omit<User, "password">[]>({
     queryKey: ["/api/users"],
   });
 
@@ -442,7 +442,7 @@ function UsersTab() {
       {/* Users Table */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
+          {usersLoading ? (
             <div className="p-6 space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center space-x-4">
