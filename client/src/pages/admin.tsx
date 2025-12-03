@@ -689,6 +689,271 @@ function UserAddonsDialog({
   );
 }
 
+// Projects Management Tab Component
+function ProjectsTab() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [phaseFilter, setPhaseFilter] = useState("all");
+  const { toast } = useToast();
+
+  const { data: projects = [], isLoading } = useQuery<Project[]>({
+    queryKey: ["/api/admin/projects"],
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/projects/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/projects"] });
+      toast({
+        title: "Projeto excluído",
+        description: "O projeto foi removido com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao excluir projeto",
+        description: "Ocorreu um erro ao tentar excluir o projeto.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getStatusLabel = (status: string) => {
+    return status === "completed" ? "Concluído" : "Em Progresso";
+  };
+
+  const getStatusColor = (status: string) => {
+    return status === "completed"
+      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+  };
+
+  const getPhaseLabel = (phase: number | null) => {
+    if (!phase) return "N/A";
+    const phases = ["Empatizar", "Definir", "Idear", "Prototipar", "Testar"];
+    return phases[phase - 1] || `Fase ${phase}`;
+  };
+
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return "N/A";
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(new Date(date));
+  };
+
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch =
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.description &&
+        project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus =
+      statusFilter === "all" || project.status === statusFilter;
+    const matchesPhase =
+      phaseFilter === "all" || project.currentPhase?.toString() === phaseFilter;
+    return matchesSearch && matchesStatus && matchesPhase;
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold" data-testid="projects-title">
+            Gerenciar Projetos
+          </h2>
+          <p className="text-muted-foreground">
+            Visualize e gerencie todos os projetos do sistema
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar projetos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+            data-testid="input-search-projects"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-40" data-testid="select-status-filter">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="in_progress">Em Progresso</SelectItem>
+            <SelectItem value="completed">Concluído</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={phaseFilter} onValueChange={setPhaseFilter}>
+          <SelectTrigger className="w-40" data-testid="select-phase-filter">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as fases</SelectItem>
+            <SelectItem value="1">Fase 1 - Empatizar</SelectItem>
+            <SelectItem value="2">Fase 2 - Definir</SelectItem>
+            <SelectItem value="3">Fase 3 - Idear</SelectItem>
+            <SelectItem value="4">Fase 4 - Prototipar</SelectItem>
+            <SelectItem value="5">Fase 5 - Testar</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Projects Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-4 w-1/5" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome do Projeto</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Fase Atual</TableHead>
+                  <TableHead>Progresso</TableHead>
+                  <TableHead>Data de Criação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProjects.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <p
+                        className="text-muted-foreground"
+                        data-testid="no-projects-message"
+                      >
+                        {searchTerm || statusFilter !== "all" || phaseFilter !== "all"
+                          ? "Nenhum projeto encontrado com os filtros aplicados."
+                          : "Nenhum projeto encontrado."}
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredProjects.map((project) => (
+                    <TableRow
+                      key={project.id}
+                      data-testid={`row-project-${project.id}`}
+                    >
+                      <TableCell className="font-medium max-w-xs">
+                        <div className="truncate" title={project.name}>
+                          {project.name}
+                        </div>
+                        {project.description && (
+                          <div
+                            className="text-sm text-muted-foreground truncate"
+                            title={project.description}
+                          >
+                            {project.description}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(project.status)}>
+                          {getStatusLabel(project.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {getPhaseLabel(project.currentPhase)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500 transition-all duration-300"
+                              style={{ width: `${project.completionRate || 0}%` }}
+                            />
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {Math.round(project.completionRate || 0)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatDate(project.createdAt)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              window.open(`/projects/${project.id}`, "_blank")
+                            }
+                            data-testid={`button-view-${project.id}`}
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                data-testid={`button-delete-${project.id}`}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o projeto "
+                                  {project.name}"? Esta ação não pode ser
+                                  desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    deleteProjectMutation.mutate(project.id)
+                                  }
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Double Diamond Management Tab Component
 function DoubleDiamondTab() {
   const [searchTerm, setSearchTerm] = useState("");
