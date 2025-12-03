@@ -549,6 +549,18 @@ export class DatabaseStorage implements IStorage {
       const deletedSubs = await db.delete(userSubscriptions).where(eq(userSubscriptions.userId, id));
       console.log(`[DELETE USER] ✓ Deleted ${deletedSubs.rowCount || 0} subscriptions`);
       
+      console.log(`[DELETE USER] Step 6b: Deleting user add-ons...`);
+      const deletedAddons = await db.delete(userAddons).where(eq(userAddons.userId, id));
+      console.log(`[DELETE USER] ✓ Deleted ${deletedAddons.rowCount || 0} add-ons`);
+      
+      console.log(`[DELETE USER] Step 6c: Deleting double diamond exports...`);
+      const deletedDdExports = await db.delete(doubleDiamondExports).where(eq(doubleDiamondExports.userId, id));
+      console.log(`[DELETE USER] ✓ Deleted ${deletedDdExports.rowCount || 0} double diamond exports`);
+      
+      console.log(`[DELETE USER] Step 6d: Deleting double diamond projects...`);
+      const deletedDdProjects = await db.delete(doubleDiamondProjects).where(eq(doubleDiamondProjects.userId, id));
+      console.log(`[DELETE USER] ✓ Deleted ${deletedDdProjects.rowCount || 0} double diamond projects`);
+      
       // 7. Get all projects owned by this user
       console.log(`[DELETE USER] Step 7: Finding user's projects...`);
       const userProjects = await db.select({ id: projects.id })
