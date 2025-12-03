@@ -304,7 +304,97 @@ function UsersTab() {
   const [editingUserAddons, setEditingUserAddons] = useState<Omit<User, 'password'> | null>(null);
   const { toast } = useToast();
 
-  // ... (rest of the code remains the same)
+  const { data: users = [], isLoading } = useQuery<Omit<User, "password">[]>({
+    queryKey: ["/api/users"],
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: z.infer<typeof userFormSchema>) => {
+      const response = await apiRequest("POST", "/api/users", userData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setIsCreating(false);
+      toast({
+        title: "Usuário criado",
+        description: "O usuário foi criado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao criar usuário",
+        description: "Ocorreu um erro ao tentar criar o usuário.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: string }) => {
+      const response = await apiRequest("PUT", `/api/users/${id}`, { role });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Usuário atualizado",
+        description: "O papel do usuário foi atualizado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao atualizar usuário",
+        description: "Ocorreu um erro ao tentar atualizar o usuário.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/users/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Usuário excluído",
+        description: "O usuário foi removido com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao excluir usuário",
+        description: "Ocorreu um erro ao tentar excluir o usuário.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleUserRole = (userId: string, currentRole: string) => {
+    const newRole = currentRole === "admin" ? "user" : "admin";
+    updateUserMutation.mutate({ id: userId, role: newRole });
+  };
+
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return "N/A";
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(date));
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = user.username
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   return (
     <div className="space-y-6">
@@ -494,7 +584,166 @@ function UsersTab() {
   );
 }
 
-// ... (rest of the code remains the same)
+// User Creation Dialog Component
+function UserCreateDialog({
+  isOpen,
+  onClose,
+  onSubmit,
+  isSubmitting,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: z.infer<typeof userFormSchema>) => void;
+  isSubmitting: boolean;
+}) {
+  const form = useForm<z.infer<typeof userFormSchema>>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      name: "",
+      password: "",
+      role: "user",
+    },
+  });
+
+  const handleSubmit = (data: z.infer<typeof userFormSchema>) => {
+    onSubmit(data);
+    form.reset();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]" data-testid="dialog-create-user">
+        <DialogHeader>
+          <DialogTitle>Criar Novo Usuário</DialogTitle>
+          <DialogDescription>
+            Preencha os dados para criar um novo usuário no sistema.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome Completo</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="João Silva"
+                      data-testid="input-name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="joao@exemplo.com"
+                      data-testid="input-email"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username (login)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="joao.silva"
+                      data-testid="input-username"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Senha</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      {...field}
+                      placeholder="Mínimo 6 caracteres"
+                      data-testid="input-password"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Papel</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-user-role">
+                        <SelectValue placeholder="Selecione o papel" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="user">Usuário</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+                data-testid="button-cancel"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="button-submit"
+              >
+                {isSubmitting ? "Criando..." : "Criar Usuário"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 type UserAddonState = {
   doubleDiamondPro: boolean;
