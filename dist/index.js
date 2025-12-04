@@ -22,6 +22,7 @@ __export(schema_exports, {
   doubleDiamondProjects: () => doubleDiamondProjects,
   dvfAssessments: () => dvfAssessments,
   empathyMaps: () => empathyMaps,
+  guidingCriteria: () => guidingCriteria,
   helpArticles: () => helpArticles,
   hmwQuestions: () => hmwQuestions,
   ideas: () => ideas,
@@ -37,6 +38,7 @@ __export(schema_exports, {
   insertDoubleDiamondProjectSchema: () => insertDoubleDiamondProjectSchema,
   insertDvfAssessmentSchema: () => insertDvfAssessmentSchema,
   insertEmpathyMapSchema: () => insertEmpathyMapSchema,
+  insertGuidingCriterionSchema: () => insertGuidingCriterionSchema,
   insertHelpArticleSchema: () => insertHelpArticleSchema,
   insertHmwQuestionSchema: () => insertHmwQuestionSchema,
   insertIdeaSchema: () => insertIdeaSchema,
@@ -59,6 +61,7 @@ __export(schema_exports, {
   insertTestPlanSchema: () => insertTestPlanSchema,
   insertTestResultSchema: () => insertTestResultSchema,
   insertTestimonialSchema: () => insertTestimonialSchema,
+  insertUserAddonSchema: () => insertUserAddonSchema,
   insertUserProgressSchema: () => insertUserProgressSchema,
   insertUserSchema: () => insertUserSchema,
   insertUserSubscriptionSchema: () => insertUserSubscriptionSchema,
@@ -82,6 +85,7 @@ __export(schema_exports, {
   testResults: () => testResults,
   testimonials: () => testimonials,
   updateProfileSchema: () => updateProfileSchema,
+  userAddons: () => userAddons,
   userProgress: () => userProgress,
   userSubscriptions: () => userSubscriptions,
   users: () => users,
@@ -91,7 +95,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, real, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertCanvasDrawingSchema, updateProfileSchema, phaseCards, benchmarks, benchmarkAssessments, doubleDiamondExports, insertDoubleDiamondExportSchema, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, insertDoubleDiamondProjectSchema;
+var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, userAddons, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertUserAddonSchema, insertCanvasDrawingSchema, updateProfileSchema, guidingCriteria, insertGuidingCriterionSchema, phaseCards, benchmarks, benchmarkAssessments, doubleDiamondExports, insertDoubleDiamondExportSchema, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, insertDoubleDiamondProjectSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -290,6 +294,8 @@ var init_schema = __esm({
       // idea, selected, prototype, tested
       canvasData: jsonb("canvas_data"),
       // Fabric.js canvas data for drawings/sketches
+      // Linked Guiding Criteria (Phase 2) - store array of guiding_criteria IDs
+      guidingCriteriaIds: jsonb("guiding_criteria_ids").default([]),
       createdAt: timestamp("created_at").default(sql`now()`)
     });
     prototypes = pgTable("prototypes", {
@@ -482,6 +488,23 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").default(sql`now()`),
       updatedAt: timestamp("updated_at").default(sql`now()`)
     });
+    userAddons = pgTable("user_addons", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: varchar("user_id").references(() => users.id).notNull(),
+      addonKey: text("addon_key").notNull(),
+      // 'double_diamond_pro', 'export_pro', 'ai_turbo', etc.
+      status: text("status").notNull().default("active"),
+      // active, canceled, expired, trialing
+      source: text("source").notNull().default("stripe"),
+      // stripe, admin, manual
+      stripeSubscriptionId: text("stripe_subscription_id"),
+      billingPeriod: text("billing_period"),
+      // monthly, yearly, null for one-time/unknown
+      currentPeriodStart: timestamp("current_period_start"),
+      currentPeriodEnd: timestamp("current_period_end"),
+      createdAt: timestamp("created_at").default(sql`now()`),
+      updatedAt: timestamp("updated_at").default(sql`now()`)
+    });
     articles = pgTable("articles", {
       id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       title: text("title").notNull(),
@@ -644,6 +667,11 @@ var init_schema = __esm({
       createdAt: true,
       updatedAt: true
     });
+    insertUserAddonSchema = createInsertSchema(userAddons).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
     insertCanvasDrawingSchema = createInsertSchema(canvasDrawings).omit({
       id: true,
       createdAt: true,
@@ -661,6 +689,23 @@ var init_schema = __esm({
       subscriptionEndDate: true,
       createdAt: true
     }).partial();
+    guidingCriteria = pgTable("guiding_criteria", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      projectId: varchar("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+      title: text("title").notNull(),
+      description: text("description"),
+      category: text("category"),
+      importance: text("importance").default("medium"),
+      tags: jsonb("tags").default([]),
+      isActive: boolean("is_active").default(true),
+      createdAt: timestamp("created_at").default(sql`now()`),
+      updatedAt: timestamp("updated_at").default(sql`now()`)
+    });
+    insertGuidingCriterionSchema = createInsertSchema(guidingCriteria).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
     phaseCards = pgTable("phase_cards", {
       id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       projectId: varchar("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
@@ -1128,6 +1173,10 @@ var init_schema = __esm({
       // Case to mirror (Airbnb, Uber, etc.)
       customSuccessCase: text("custom_success_case"),
       // User's custom success case (if not in list)
+      customSuccessCaseUrl: text("custom_success_case_url"),
+      // Optional URL with additional reference materials
+      customSuccessCasePdfUrl: text("custom_success_case_pdf_url"),
+      // Optional URL to a reference PDF
       targetAudience: text("target_audience"),
       // User's minimal description of audience
       problemStatement: text("problem_statement"),
@@ -1507,6 +1556,7 @@ var init_storage = __esm({
         await deleteTable("observations", () => db.delete(observations).where(eq2(observations.projectId, id)));
         await deleteTable("povStatements", () => db.delete(povStatements).where(eq2(povStatements.projectId, id)));
         await deleteTable("hmwQuestions", () => db.delete(hmwQuestions).where(eq2(hmwQuestions.projectId, id)));
+        await deleteTable("guidingCriteria", () => db.delete(guidingCriteria).where(eq2(guidingCriteria.projectId, id)));
         await deleteTable("ideas", () => db.delete(ideas).where(eq2(ideas.projectId, id)));
         await deleteTable("prototypes", () => db.delete(prototypes).where(eq2(prototypes.projectId, id)));
         await deleteTable("testPlans", () => db.delete(testPlans).where(eq2(testPlans.projectId, id)));
@@ -1599,6 +1649,15 @@ var init_storage = __esm({
           console.log(`[DELETE USER] Step 6: Deleting user subscriptions...`);
           const deletedSubs = await db.delete(userSubscriptions).where(eq2(userSubscriptions.userId, id));
           console.log(`[DELETE USER] \u2713 Deleted ${deletedSubs.rowCount || 0} subscriptions`);
+          console.log(`[DELETE USER] Step 6b: Deleting user add-ons...`);
+          const deletedAddons = await db.delete(userAddons).where(eq2(userAddons.userId, id));
+          console.log(`[DELETE USER] \u2713 Deleted ${deletedAddons.rowCount || 0} add-ons`);
+          console.log(`[DELETE USER] Step 6c: Deleting double diamond exports...`);
+          const deletedDdExports = await db.delete(doubleDiamondExports).where(eq2(doubleDiamondExports.userId, id));
+          console.log(`[DELETE USER] \u2713 Deleted ${deletedDdExports.rowCount || 0} double diamond exports`);
+          console.log(`[DELETE USER] Step 6d: Deleting double diamond projects...`);
+          const deletedDdProjects = await db.delete(doubleDiamondProjects).where(eq2(doubleDiamondProjects.userId, id));
+          console.log(`[DELETE USER] \u2713 Deleted ${deletedDdProjects.rowCount || 0} double diamond projects`);
           console.log(`[DELETE USER] Step 7: Finding user's projects...`);
           const userProjects = await db.select({ id: projects.id }).from(projects).where(eq2(projects.userId, id));
           console.log(`[DELETE USER] \u2713 Found ${userProjects.length} projects`);
@@ -1648,6 +1707,10 @@ var init_storage = __esm({
               }
               try {
                 await db.delete(hmwQuestions).where(eq2(hmwQuestions.projectId, projectId));
+              } catch (e) {
+              }
+              try {
+                await db.delete(guidingCriteria).where(eq2(guidingCriteria.projectId, projectId));
               } catch (e) {
               }
               try {
@@ -1873,6 +1936,25 @@ var init_storage = __esm({
         const result = await db.delete(hmwQuestions).where(eq2(hmwQuestions.id, id));
         return (result.rowCount || 0) > 0;
       }
+      async getGuidingCriteria(projectId) {
+        return await db.select().from(guidingCriteria).where(eq2(guidingCriteria.projectId, projectId)).orderBy(desc(guidingCriteria.createdAt));
+      }
+      async getGuidingCriterion(id) {
+        const [criterion] = await db.select().from(guidingCriteria).where(eq2(guidingCriteria.id, id));
+        return criterion;
+      }
+      async createGuidingCriterion(criterion) {
+        const [newCriterion] = await db.insert(guidingCriteria).values(criterion).returning();
+        return newCriterion;
+      }
+      async updateGuidingCriterion(id, criterion) {
+        const [updatedCriterion] = await db.update(guidingCriteria).set({ ...criterion, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(guidingCriteria.id, id)).returning();
+        return updatedCriterion;
+      }
+      async deleteGuidingCriterion(id) {
+        const result = await db.delete(guidingCriteria).where(eq2(guidingCriteria.id, id));
+        return (result.rowCount || 0) > 0;
+      }
       // Phase 3: Ideate
       async getIdeas(projectId) {
         return await db.select().from(ideas).where(eq2(ideas.projectId, projectId)).orderBy(desc(ideas.createdAt));
@@ -2000,7 +2082,7 @@ var init_storage = __esm({
         return plan;
       }
       async getSubscriptionPlanByName(name) {
-        const [plan] = await db.select().from(subscriptionPlans).where(eq2(subscriptionPlans.name, name));
+        const [plan] = await db.select().from(subscriptionPlans).where(sql2`${subscriptionPlans.name} ILIKE ${name}`).limit(1);
         return plan;
       }
       async createSubscriptionPlan(plan) {
@@ -2036,6 +2118,32 @@ var init_storage = __esm({
       }
       async cancelUserSubscription(id) {
         const result = await db.update(userSubscriptions).set({ status: "cancelled" }).where(eq2(userSubscriptions.id, id));
+        return (result.rowCount || 0) > 0;
+      }
+      // User Add-ons
+      async getUserAddons(userId) {
+        return await db.select().from(userAddons).where(eq2(userAddons.userId, userId)).orderBy(desc(userAddons.createdAt));
+      }
+      async getActiveUserAddons(userId) {
+        return await db.select().from(userAddons).where(and(
+          eq2(userAddons.userId, userId),
+          eq2(userAddons.status, "active")
+        )).orderBy(desc(userAddons.createdAt));
+      }
+      async createUserAddon(addon) {
+        const [newAddon] = await db.insert(userAddons).values(addon).returning();
+        return newAddon;
+      }
+      async updateUserAddon(id, addon) {
+        const [updatedAddon] = await db.update(userAddons).set({ ...addon, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(userAddons.id, id)).returning();
+        return updatedAddon;
+      }
+      async deleteUserAddon(id) {
+        const result = await db.delete(userAddons).where(eq2(userAddons.id, id));
+        return (result.rowCount || 0) > 0;
+      }
+      async updateUserAddonsByStripeSubscription(stripeSubscriptionId, addon) {
+        const result = await db.update(userAddons).set({ ...addon, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(userAddons.stripeSubscriptionId, stripeSubscriptionId));
         return (result.rowCount || 0) > 0;
       }
       // Benchmarking
@@ -4258,25 +4366,48 @@ import { sql as sql3 } from "drizzle-orm";
 
 // server/subscriptionMiddleware.ts
 init_storage();
+function normalizeLimit(value) {
+  if (value === null || value === void 0) return null;
+  if (value < 0) return null;
+  return value;
+}
 async function loadUserSubscription(req, res, next) {
   if (!req.user?.id) {
     const freePlan = await storage.getSubscriptionPlanByName("free");
     if (freePlan) {
+      const planMaxProjects = normalizeLimit(freePlan.maxProjects);
+      const planMaxPersonas = normalizeLimit(freePlan.maxPersonasPerProject);
+      const planMaxUsers = normalizeLimit(freePlan.maxUsersPerTeam);
+      const planAiChat = normalizeLimit(freePlan.aiChatLimit);
+      const planLibraryArticles = normalizeLimit(freePlan.libraryArticlesCount);
+      const planMaxDoubleDiamondProjects = normalizeLimit(freePlan.maxDoubleDiamondProjects);
+      const planMaxDoubleDiamondExports = normalizeLimit(freePlan.maxDoubleDiamondExports);
+      const exportFormats = Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats : [];
       req.subscription = {
         plan: freePlan,
         limits: {
-          maxProjects: freePlan.maxProjects,
-          maxPersonasPerProject: freePlan.maxPersonasPerProject,
-          maxUsersPerTeam: freePlan.maxUsersPerTeam,
-          aiChatLimit: freePlan.aiChatLimit,
-          libraryArticlesCount: freePlan.libraryArticlesCount,
+          maxProjects: planMaxProjects,
+          maxPersonasPerProject: planMaxPersonas,
+          maxUsersPerTeam: planMaxUsers,
+          aiChatLimit: planAiChat,
+          libraryArticlesCount: planLibraryArticles,
+          maxDoubleDiamondProjects: planMaxDoubleDiamondProjects,
+          maxDoubleDiamondExports: planMaxDoubleDiamondExports,
           canCollaborate: freePlan.hasCollaboration ?? false,
-          canExportPDF: Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("pdf") : false,
-          canExportPNG: Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("png") : false,
-          canExportCSV: Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("csv") : false,
+          canExportPDF: exportFormats.includes("pdf"),
+          canExportPNG: exportFormats.includes("png"),
+          canExportCSV: exportFormats.includes("csv"),
           hasPermissionManagement: freePlan.hasPermissionManagement ?? false,
           hasSharedWorkspace: freePlan.hasSharedWorkspace ?? false,
           hasCommentsAndFeedback: freePlan.hasCommentsAndFeedback ?? false
+        },
+        addons: {
+          doubleDiamondPro: false,
+          exportPro: false,
+          aiTurbo: false,
+          collabAdvanced: false,
+          libraryPremium: false,
+          raw: []
         }
       };
     }
@@ -4291,21 +4422,78 @@ async function loadUserSubscription(req, res, next) {
       plan = await storage.getSubscriptionPlanByName("free");
     }
     if (plan) {
+      const user = await storage.getUser(req.user.id);
+      const planMaxProjects = normalizeLimit(plan.maxProjects);
+      const planMaxPersonas = normalizeLimit(plan.maxPersonasPerProject);
+      const planMaxUsers = normalizeLimit(plan.maxUsersPerTeam);
+      const planAiChat = normalizeLimit(plan.aiChatLimit);
+      const planLibraryArticles = normalizeLimit(plan.libraryArticlesCount);
+      const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
+      const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
+      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
+      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
+      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
+      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
+      const activeAddons = await storage.getActiveUserAddons(req.user.id);
+      const addonKeys = new Set(activeAddons.map((a) => a.addonKey));
+      const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
+      const hasExportPro = addonKeys.has("export_pro");
+      const hasAiTurbo = addonKeys.has("ai_turbo");
+      const hasCollabAdvanced = addonKeys.has("collab_advanced");
+      const hasLibraryPremium = addonKeys.has("library_premium");
+      let maxProjects = userMaxProjects !== null ? userMaxProjects : planMaxProjects;
+      let aiChatLimit = userAiChatLimit !== null ? userAiChatLimit : planAiChat;
+      let maxDoubleDiamondProjects = userMaxDoubleDiamondProjects !== null ? userMaxDoubleDiamondProjects : planMaxDoubleDiamondProjects;
+      let maxDoubleDiamondExports = userMaxDoubleDiamondExports !== null ? userMaxDoubleDiamondExports : planMaxDoubleDiamondExports;
+      let libraryArticlesCount = planLibraryArticles;
+      if (hasAiTurbo) {
+        aiChatLimit = aiChatLimit !== null ? aiChatLimit + 300 : null;
+      }
+      if (hasDoubleDiamondPro) {
+        maxDoubleDiamondProjects = null;
+        maxDoubleDiamondExports = null;
+      }
+      if (hasLibraryPremium) {
+        libraryArticlesCount = null;
+      }
+      const exportFormats = Array.isArray(plan.exportFormats) ? plan.exportFormats : [];
+      let canExportPDF = exportFormats.includes("pdf");
+      let canExportPNG = exportFormats.includes("png");
+      let canExportCSV = exportFormats.includes("csv");
+      if (hasExportPro || hasDoubleDiamondPro) {
+        canExportPDF = true;
+        canExportPNG = true;
+        canExportCSV = true;
+      }
+      const canCollaborate = (plan.hasCollaboration ?? false) || hasCollabAdvanced;
+      const hasSharedWorkspace = (plan.hasSharedWorkspace ?? false) || hasCollabAdvanced;
+      const hasCommentsAndFeedback = (plan.hasCommentsAndFeedback ?? false) || hasCollabAdvanced;
+      const hasPermissionManagement = plan.hasPermissionManagement ?? false;
       req.subscription = {
         plan,
         limits: {
-          maxProjects: plan.maxProjects,
-          maxPersonasPerProject: plan.maxPersonasPerProject,
-          maxUsersPerTeam: plan.maxUsersPerTeam,
-          aiChatLimit: plan.aiChatLimit,
-          libraryArticlesCount: plan.libraryArticlesCount,
-          canCollaborate: plan.hasCollaboration ?? false,
-          canExportPDF: Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("pdf") : false,
-          canExportPNG: Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("png") : false,
-          canExportCSV: Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("csv") : false,
-          hasPermissionManagement: plan.hasPermissionManagement ?? false,
-          hasSharedWorkspace: plan.hasSharedWorkspace ?? false,
-          hasCommentsAndFeedback: plan.hasCommentsAndFeedback ?? false
+          maxProjects,
+          maxPersonasPerProject: planMaxPersonas,
+          maxUsersPerTeam: planMaxUsers,
+          aiChatLimit,
+          libraryArticlesCount,
+          maxDoubleDiamondProjects,
+          maxDoubleDiamondExports,
+          canCollaborate,
+          canExportPDF,
+          canExportPNG,
+          canExportCSV,
+          hasPermissionManagement,
+          hasSharedWorkspace,
+          hasCommentsAndFeedback
+        },
+        addons: {
+          doubleDiamondPro: hasDoubleDiamondPro,
+          exportPro: hasExportPro,
+          aiTurbo: hasAiTurbo,
+          collabAdvanced: hasCollabAdvanced,
+          libraryPremium: hasLibraryPremium,
+          raw: activeAddons
         }
       };
     }
@@ -4384,11 +4572,13 @@ async function getSubscriptionInfo(req, res) {
     return res.json({
       plan: freePlan,
       limits: freePlan ? {
-        maxProjects: freePlan.maxProjects,
-        maxPersonasPerProject: freePlan.maxPersonasPerProject,
-        maxUsersPerTeam: freePlan.maxUsersPerTeam,
-        aiChatLimit: freePlan.aiChatLimit,
-        libraryArticlesCount: freePlan.libraryArticlesCount,
+        maxProjects: normalizeLimit(freePlan.maxProjects),
+        maxPersonasPerProject: normalizeLimit(freePlan.maxPersonasPerProject),
+        maxUsersPerTeam: normalizeLimit(freePlan.maxUsersPerTeam),
+        aiChatLimit: normalizeLimit(freePlan.aiChatLimit),
+        libraryArticlesCount: normalizeLimit(freePlan.libraryArticlesCount),
+        maxDoubleDiamondProjects: normalizeLimit(freePlan.maxDoubleDiamondProjects),
+        maxDoubleDiamondExports: normalizeLimit(freePlan.maxDoubleDiamondExports),
         canCollaborate: freePlan.hasCollaboration ?? false,
         canExportPDF: Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("pdf") : false,
         canExportPNG: Array.isArray(freePlan.exportFormats) ? freePlan.exportFormats.includes("png") : false,
@@ -4397,6 +4587,14 @@ async function getSubscriptionInfo(req, res) {
         hasSharedWorkspace: freePlan.hasSharedWorkspace ?? false,
         hasCommentsAndFeedback: freePlan.hasCommentsAndFeedback ?? false
       } : null,
+      addons: {
+        doubleDiamondPro: false,
+        exportPro: false,
+        aiTurbo: false,
+        collabAdvanced: false,
+        libraryPremium: false,
+        raw: []
+      },
       usage: {
         projects: 0,
         aiChatThisMonth: 0
@@ -4412,23 +4610,86 @@ async function getSubscriptionInfo(req, res) {
       plan = await storage.getSubscriptionPlanByName("free");
     }
     const userProjects = await storage.getProjects(req.user.id);
+    const user = await storage.getUser(req.user.id);
+    const activeAddons = plan ? await storage.getActiveUserAddons(req.user.id) : [];
+    let limits = null;
+    let addonsInfo = null;
+    if (plan) {
+      const planMaxProjects = normalizeLimit(plan.maxProjects);
+      const planMaxPersonas = normalizeLimit(plan.maxPersonasPerProject);
+      const planMaxUsers = normalizeLimit(plan.maxUsersPerTeam);
+      const planAiChat = normalizeLimit(plan.aiChatLimit);
+      const planLibraryArticles = normalizeLimit(plan.libraryArticlesCount);
+      const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
+      const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
+      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
+      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
+      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
+      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
+      const addonKeys = new Set(activeAddons.map((a) => a.addonKey));
+      const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
+      const hasExportPro = addonKeys.has("export_pro");
+      const hasAiTurbo = addonKeys.has("ai_turbo");
+      const hasCollabAdvanced = addonKeys.has("collab_advanced");
+      const hasLibraryPremium = addonKeys.has("library_premium");
+      let maxProjects = userMaxProjects !== null ? userMaxProjects : planMaxProjects;
+      let aiChatLimit = userAiChatLimit !== null ? userAiChatLimit : planAiChat;
+      let maxDoubleDiamondProjects = userMaxDoubleDiamondProjects !== null ? userMaxDoubleDiamondProjects : planMaxDoubleDiamondProjects;
+      let maxDoubleDiamondExports = userMaxDoubleDiamondExports !== null ? userMaxDoubleDiamondExports : planMaxDoubleDiamondExports;
+      let libraryArticlesCount = planLibraryArticles;
+      if (hasAiTurbo) {
+        aiChatLimit = aiChatLimit !== null ? aiChatLimit + 300 : null;
+      }
+      if (hasDoubleDiamondPro) {
+        maxDoubleDiamondProjects = null;
+        maxDoubleDiamondExports = null;
+      }
+      if (hasLibraryPremium) {
+        libraryArticlesCount = null;
+      }
+      const exportFormats = Array.isArray(plan.exportFormats) ? plan.exportFormats : [];
+      let canExportPDF = exportFormats.includes("pdf");
+      let canExportPNG = exportFormats.includes("png");
+      let canExportCSV = exportFormats.includes("csv");
+      if (hasExportPro || hasDoubleDiamondPro) {
+        canExportPDF = true;
+        canExportPNG = true;
+        canExportCSV = true;
+      }
+      const canCollaborate = (plan.hasCollaboration ?? false) || hasCollabAdvanced;
+      const hasSharedWorkspace = (plan.hasSharedWorkspace ?? false) || hasCollabAdvanced;
+      const hasCommentsAndFeedback = (plan.hasCommentsAndFeedback ?? false) || hasCollabAdvanced;
+      const hasPermissionManagement = plan.hasPermissionManagement ?? false;
+      limits = {
+        maxProjects,
+        maxPersonasPerProject: planMaxPersonas,
+        maxUsersPerTeam: planMaxUsers,
+        aiChatLimit,
+        libraryArticlesCount,
+        maxDoubleDiamondProjects,
+        maxDoubleDiamondExports,
+        canCollaborate,
+        canExportPDF,
+        canExportPNG,
+        canExportCSV,
+        hasPermissionManagement,
+        hasSharedWorkspace,
+        hasCommentsAndFeedback
+      };
+      addonsInfo = {
+        doubleDiamondPro: hasDoubleDiamondPro,
+        exportPro: hasExportPro,
+        aiTurbo: hasAiTurbo,
+        collabAdvanced: hasCollabAdvanced,
+        libraryPremium: hasLibraryPremium,
+        raw: activeAddons
+      };
+    }
     res.json({
       plan,
       subscription: userSubscription,
-      limits: plan ? {
-        maxProjects: plan.maxProjects,
-        maxPersonasPerProject: plan.maxPersonasPerProject,
-        maxUsersPerTeam: plan.maxUsersPerTeam,
-        aiChatLimit: plan.aiChatLimit,
-        libraryArticlesCount: plan.libraryArticlesCount,
-        canCollaborate: plan.hasCollaboration ?? false,
-        canExportPDF: Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("pdf") : false,
-        canExportPNG: Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("png") : false,
-        canExportCSV: Array.isArray(plan.exportFormats) ? plan.exportFormats.includes("csv") : false,
-        hasPermissionManagement: plan.hasPermissionManagement ?? false,
-        hasSharedWorkspace: plan.hasSharedWorkspace ?? false,
-        hasCommentsAndFeedback: plan.hasCommentsAndFeedback ?? false
-      } : null,
+      limits,
+      addons: addonsInfo,
       usage: {
         projects: userProjects.length,
         aiChatThisMonth: 0
@@ -4540,46 +4801,39 @@ async function checkDoubleDiamondLimit(req, res, next) {
     }
     const userDoubleDiamondProjects = await storage.getDoubleDiamondProjects(userId);
     const currentUsage = userDoubleDiamondProjects.length;
-    if (!userData.subscriptionPlanId) {
-      if (currentUsage >= FREE_PLAN_DOUBLE_DIAMOND_LIMIT) {
-        return res.status(403).json({
-          error: `Voc\xEA atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond do plano gratuito. Fa\xE7a upgrade para criar projetos ilimitados.`,
-          code: "DOUBLE_DIAMOND_LIMIT_REACHED",
-          currentUsage,
-          limit: FREE_PLAN_DOUBLE_DIAMOND_LIMIT,
-          planName: "Gratuito",
-          upgradeUrl: "/pricing"
-        });
-      }
+    const activeAddons = await storage.getActiveUserAddons(userId);
+    const addonKeys = new Set(activeAddons.map((a) => a.addonKey));
+    const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
+    if (hasDoubleDiamondPro) {
+      console.log(`\u2705 User ${userId} has Double Diamond Pro add-on - unlimited projects`);
       return next();
     }
-    const plan = await db.select().from(subscriptionPlans).where(eq4(subscriptionPlans.id, userData.subscriptionPlanId)).limit(1);
-    if (!plan || plan.length === 0) {
-      if (currentUsage >= FREE_PLAN_DOUBLE_DIAMOND_LIMIT) {
-        return res.status(403).json({
-          error: `Voc\xEA atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond. Fa\xE7a upgrade para criar projetos ilimitados.`,
-          code: "DOUBLE_DIAMOND_LIMIT_REACHED",
-          currentUsage,
-          limit: FREE_PLAN_DOUBLE_DIAMOND_LIMIT,
-          planName: "Gratuito",
-          upgradeUrl: "/pricing"
-        });
-      }
-      return next();
+    let planData = null;
+    if (userData.subscriptionPlanId) {
+      const plan = await db.select().from(subscriptionPlans).where(eq4(subscriptionPlans.id, userData.subscriptionPlanId)).limit(1);
+      planData = plan && plan.length > 0 ? plan[0] : null;
     }
-    const planData = plan[0];
-    const isFreePlan = planData.name === "free" || planData.priceMonthly === 0;
-    if (isFreePlan) {
-      if (currentUsage >= FREE_PLAN_DOUBLE_DIAMOND_LIMIT) {
-        return res.status(403).json({
-          error: `Voc\xEA atingiu o limite de ${FREE_PLAN_DOUBLE_DIAMOND_LIMIT} projetos Double Diamond do plano ${planData.displayName}. Fa\xE7a upgrade para criar projetos ilimitados.`,
-          code: "DOUBLE_DIAMOND_LIMIT_REACHED",
-          currentUsage,
-          limit: FREE_PLAN_DOUBLE_DIAMOND_LIMIT,
-          planName: planData.displayName,
-          upgradeUrl: "/pricing"
-        });
-      }
+    const userCustomLimitRaw = userData.customMaxDoubleDiamondProjects;
+    const userCustomLimit = typeof userCustomLimitRaw === "number" && userCustomLimitRaw >= 0 ? userCustomLimitRaw : null;
+    let planLimit = null;
+    if (!planData) {
+      planLimit = FREE_PLAN_DOUBLE_DIAMOND_LIMIT;
+    } else if (typeof planData.maxDoubleDiamondProjects === "number") {
+      planLimit = planData.maxDoubleDiamondProjects < 0 ? null : planData.maxDoubleDiamondProjects;
+    } else {
+      const isFreePlan = planData.name === "free" || planData.priceMonthly === 0;
+      planLimit = isFreePlan ? FREE_PLAN_DOUBLE_DIAMOND_LIMIT : null;
+    }
+    const effectiveLimit = userCustomLimit !== null ? userCustomLimit : planLimit;
+    if (effectiveLimit !== null && currentUsage >= effectiveLimit) {
+      return res.status(403).json({
+        error: `Voc\xEA atingiu o limite de ${effectiveLimit} projetos Double Diamond do seu plano. Fa\xE7a upgrade ou adquira o add-on Double Diamond Pro para criar mais projetos.`,
+        code: "DOUBLE_DIAMOND_LIMIT_REACHED",
+        currentUsage,
+        limit: effectiveLimit,
+        planName: planData?.displayName ?? (userData.subscriptionPlanId ? "Plano atual" : "Gratuito"),
+        upgradeUrl: "/pricing"
+      });
     }
     next();
   } catch (error) {
@@ -4913,102 +5167,557 @@ Seja espec\xEDfico, construtivo e ofere\xE7a insights acion\xE1veis. Responda em
       10,
       Math.round(2 + empathyDataCount * 0.5 + defineDataCount * 0.8 + ideateDataCount * 0.3 + prototypeDataCount * 1.2 + testDataCount * 1.5)
     );
-    return {
-      executiveSummary: `Projeto ${analysisData.project?.name || "DTTools"} est\xE1 na fase ${analysisData.project?.currentPhase || 1} do Design Thinking. ${empathyDataCount > 0 ? "Demonstra boa base de pesquisa emp\xE1tica." : "Recomenda-se ampliar pesquisa com usu\xE1rios."} An\xE1lise baseada em dados demonstrativos.`,
-      maturityScore,
-      overallInsights: [
+    const rawLang = analysisData.language || "pt-BR";
+    const lang = rawLang.startsWith("en") ? "en" : rawLang.startsWith("es") ? "es" : rawLang.startsWith("fr") ? "fr" : "pt-BR";
+    const criteriaList = analysisData.guidingCriteria || [];
+    const criteriaCount = criteriaList?.length || 0;
+    let criteriaCoveredCount = 0;
+    let ideasWithCriteriaCount = 0;
+    if (criteriaCount > 0) {
+      const criteriaIds = criteriaList.map((c) => c.id);
+      const coveredCriteria = /* @__PURE__ */ new Set();
+      for (const idea of analysisData.ideas || []) {
+        const ideaCriteriaIds = Array.isArray(idea.guidingCriteriaIds) ? idea.guidingCriteriaIds : [];
+        if (ideaCriteriaIds.length > 0) {
+          ideasWithCriteriaCount++;
+        }
+        for (const id of ideaCriteriaIds) {
+          if (criteriaIds.includes(id)) {
+            coveredCriteria.add(id);
+          }
+        }
+      }
+      criteriaCoveredCount = coveredCriteria.size;
+    }
+    const criteriaCoverage = criteriaCount === 0 ? 0 : Math.round(criteriaCoveredCount / criteriaCount * 100);
+    const ideasUsingCriteriaRatio = ideateDataCount === 0 ? 0 : Math.round(ideasWithCriteriaCount / ideateDataCount * 100);
+    const problemSolutionAlignment = criteriaCount === 0 ? ideateDataCount > 0 ? 60 : 40 : Math.max(
+      20,
+      Math.min(
+        100,
+        Math.round(criteriaCoverage * 0.6 + ideasUsingCriteriaRatio * 0.4)
+      )
+    );
+    const researchInsightsAlignment = defineDataCount > 0 || empathyDataCount > 0 ? Math.min(100, 40 + defineDataCount * 10 + empathyDataCount * 5) : 35;
+    const alignmentComments = [];
+    if (criteriaCount === 0) {
+      if (lang === "en") {
+        alignmentComments.push(
+          "No guiding criteria have been defined yet. Creating clear criteria in Phase 2 helps guide idea generation and prioritization."
+        );
+      } else if (lang === "es") {
+        alignmentComments.push(
+          "Todav\xEDa no se han definido criterios orientadores. Definir criterios claros en la Fase 2 ayuda a guiar la generaci\xF3n y priorizaci\xF3n de ideas."
+        );
+      } else if (lang === "fr") {
+        alignmentComments.push(
+          "Aucun crit\xE8re directeur n'a encore \xE9t\xE9 d\xE9fini. D\xE9finir des crit\xE8res clairs \xE0 la Phase 2 aide \xE0 orienter la g\xE9n\xE9ration et la priorisation des id\xE9es."
+        );
+      } else {
+        alignmentComments.push(
+          "Nenhum crit\xE9rio norteador foi definido ainda. Criar crit\xE9rios claros na Fase 2 ajuda a orientar a gera\xE7\xE3o e a prioriza\xE7\xE3o de ideias."
+        );
+      }
+    } else {
+      if (lang === "en") {
+        alignmentComments.push(
+          `${criteriaCoveredCount} of ${criteriaCount} guiding criteria have at least one associated idea.`
+        );
+      } else if (lang === "es") {
+        alignmentComments.push(
+          `${criteriaCoveredCount} de ${criteriaCount} criterios orientadores tienen al menos una idea asociada.`
+        );
+      } else if (lang === "fr") {
+        alignmentComments.push(
+          `${criteriaCoveredCount} sur ${criteriaCount} crit\xE8res directeurs ont au moins une id\xE9e associ\xE9e.`
+        );
+      } else {
+        alignmentComments.push(
+          `${criteriaCoveredCount} de ${criteriaCount} crit\xE9rios norteadores t\xEAm pelo menos uma ideia associada.`
+        );
+      }
+      if (criteriaCoverage < 60) {
+        if (lang === "en") {
+          alignmentComments.push(
+            "Several guiding criteria still have no directly linked ideas. Consider generating new ideas focused on these uncovered criteria."
+          );
+        } else if (lang === "es") {
+          alignmentComments.push(
+            "Varios criterios orientadores a\xFAn no tienen ideas vinculadas directamente. Considera generar nuevas ideas centradas en estos criterios no cubiertos."
+          );
+        } else if (lang === "fr") {
+          alignmentComments.push(
+            "Plusieurs crit\xE8res directeurs n'ont pas encore d'id\xE9es directement li\xE9es. Envisagez de g\xE9n\xE9rer de nouvelles id\xE9es centr\xE9es sur ces crit\xE8res non couverts."
+          );
+        } else {
+          alignmentComments.push(
+            "V\xE1rios crit\xE9rios norteadores ainda n\xE3o possuem ideias diretamente ligadas. Considere gerar novas ideias focadas nesses crit\xE9rios descobertos."
+          );
+        }
+      } else {
+        if (lang === "en") {
+          alignmentComments.push(
+            "Most guiding criteria are already covered by ideas, indicating good alignment between problem definition and ideation."
+          );
+        } else if (lang === "es") {
+          alignmentComments.push(
+            "La mayor\xEDa de los criterios orientadores ya est\xE1n cubiertos por ideas, lo que indica un buen alineamiento entre definici\xF3n de problema e ideaci\xF3n."
+          );
+        } else if (lang === "fr") {
+          alignmentComments.push(
+            "La plupart des crit\xE8res directeurs sont d\xE9j\xE0 couverts par des id\xE9es, ce qui indique un bon alignement entre d\xE9finition du probl\xE8me et id\xE9ation."
+          );
+        } else {
+          alignmentComments.push(
+            "A maior parte dos crit\xE9rios norteadores j\xE1 est\xE1 coberta por ideias, indicando bom alinhamento entre defini\xE7\xE3o de problema e idea\xE7\xE3o."
+          );
+        }
+      }
+      if (ideateDataCount > 0 && ideasUsingCriteriaRatio < 50) {
+        if (lang === "en") {
+          alignmentComments.push(
+            "A significant portion of ideas is not yet explicitly linked to guiding criteria. Link each idea to at least one relevant criterion to make prioritization easier."
+          );
+        } else if (lang === "es") {
+          alignmentComments.push(
+            "Una parte relevante de las ideas a\xFAn no est\xE1 expl\xEDcitamente vinculada a criterios orientadores. Relaciona cada idea con al menos un criterio relevante para facilitar la priorizaci\xF3n."
+          );
+        } else if (lang === "fr") {
+          alignmentComments.push(
+            "Une partie importante des id\xE9es n'est pas encore explicitement li\xE9e aux crit\xE8res directeurs. Reliez chaque id\xE9e \xE0 au moins un crit\xE8re pertinent pour faciliter la priorisation."
+          );
+        } else {
+          alignmentComments.push(
+            "Uma parcela relevante das ideias ainda n\xE3o est\xE1 explicitamente ligada a crit\xE9rios norteadores. Relacione cada ideia a pelo menos um crit\xE9rio relevante para facilitar prioriza\xE7\xE3o."
+          );
+        }
+      }
+    }
+    if (alignmentComments.length === 0) {
+      if (lang === "en") {
+        alignmentComments.push(
+          "The project shows understanding of the methodology.",
+          "Keep deepening user research."
+        );
+      } else if (lang === "es") {
+        alignmentComments.push(
+          "El proyecto demuestra entendimiento de la metodolog\xEDa.",
+          "Contin\xFAa profundizando la investigaci\xF3n con usuarios."
+        );
+      } else if (lang === "fr") {
+        alignmentComments.push(
+          "Le projet montre une bonne compr\xE9hension de la m\xE9thodologie.",
+          "Continuez \xE0 approfondir la recherche avec les utilisateurs."
+        );
+      } else {
+        alignmentComments.push(
+          "Projeto demonstra entendimento da metodologia.",
+          "Continue aprofundando pesquisa com usu\xE1rios."
+        );
+      }
+    }
+    const overallInsights = [];
+    if (lang === "en") {
+      overallInsights.push(
+        empathyDataCount > 2 ? "Excellent work in the Empathize phase" : "Expanding empathy research will bring more insights",
+        "Keep following the structured Design Thinking methodology",
+        "The collected data shows potential for innovative solutions"
+      );
+      if (criteriaCount > 0) {
+        overallInsights.push(
+          `You defined ${criteriaCount} guiding criteria in the Define phase, with ${criteriaCoveredCount} already covered by ideas.`
+        );
+      }
+    } else if (lang === "es") {
+      overallInsights.push(
+        empathyDataCount > 2 ? "Excelente trabajo en la fase de Empatizar" : "Ampliar la investigaci\xF3n emp\xE1tica traer\xE1 m\xE1s insights",
+        "Sigue la metodolog\xEDa estructurada de Design Thinking",
+        "Los datos recogidos demuestran potencial para soluciones innovadoras"
+      );
+      if (criteriaCount > 0) {
+        overallInsights.push(
+          `Se definieron ${criteriaCount} criterios orientadores en la fase Definir, con ${criteriaCoveredCount} de ellos ya cubiertos por ideas.`
+        );
+      }
+    } else if (lang === "fr") {
+      overallInsights.push(
+        empathyDataCount > 2 ? "Excellent travail dans la phase Empathiser" : "Approfondir la recherche empathique apportera plus d'insights",
+        "Continuez \xE0 suivre la m\xE9thodologie structur\xE9e de Design Thinking",
+        "Les donn\xE9es collect\xE9es montrent un potentiel pour des solutions innovantes"
+      );
+      if (criteriaCount > 0) {
+        overallInsights.push(
+          `${criteriaCount} crit\xE8res directeurs ont \xE9t\xE9 d\xE9finis dans la phase D\xE9finir, dont ${criteriaCoveredCount} d\xE9j\xE0 couverts par des id\xE9es.`
+        );
+      }
+    } else {
+      overallInsights.push(
         empathyDataCount > 2 ? "Excelente trabalho na fase de Empatia" : "Ampliar pesquisa emp\xE1tica trar\xE1 mais insights",
         "Continue seguindo a metodologia estruturada do Design Thinking",
         "Dados coletados demonstram potencial para solu\xE7\xF5es inovadoras"
-      ],
-      attentionPoints: [
+      );
+      if (criteriaCount > 0) {
+        overallInsights.push(
+          `Foram definidos ${criteriaCount} crit\xE9rios norteadores na fase Definir, com ${criteriaCoveredCount} deles j\xE1 cobertos por ideias.`
+        );
+      }
+    }
+    const attentionPoints = [];
+    if (lang === "en") {
+      attentionPoints.push(
+        empathyDataCount === 0 ? "More user data needs to be collected" : "Consider diversifying research methods",
+        defineDataCount === 0 ? "Clearly define the core problem" : "Refine the problem definition",
+        "To unlock full analysis, configure the OpenAI API key"
+      );
+      if (criteriaCount > 0 && criteriaCoverage < 70) {
+        attentionPoints.push(
+          "Not all guiding criteria have associated ideas. Check coverage gaps between criteria and ideation."
+        );
+      }
+    } else if (lang === "es") {
+      attentionPoints.push(
+        empathyDataCount === 0 ? "Es necesario recoger m\xE1s datos de usuarios" : "Considera diversificar los m\xE9todos de investigaci\xF3n",
+        defineDataCount === 0 ? "Definir claramente el problema central" : "Refinar la definici\xF3n del problema",
+        "Para un an\xE1lisis completo, configura la clave de la API de OpenAI"
+      );
+      if (criteriaCount > 0 && criteriaCoverage < 70) {
+        attentionPoints.push(
+          "No todos los criterios orientadores tienen ideas asociadas. Eval\xFAa las brechas de cobertura entre criterios e ideaci\xF3n."
+        );
+      }
+    } else if (lang === "fr") {
+      attentionPoints.push(
+        empathyDataCount === 0 ? "Il est n\xE9cessaire de collecter davantage de donn\xE9es utilisateurs" : "Envisagez de diversifier les m\xE9thodes de recherche",
+        defineDataCount === 0 ? "D\xE9finir clairement le probl\xE8me central" : "Affiner la d\xE9finition du probl\xE8me",
+        "Pour une analyse compl\xE8te, configurez la cl\xE9 d'API OpenAI"
+      );
+      if (criteriaCount > 0 && criteriaCoverage < 70) {
+        attentionPoints.push(
+          "Tous les crit\xE8res directeurs n'ont pas d'id\xE9es associ\xE9es. \xC9valuez les \xE9carts de couverture entre crit\xE8res et id\xE9ation."
+        );
+      }
+    } else {
+      attentionPoints.push(
         empathyDataCount === 0 ? "Necess\xE1rio coletar mais dados de usu\xE1rios" : "Considerar diversificar m\xE9todos de pesquisa",
         defineDataCount === 0 ? "Definir claramente o problema central" : "Refinar defini\xE7\xE3o do problema",
         "Para an\xE1lise completa, configure a chave da API OpenAI"
-      ],
-      priorityNextSteps: [
+      );
+      if (criteriaCount > 0 && criteriaCoverage < 70) {
+        attentionPoints.push(
+          "Nem todos os crit\xE9rios norteadores possuem ideias associadas. Avalie lacunas de cobertura entre crit\xE9rios e idea\xE7\xE3o."
+        );
+      }
+    }
+    const priorityNextSteps = [];
+    if (lang === "en") {
+      priorityNextSteps.push(
+        analysisData.project?.currentPhase === 1 ? "Finish the tools of the Empathize phase" : "Move on to the next phase",
+        "Document all collected insights",
+        "Review progress with the team regularly"
+      );
+      if (criteriaCount > 0) {
+        priorityNextSteps.push(
+          "Map which guiding criteria still have no associated ideas and plan ideation sessions to cover them."
+        );
+      } else {
+        priorityNextSteps.push(
+          "Define 3 to 7 clear guiding criteria in Phase 2 to guide idea generation and prioritization."
+        );
+      }
+    } else if (lang === "es") {
+      priorityNextSteps.push(
+        analysisData.project?.currentPhase === 1 ? "Finalizar las herramientas de la fase Empatizar" : "Avanzar a la siguiente fase",
+        "Documentar todos los insights recogidos",
+        "Revisar el progreso con el equipo regularmente"
+      );
+      if (criteriaCount > 0) {
+        priorityNextSteps.push(
+          "Mapear qu\xE9 criterios orientadores a\xFAn no tienen ideas asociadas y planear sesiones de ideaci\xF3n para cubrirlos."
+        );
+      } else {
+        priorityNextSteps.push(
+          "Definir de 3 a 7 criterios orientadores claros en la Fase 2 para guiar la generaci\xF3n y priorizaci\xF3n de ideas."
+        );
+      }
+    } else if (lang === "fr") {
+      priorityNextSteps.push(
+        analysisData.project?.currentPhase === 1 ? "Finaliser les outils de la phase Empathiser" : "Passer \xE0 la phase suivante",
+        "Documenter tous les insights collect\xE9s",
+        "Revoir r\xE9guli\xE8rement l'avancement avec l'\xE9quipe"
+      );
+      if (criteriaCount > 0) {
+        priorityNextSteps.push(
+          "Identifier quels crit\xE8res directeurs n'ont pas encore d'id\xE9es associ\xE9es et planifier des sessions d'id\xE9ation cibl\xE9es pour les couvrir."
+        );
+      } else {
+        priorityNextSteps.push(
+          "D\xE9finir de 3 \xE0 7 crit\xE8res directeurs clairs \xE0 la Phase 2 pour guider la g\xE9n\xE9ration et la priorisation des id\xE9es."
+        );
+      }
+    } else {
+      priorityNextSteps.push(
         analysisData.project?.currentPhase === 1 ? "Finalizar ferramentas da fase Empatizar" : "Avan\xE7ar para pr\xF3xima fase",
         "Documentar todos os insights coletados",
         "Revisar progresso com equipe regularmente"
-      ],
-      phaseAnalyses: this.generateSmartPhaseAnalyses(empathyDataCount, defineDataCount, ideateDataCount, prototypeDataCount, testDataCount),
+      );
+      if (criteriaCount > 0) {
+        priorityNextSteps.push(
+          "Mapear quais crit\xE9rios norteadores ainda n\xE3o possuem ideias associadas e planejar sess\xF5es de idea\xE7\xE3o direcionadas para cobri-los."
+        );
+      } else {
+        priorityNextSteps.push(
+          "Definir de 3 a 7 crit\xE9rios norteadores claros na Fase 2 para orientar a gera\xE7\xE3o e prioriza\xE7\xE3o de ideias."
+        );
+      }
+    }
+    let executiveSummary;
+    const projectName = analysisData.project?.name || "DTTools";
+    const phase = analysisData.project?.currentPhase || 1;
+    if (lang === "en") {
+      const empathySentence = empathyDataCount > 0 ? "It shows a good basis of empathy research." : "It is recommended to expand user research.";
+      executiveSummary = `Project ${projectName} is in phase ${phase} of the Design Thinking process. ${empathySentence} Analysis based on demonstration data.`;
+    } else if (lang === "es") {
+      const empathySentence = empathyDataCount > 0 ? "Demuestra una buena base de investigaci\xF3n emp\xE1tica." : "Se recomienda ampliar la investigaci\xF3n con usuarios.";
+      executiveSummary = `El proyecto ${projectName} est\xE1 en la fase ${phase} del proceso de Design Thinking. ${empathySentence} An\xE1lisis basado en datos demostrativos.`;
+    } else if (lang === "fr") {
+      const empathySentence = empathyDataCount > 0 ? "Il montre une bonne base de recherche empathique." : "Il est recommand\xE9 d'approfondir la recherche avec les utilisateurs.";
+      executiveSummary = `Le projet ${projectName} est \xE0 la phase ${phase} du processus de Design Thinking. ${empathySentence} Analyse bas\xE9e sur des donn\xE9es de d\xE9monstration.`;
+    } else {
+      const empathySentence = empathyDataCount > 0 ? "Demonstra boa base de pesquisa emp\xE1tica." : "Recomenda-se ampliar pesquisa com usu\xE1rios.";
+      executiveSummary = `Projeto ${projectName} est\xE1 na fase ${phase} do Design Thinking. ${empathySentence} An\xE1lise baseada em dados demonstrativos.`;
+    }
+    let consistencyIssues;
+    let consistencyStrengths;
+    if (lang === "en") {
+      consistencyIssues = empathyDataCount < 2 ? ["More empathy data is needed"] : ["Keep collecting feedback"];
+      consistencyStrengths = ["Following the Design Thinking methodology", "Project structure is well organized"];
+    } else if (lang === "es") {
+      consistencyIssues = empathyDataCount < 2 ? ["Es necesario m\xE1s datos de empat\xEDa"] : ["Seguir recopilando feedback"];
+      consistencyStrengths = ["Siguiendo la metodolog\xEDa de Design Thinking", "Estructura del proyecto bien organizada"];
+    } else if (lang === "fr") {
+      consistencyIssues = empathyDataCount < 2 ? ["Davantage de donn\xE9es d'empathie sont n\xE9cessaires"] : ["Continuer \xE0 collecter des retours"];
+      consistencyStrengths = ["Suivi de la m\xE9thodologie Design Thinking", "Structure de projet bien organis\xE9e"];
+    } else {
+      consistencyIssues = empathyDataCount < 2 ? ["Necess\xE1rio mais dados de empatia"] : ["Continuar coletando feedback"];
+      consistencyStrengths = ["Seguindo metodologia Design Thinking", "Estrutura de projeto bem organizada"];
+    }
+    let immediateRecommendations;
+    let shortTermRecommendations;
+    let longTermRecommendations;
+    if (lang === "en") {
+      immediateRecommendations = [
+        empathyDataCount === 0 ? "Create empathy maps and personas" : "Analyze the data that has been collected",
+        "Document key insights",
+        criteriaCount > 0 ? "Review whether each guiding criterion has at least one associated idea." : "Create guiding criteria that reflect the main needs and objectives of the project."
+      ];
+      shortTermRecommendations = [
+        "Move forward to the next Design Thinking phase",
+        "Validate hypotheses with more users",
+        "Use guiding criteria as a filter to prioritize ideas most aligned with the project strategy."
+      ];
+      longTermRecommendations = [
+        "Implement a continuous feedback process",
+        "Consider specialized consulting for advanced analyses",
+        "Monitor over time whether new ideas remain aligned with the defined guiding criteria."
+      ];
+    } else if (lang === "es") {
+      immediateRecommendations = [
+        empathyDataCount === 0 ? "Crear mapas de empat\xEDa y personas" : "Analizar los datos recogidos",
+        "Documentar los insights principales",
+        criteriaCount > 0 ? "Revisar si cada criterio orientador tiene al menos una idea asociada." : "Crear criterios orientadores que reflejen las principales necesidades y objetivos del proyecto."
+      ];
+      shortTermRecommendations = [
+        "Avanzar a la siguiente fase de Design Thinking",
+        "Validar hip\xF3tesis con m\xE1s usuarios",
+        "Usar los criterios orientadores como filtro para priorizar las ideas m\xE1s alineadas con la estrategia del proyecto."
+      ];
+      longTermRecommendations = [
+        "Implementar un proceso continuo de feedback",
+        "Considerar consultor\xEDa especializada para an\xE1lisis avanzados",
+        "Monitorear a lo largo del tiempo si las nuevas ideas siguen alineadas con los criterios orientadores definidos."
+      ];
+    } else if (lang === "fr") {
+      immediateRecommendations = [
+        empathyDataCount === 0 ? "Cr\xE9er des cartes d'empathie et des personas" : "Analyser les donn\xE9es collect\xE9es",
+        "Documenter les principaux insights",
+        criteriaCount > 0 ? "V\xE9rifier si chaque crit\xE8re directeur a au moins une id\xE9e associ\xE9e." : "Cr\xE9er des crit\xE8res directeurs qui refl\xE8tent les principaux besoins et objectifs du projet."
+      ];
+      shortTermRecommendations = [
+        "Avancer vers la prochaine phase du Design Thinking",
+        "Valider les hypoth\xE8ses avec davantage d'utilisateurs",
+        "Utiliser les crit\xE8res directeurs comme filtre pour prioriser les id\xE9es les plus align\xE9es sur la strat\xE9gie du projet."
+      ];
+      longTermRecommendations = [
+        "Mettre en place un processus de feedback continu",
+        "Envisager un accompagnement sp\xE9cialis\xE9 pour des analyses avanc\xE9es",
+        "Suivre dans le temps si les nouvelles id\xE9es restent align\xE9es avec les crit\xE8res directeurs d\xE9finis."
+      ];
+    } else {
+      immediateRecommendations = [
+        empathyDataCount === 0 ? "Criar mapas de empatia e personas" : "Analisar dados coletados",
+        "Documentar insights principais",
+        criteriaCount > 0 ? "Revisar se cada crit\xE9rio norteador possui ao menos uma ideia associada." : "Criar crit\xE9rios norteadores que reflitam as principais necessidades e objetivos do projeto."
+      ];
+      shortTermRecommendations = [
+        "Avan\xE7ar para pr\xF3xima fase do Design Thinking",
+        "Validar hip\xF3teses com mais usu\xE1rios",
+        "Usar os crit\xE9rios norteadores como filtro para priorizar ideias mais alinhadas \xE0 estrat\xE9gia do projeto."
+      ];
+      longTermRecommendations = [
+        "Implementar processo cont\xEDnuo de feedback",
+        "Considerar consultoria especializada para an\xE1lises avan\xE7adas",
+        "Monitorar ao longo do tempo se novas ideias continuam alinhadas aos crit\xE9rios norteadores definidos."
+      ];
+    }
+    return {
+      executiveSummary,
+      maturityScore,
+      overallInsights,
+      attentionPoints,
+      priorityNextSteps,
+      phaseAnalyses: this.generateSmartPhaseAnalyses(empathyDataCount, defineDataCount, ideateDataCount, prototypeDataCount, testDataCount, lang),
       consistency: {
         score: Math.min(100, 40 + empathyDataCount * 10 + defineDataCount * 15),
-        issues: empathyDataCount < 2 ? ["Necess\xE1rio mais dados de empatia"] : ["Continuar coletando feedback"],
-        strengths: ["Seguindo metodologia Design Thinking", "Estrutura de projeto bem organizada"]
+        issues: consistencyIssues,
+        strengths: consistencyStrengths
       },
       alignment: {
-        problemSolutionAlignment: empathyDataCount > 0 ? 75 : 45,
-        researchInsightsAlignment: defineDataCount > 0 ? 80 : 50,
-        comments: ["Projeto demonstra entendimento da metodologia", "Continue aprofundando pesquisa com usu\xE1rios"]
+        problemSolutionAlignment,
+        researchInsightsAlignment,
+        comments: alignmentComments
       },
       recommendations: {
-        immediate: [
-          empathyDataCount === 0 ? "Criar mapas de empatia e personas" : "Analisar dados coletados",
-          "Documentar insights principais"
-        ],
-        shortTerm: [
-          "Avan\xE7ar para pr\xF3xima fase do Design Thinking",
-          "Validar hip\xF3teses com mais usu\xE1rios"
-        ],
-        longTerm: [
-          "Implementar processo cont\xEDnuo de feedback",
-          "Considerar consultoria especializada para an\xE1lises avan\xE7adas"
-        ]
+        immediate: immediateRecommendations,
+        shortTerm: shortTermRecommendations,
+        longTerm: longTermRecommendations
       }
     };
   }
-  generateSmartPhaseAnalyses(empathy, define, ideate, prototype, test) {
+  generateSmartPhaseAnalyses(empathy, define, ideate, prototype, test, lang) {
+    const phaseLang = lang === "en" || lang === "es" || lang === "fr" ? lang : "pt-BR";
     return [
       {
         phase: 1,
-        phaseName: "Empatizar",
-        completeness: Math.min(100, empathy * 25),
-        quality: empathy > 2 ? 85 : empathy > 0 ? 65 : 30,
-        insights: empathy > 0 ? [`${empathy} ferramentas de empatia criadas`, "Base s\xF3lida para entender usu\xE1rios"] : ["Fase iniciada, continuar coletando dados"],
-        gaps: empathy < 2 ? ["Ampliar m\xE9todos de pesquisa emp\xE1tica"] : ["Considerar entrevistas adicionais"],
-        recommendations: empathy === 0 ? ["Come\xE7ar com mapas de empatia"] : ["Analisar padr\xF5es nos dados coletados"],
-        strengths: empathy > 0 ? ["Dados emp\xE1ticos coletados"] : ["Estrutura preparada para pesquisa"]
+        phaseName: phaseLang === "en" ? "Empathize" : phaseLang === "es" ? "Empatizar" : phaseLang === "fr" ? "Empathiser" : "Empatizar",
+        completeness: empathy === 0 ? 0 : Math.min(100, empathy * 25),
+        quality: empathy === 0 ? 0 : empathy > 2 ? 85 : 65,
+        insights: empathy > 0 ? [
+          phaseLang === "en" ? `${empathy} empathy tools created` : phaseLang === "es" ? `${empathy} herramientas de empat\xEDa creadas` : phaseLang === "fr" ? `${empathy} outils d'empathie cr\xE9\xE9s` : `${empathy} ferramentas de empatia criadas`,
+          phaseLang === "en" ? "Solid basis to understand users" : phaseLang === "es" ? "Base s\xF3lida para entender a los usuarios" : phaseLang === "fr" ? "Base solide pour comprendre les utilisateurs" : "Base s\xF3lida para entender usu\xE1rios"
+        ] : [
+          phaseLang === "en" ? "Phase started, keep collecting data" : phaseLang === "es" ? "Fase iniciada, seguir recopilando datos" : phaseLang === "fr" ? "Phase commenc\xE9e, continuer \xE0 collecter des donn\xE9es" : "Fase iniciada, continuar coletando dados"
+        ],
+        gaps: empathy < 2 ? [
+          phaseLang === "en" ? "Expand empathy research methods" : phaseLang === "es" ? "Ampliar los m\xE9todos de investigaci\xF3n emp\xE1tica" : phaseLang === "fr" ? "D\xE9velopper les m\xE9thodes de recherche empathique" : "Ampliar m\xE9todos de pesquisa emp\xE1tica"
+        ] : [
+          phaseLang === "en" ? "Consider additional interviews" : phaseLang === "es" ? "Considerar entrevistas adicionales" : phaseLang === "fr" ? "Envisager des entretiens suppl\xE9mentaires" : "Considerar entrevistas adicionais"
+        ],
+        recommendations: empathy === 0 ? [
+          phaseLang === "en" ? "Start with empathy maps" : phaseLang === "es" ? "Comenzar con mapas de empat\xEDa" : phaseLang === "fr" ? "Commencer par des cartes d'empathie" : "Come\xE7ar com mapas de empatia"
+        ] : [
+          phaseLang === "en" ? "Analyze patterns in collected data" : phaseLang === "es" ? "Analizar patrones en los datos recogidos" : phaseLang === "fr" ? "Analyser les motifs dans les donn\xE9es collect\xE9es" : "Analisar padr\xF5es nos dados coletados"
+        ],
+        strengths: empathy > 0 ? [
+          phaseLang === "en" ? "Empathy data collected" : phaseLang === "es" ? "Datos emp\xE1ticos recogidos" : phaseLang === "fr" ? "Donn\xE9es empathiques collect\xE9es" : "Dados emp\xE1ticos coletados"
+        ] : [
+          phaseLang === "en" ? "Structure ready for research" : phaseLang === "es" ? "Estructura preparada para la investigaci\xF3n" : phaseLang === "fr" ? "Structure pr\xEAte pour la recherche" : "Estrutura preparada para pesquisa"
+        ]
       },
       {
         phase: 2,
-        phaseName: "Definir",
-        completeness: Math.min(100, define * 30),
-        quality: define > 0 ? 70 : 25,
-        insights: define > 0 ? ["Problema come\xE7ando a ser definido"] : ["Aguardando defini\xE7\xE3o do problema"],
-        gaps: define === 0 ? ["Criar declara\xE7\xF5es POV"] : ["Expandir defini\xE7\xE3o do problema"],
-        recommendations: ["Sintetizar insights da fase anterior"],
-        strengths: define > 0 ? ["Processo de defini\xE7\xE3o iniciado"] : ["Preparado para definir problema"]
+        phaseName: phaseLang === "en" ? "Define" : phaseLang === "es" ? "Definir" : phaseLang === "fr" ? "D\xE9finir" : "Definir",
+        completeness: define === 0 ? 0 : Math.min(100, define * 30),
+        quality: define === 0 ? 0 : 70,
+        insights: define > 0 ? [
+          phaseLang === "en" ? "The problem is starting to be defined" : phaseLang === "es" ? "El problema empieza a definirse" : phaseLang === "fr" ? "Le probl\xE8me commence \xE0 \xEAtre d\xE9fini" : "Problema come\xE7ando a ser definido"
+        ] : [
+          phaseLang === "en" ? "Waiting for problem definition" : phaseLang === "es" ? "A la espera de la definici\xF3n del problema" : phaseLang === "fr" ? "En attente de la d\xE9finition du probl\xE8me" : "Aguardando defini\xE7\xE3o do problema"
+        ],
+        gaps: define === 0 ? [
+          phaseLang === "en" ? "Create POV statements" : phaseLang === "es" ? "Crear declaraciones POV" : phaseLang === "fr" ? "Cr\xE9er des d\xE9clarations POV" : "Criar declara\xE7\xF5es POV"
+        ] : [
+          phaseLang === "en" ? "Expand the problem definition" : phaseLang === "es" ? "Ampliar la definici\xF3n del problema" : phaseLang === "fr" ? "\xC9largir la d\xE9finition du probl\xE8me" : "Expandir defini\xE7\xE3o do problema"
+        ],
+        recommendations: [
+          phaseLang === "en" ? "Synthesize insights from the previous phase" : phaseLang === "es" ? "Sintetizar los insights de la fase anterior" : phaseLang === "fr" ? "Synth\xE9tiser les insights de la phase pr\xE9c\xE9dente" : "Sintetizar insights da fase anterior"
+        ],
+        strengths: define > 0 ? [
+          phaseLang === "en" ? "Definition process started" : phaseLang === "es" ? "Proceso de definici\xF3n iniciado" : phaseLang === "fr" ? "Processus de d\xE9finition lanc\xE9" : "Processo de defini\xE7\xE3o iniciado"
+        ] : [
+          phaseLang === "en" ? "Ready to define the problem" : phaseLang === "es" ? "Preparado para definir el problema" : phaseLang === "fr" ? "Pr\xEAt \xE0 d\xE9finir le probl\xE8me" : "Preparado para definir problema"
+        ]
       },
       {
         phase: 3,
-        phaseName: "Idear",
-        completeness: Math.min(100, ideate * 20),
-        quality: ideate > 0 ? 60 : 20,
-        insights: ideate > 0 ? ["Processo criativo iniciado"] : ["Aguardando idea\xE7\xE3o"],
-        gaps: ["Gerar mais diversidade de ideias"],
-        recommendations: ["Usar t\xE9cnicas de brainstorming"],
-        strengths: ideate > 0 ? ["Criatividade aplicada"] : ["Potencial criativo"]
+        phaseName: phaseLang === "en" ? "Ideate" : phaseLang === "es" ? "Idear" : phaseLang === "fr" ? "Id\xE9er" : "Idear",
+        completeness: ideate === 0 ? 0 : Math.min(100, ideate * 20),
+        quality: ideate === 0 ? 0 : 60,
+        insights: ideate > 0 ? [
+          phaseLang === "en" ? "Creative process started" : phaseLang === "es" ? "Proceso creativo iniciado" : phaseLang === "fr" ? "Processus cr\xE9atif lanc\xE9" : "Processo criativo iniciado"
+        ] : [
+          phaseLang === "en" ? "Waiting for ideation" : phaseLang === "es" ? "A la espera de ideaci\xF3n" : phaseLang === "fr" ? "En attente d'id\xE9ation" : "Aguardando idea\xE7\xE3o"
+        ],
+        gaps: ideate === 0 ? [
+          phaseLang === "en" ? "Generate initial ideas" : phaseLang === "es" ? "Generar ideas iniciales" : phaseLang === "fr" ? "G\xE9n\xE9rer des id\xE9es initiales" : "Gerar ideias iniciais"
+        ] : [
+          phaseLang === "en" ? "Generate more diverse ideas" : phaseLang === "es" ? "Generar m\xE1s diversidad de ideas" : phaseLang === "fr" ? "G\xE9n\xE9rer davantage d'id\xE9es diverses" : "Gerar mais diversidade de ideias"
+        ],
+        recommendations: [
+          phaseLang === "en" ? "Use brainstorming techniques" : phaseLang === "es" ? "Usar t\xE9cnicas de brainstorming" : phaseLang === "fr" ? "Utiliser des techniques de brainstorming" : "Usar t\xE9cnicas de brainstorming"
+        ],
+        strengths: ideate > 0 ? [
+          phaseLang === "en" ? "Creativity applied" : phaseLang === "es" ? "Creatividad aplicada" : phaseLang === "fr" ? "Cr\xE9ativit\xE9 appliqu\xE9e" : "Criatividade aplicada"
+        ] : [
+          phaseLang === "en" ? "Creative potential" : phaseLang === "es" ? "Potencial creativo" : phaseLang === "fr" ? "Potentiel cr\xE9atif" : "Potencial criativo"
+        ]
       },
       {
         phase: 4,
-        phaseName: "Prototipar",
-        completeness: Math.min(100, prototype * 25),
-        quality: prototype > 0 ? 65 : 15,
-        insights: prototype > 0 ? ["Ideias sendo materializadas"] : ["Aguardando prototipagem"],
-        gaps: ["Criar prot\xF3tipos test\xE1veis"],
-        recommendations: ["Focar em prot\xF3tipos r\xE1pidos"],
-        strengths: prototype > 0 ? ["Pensamento tang\xEDvel"] : ["Preparado para prototipar"]
+        phaseName: phaseLang === "en" ? "Prototype" : phaseLang === "es" ? "Prototipar" : phaseLang === "fr" ? "Prototyper" : "Prototipar",
+        completeness: prototype === 0 ? 0 : Math.min(100, prototype * 25),
+        quality: prototype === 0 ? 0 : 65,
+        insights: prototype > 0 ? [
+          phaseLang === "en" ? "Ideas are being materialized" : phaseLang === "es" ? "Las ideas est\xE1n siendo materializadas" : phaseLang === "fr" ? "Les id\xE9es sont en cours de mat\xE9rialisation" : "Ideias sendo materializadas"
+        ] : [
+          phaseLang === "en" ? "Waiting for prototyping" : phaseLang === "es" ? "A la espera de prototipado" : phaseLang === "fr" ? "En attente de prototypage" : "Aguardando prototipagem"
+        ],
+        gaps: prototype === 0 ? [
+          phaseLang === "en" ? "Create first prototypes" : phaseLang === "es" ? "Crear los primeros prototipos" : phaseLang === "fr" ? "Cr\xE9er les premiers prototypes" : "Criar primeiros prot\xF3tipos"
+        ] : [
+          phaseLang === "en" ? "Create testable prototypes" : phaseLang === "es" ? "Crear prototipos que puedan probarse" : phaseLang === "fr" ? "Cr\xE9er des prototypes testables" : "Criar prot\xF3tipos test\xE1veis"
+        ],
+        recommendations: [
+          phaseLang === "en" ? "Focus on quick prototypes" : phaseLang === "es" ? "Enfocarse en prototipos r\xE1pidos" : phaseLang === "fr" ? "Se concentrer sur des prototypes rapides" : "Focar em prot\xF3tipos r\xE1pidos"
+        ],
+        strengths: prototype > 0 ? [
+          phaseLang === "en" ? "Tangible thinking" : phaseLang === "es" ? "Pensamiento tangible" : phaseLang === "fr" ? "Pens\xE9e tangible" : "Pensamento tang\xEDvel"
+        ] : [
+          phaseLang === "en" ? "Ready to prototype" : phaseLang === "es" ? "Preparado para prototipar" : phaseLang === "fr" ? "Pr\xEAt \xE0 prototyper" : "Preparado para prototipar"
+        ]
       },
       {
         phase: 5,
-        phaseName: "Testar",
-        completeness: Math.min(100, test * 30),
-        quality: test > 0 ? 70 : 10,
-        insights: test > 0 ? ["Valida\xE7\xE3o com usu\xE1rios iniciada"] : ["Aguardando testes"],
-        gaps: ["Testar com usu\xE1rios reais"],
-        recommendations: ["Planejar sess\xF5es de teste"],
-        strengths: test > 0 ? ["Foco na valida\xE7\xE3o"] : ["Estrutura para testes"]
+        phaseName: phaseLang === "en" ? "Test" : phaseLang === "es" ? "Testar" : phaseLang === "fr" ? "Tester" : "Testar",
+        completeness: test === 0 ? 0 : Math.min(100, test * 30),
+        quality: test === 0 ? 0 : 70,
+        insights: test > 0 ? [
+          phaseLang === "en" ? "User testing has started" : phaseLang === "es" ? "Se ha iniciado la validaci\xF3n con usuarios" : phaseLang === "fr" ? "La validation avec des utilisateurs a commenc\xE9" : "Valida\xE7\xE3o com usu\xE1rios iniciada"
+        ] : [
+          phaseLang === "en" ? "Waiting for tests" : phaseLang === "es" ? "A la espera de pruebas" : phaseLang === "fr" ? "En attente de tests" : "Aguardando testes"
+        ],
+        gaps: test === 0 ? [
+          phaseLang === "en" ? "Plan first user tests" : phaseLang === "es" ? "Planificar las primeras pruebas con usuarios" : phaseLang === "fr" ? "Planifier les premiers tests utilisateurs" : "Planejar primeiros testes com usu\xE1rios"
+        ] : [
+          phaseLang === "en" ? "Test with real users" : phaseLang === "es" ? "Probar con usuarios reales" : phaseLang === "fr" ? "Tester avec de vrais utilisateurs" : "Testar com usu\xE1rios reais"
+        ],
+        recommendations: [
+          phaseLang === "en" ? "Plan testing sessions" : phaseLang === "es" ? "Planificar sesiones de prueba" : phaseLang === "fr" ? "Planifier des sessions de test" : "Planejar sess\xF5es de teste"
+        ],
+        strengths: test > 0 ? [
+          phaseLang === "en" ? "Focus on validation" : phaseLang === "es" ? "Enfoque en la validaci\xF3n" : phaseLang === "fr" ? "Focus sur la validation" : "Foco na valida\xE7\xE3o"
+        ] : [
+          phaseLang === "en" ? "Structure ready for testing" : phaseLang === "es" ? "Estructura preparada para pruebas" : phaseLang === "fr" ? "Structure pr\xEAte pour les tests" : "Estrutura para testes"
+        ]
       }
     ];
   }
@@ -6511,11 +7220,43 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
     };
   }
 }
+async function translateLongContent(portugueseText) {
+  const MAX_CHUNK_SIZE = 2500;
+  if (!portugueseText || portugueseText.trim() === "") {
+    return { en: "", es: "", fr: "" };
+  }
+  if (portugueseText.length <= MAX_CHUNK_SIZE) {
+    return translateText(portugueseText, "content");
+  }
+  const chunks = [];
+  let remaining = portugueseText;
+  while (remaining.length > 0) {
+    if (remaining.length <= MAX_CHUNK_SIZE) {
+      chunks.push(remaining);
+      break;
+    }
+    let splitIndex = remaining.lastIndexOf("\n", MAX_CHUNK_SIZE);
+    if (splitIndex <= 0) {
+      splitIndex = MAX_CHUNK_SIZE;
+    }
+    const chunk = remaining.slice(0, splitIndex);
+    chunks.push(chunk);
+    remaining = remaining.slice(splitIndex);
+  }
+  const results = await Promise.all(
+    chunks.map((chunk) => translateText(chunk, "content"))
+  );
+  return {
+    en: results.map((r) => r.en).join(""),
+    es: results.map((r) => r.es).join(""),
+    fr: results.map((r) => r.fr).join("")
+  };
+}
 async function translateArticle(article) {
   const [titleTranslations, descTranslations, contentTranslations] = await Promise.all([
     translateText(article.title, "title"),
     translateText(article.description, "description"),
-    translateText(article.content, "content")
+    translateLongContent(article.content)
   ]);
   return {
     titleEn: titleTranslations.en,
@@ -6909,6 +7650,28 @@ var stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRE
 if (!stripe) {
   console.warn("\u26A0\uFE0F  STRIPE_SECRET_KEY not set - payment features will be disabled");
 }
+var ADDON_PRICE_IDS = {
+  double_diamond_pro: {
+    monthly: process.env.STRIPE_PRICE_ADDON_DOUBLE_DIAMOND_PRO_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_ADDON_DOUBLE_DIAMOND_PRO_YEARLY
+  },
+  export_pro: {
+    monthly: process.env.STRIPE_PRICE_ADDON_EXPORT_PRO_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_ADDON_EXPORT_PRO_YEARLY
+  },
+  ai_turbo: {
+    monthly: process.env.STRIPE_PRICE_ADDON_AI_TURBO_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_ADDON_AI_TURBO_YEARLY
+  },
+  collab_advanced: {
+    monthly: process.env.STRIPE_PRICE_ADDON_COLLAB_ADVANCED_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_ADDON_COLLAB_ADVANCED_YEARLY
+  },
+  library_premium: {
+    monthly: process.env.STRIPE_PRICE_ADDON_LIBRARY_PREMIUM_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_ADDON_LIBRARY_PREMIUM_YEARLY
+  }
+};
 function requireAuth(req, res, next) {
   if (!req.session?.userId) {
     return res.status(401).json({ error: "Authentication required" });
@@ -7016,11 +7779,16 @@ async function registerRoutes(app2) {
       const sig = req.headers["stripe-signature"];
       let event;
       try {
-        event = stripe.webhooks.constructEvent(
-          req.body,
-          sig ?? "",
-          process.env.STRIPE_WEBHOOK_SECRET ?? ""
-        );
+        if (process.env.NODE_ENV === "development") {
+          event = req.body;
+        } else {
+          const rawBody = req.rawBody ?? req.body;
+          event = stripe.webhooks.constructEvent(
+            rawBody,
+            sig ?? "",
+            process.env.STRIPE_WEBHOOK_SECRET ?? ""
+          );
+        }
       } catch (err) {
         console.log("Webhook signature verification failed.", err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -7029,8 +7797,34 @@ async function registerRoutes(app2) {
         switch (event.type) {
           case "checkout.session.completed": {
             const session2 = event.data.object;
-            if (session2.metadata) {
-              const { userId, planId, billingPeriod } = session2.metadata;
+            const metadata = session2.metadata || {};
+            const userId = metadata.userId;
+            const planId = metadata.planId;
+            const billingPeriod = metadata.billingPeriod;
+            const addonKey = metadata.addonKey;
+            if (!userId) {
+              console.warn(
+                "[Stripe webhook] checkout.session.completed without userId metadata"
+              );
+              break;
+            }
+            if (addonKey && !planId && billingPeriod) {
+              await storage.createUserAddon({
+                userId,
+                addonKey,
+                status: "active",
+                source: "stripe",
+                stripeSubscriptionId: session2.subscription,
+                billingPeriod,
+                currentPeriodStart: /* @__PURE__ */ new Date(),
+                currentPeriodEnd: new Date(
+                  Date.now() + (billingPeriod === "yearly" ? 365 : 30) * 24 * 60 * 60 * 1e3
+                )
+              });
+              console.log(
+                `\u2705 Add-on ${addonKey} activated for user ${userId} (subscription ${session2.subscription})`
+              );
+            } else if (planId && billingPeriod) {
               await storage.createUserSubscription({
                 userId,
                 planId,
@@ -7075,6 +7869,13 @@ async function registerRoutes(app2) {
                   cancelAtPeriodEnd: subscription.cancel_at_period_end
                 });
               }
+              await storage.updateUserAddonsByStripeSubscription(
+                subscription.id,
+                {
+                  status,
+                  currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1e3) : null
+                }
+              );
               console.log(
                 `\u2705 Subscription ${status} for user ${customer.metadata.userId}`
               );
@@ -7847,6 +8648,57 @@ async function registerRoutes(app2) {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete HMW question" });
+    }
+  });
+  app2.get("/api/projects/:projectId/guiding-criteria", requireAuth, async (req, res) => {
+    try {
+      const criteria = await storage.getGuidingCriteria(req.params.projectId);
+      res.json(criteria);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch guiding criteria" });
+    }
+  });
+  app2.post("/api/projects/:projectId/guiding-criteria", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertGuidingCriterionSchema.parse({
+        ...req.body,
+        projectId: req.params.projectId
+      });
+      const criterion = await storage.createGuidingCriterion(validatedData);
+      res.status(201).json(criterion);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid guiding criterion data" });
+    }
+  });
+  app2.put("/api/guiding-criteria/:id", requireAuth, async (req, res) => {
+    try {
+      const existing = await storage.getGuidingCriterion(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+      const validatedData = insertGuidingCriterionSchema.omit({ projectId: true }).partial().parse(req.body);
+      const criterion = await storage.updateGuidingCriterion(req.params.id, validatedData);
+      if (!criterion) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+      res.json(criterion);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid guiding criterion data" });
+    }
+  });
+  app2.delete("/api/guiding-criteria/:id", requireAuth, async (req, res) => {
+    try {
+      const existing = await storage.getGuidingCriterion(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+      const success = await storage.deleteGuidingCriterion(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Guiding criterion not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete guiding criterion" });
     }
   });
   app2.get("/api/projects/:projectId/ideas", requireAuth, async (req, res) => {
@@ -8849,6 +9701,89 @@ async function registerRoutes(app2) {
       });
     }
   });
+  app2.get("/api/admin/users/:id/addons", requireAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const activeAddons = await storage.getActiveUserAddons(userId);
+      const addonKeys = new Set(activeAddons.map((addon) => addon.addonKey));
+      res.json({
+        addons: {
+          doubleDiamondPro: addonKeys.has("double_diamond_pro"),
+          exportPro: addonKeys.has("export_pro"),
+          aiTurbo: addonKeys.has("ai_turbo"),
+          collabAdvanced: addonKeys.has("collab_advanced"),
+          libraryPremium: addonKeys.has("library_premium")
+        },
+        raw: activeAddons
+      });
+    } catch (error) {
+      console.error("Error fetching user addons:", error);
+      res.status(500).json({ error: "Failed to fetch user addons" });
+    }
+  });
+  app2.put("/api/admin/users/:id/addons", requireAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const {
+        doubleDiamondPro,
+        exportPro,
+        aiTurbo,
+        collabAdvanced,
+        libraryPremium
+      } = req.body || {};
+      const currentAddons = await storage.getUserAddons(userId);
+      const updateAddon = async (addonKey, enabled) => {
+        if (typeof enabled !== "boolean") return;
+        const existingForKey = currentAddons.filter((addon) => addon.addonKey === addonKey);
+        const activeForKey = existingForKey.filter((addon) => addon.status === "active");
+        if (enabled) {
+          if (activeForKey.length === 0) {
+            await storage.createUserAddon({
+              userId,
+              addonKey,
+              status: "active",
+              source: "admin",
+              billingPeriod: null,
+              stripeSubscriptionId: null,
+              currentPeriodStart: /* @__PURE__ */ new Date(),
+              currentPeriodEnd: null
+            });
+          }
+        } else {
+          if (activeForKey.length > 0) {
+            await Promise.all(
+              activeForKey.map(
+                (addon) => storage.updateUserAddon(addon.id, { status: "canceled" })
+              )
+            );
+          }
+        }
+      };
+      await Promise.all([
+        updateAddon("double_diamond_pro", doubleDiamondPro),
+        updateAddon("export_pro", exportPro),
+        updateAddon("ai_turbo", aiTurbo),
+        updateAddon("collab_advanced", collabAdvanced),
+        updateAddon("library_premium", libraryPremium)
+      ]);
+      const activeAddons = await storage.getActiveUserAddons(userId);
+      const addonKeys = new Set(activeAddons.map((addon) => addon.addonKey));
+      res.json({
+        message: "Add-ons atualizados com sucesso",
+        addons: {
+          doubleDiamondPro: addonKeys.has("double_diamond_pro"),
+          exportPro: addonKeys.has("export_pro"),
+          aiTurbo: addonKeys.has("ai_turbo"),
+          collabAdvanced: addonKeys.has("collab_advanced"),
+          libraryPremium: addonKeys.has("library_premium")
+        },
+        raw: activeAddons
+      });
+    } catch (error) {
+      console.error("Error updating user addons:", error);
+      res.status(500).json({ error: "Failed to update user addons" });
+    }
+  });
   app2.get("/api/admin/stats", requireAdmin, async (_req, res) => {
     try {
       const users2 = await storage.getUsers();
@@ -8994,30 +9929,22 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch user subscription" });
     }
   });
-  app2.post("/api/create-checkout-session", requireAuth, async (req, res) => {
+  app2.post("/api/addons/create-checkout-session", requireAuth, async (req, res) => {
     try {
+      if (!stripe) {
+        return res.status(503).json({ error: "Payment system not configured. Please contact support." });
+      }
       if (!req.user?.id) {
         return res.status(401).json({ error: "User not authenticated" });
       }
-      const { planId, billingPeriod } = req.body;
-      if (!planId || !billingPeriod) {
-        return res.status(400).json({ error: "Plan ID and billing period are required" });
+      const { addonKey, billingPeriod } = req.body;
+      if (!addonKey || !billingPeriod) {
+        return res.status(400).json({ error: "Addon key and billing period are required" });
       }
-      const plan = await storage.getSubscriptionPlan(planId);
-      if (!plan) {
-        return res.status(404).json({ error: "Subscription plan not found" });
-      }
-      if (plan.name === "free") {
-        const subscription = await storage.createUserSubscription({
-          userId: req.user.id,
-          planId: plan.id,
-          status: "active",
-          billingPeriod: "monthly"
-        });
-        return res.json({ subscription });
-      }
-      if (!stripe) {
-        return res.status(503).json({ error: "Payment system not configured. Please contact support." });
+      const priceConfig = ADDON_PRICE_IDS[addonKey];
+      const priceId = priceConfig ? billingPeriod === "yearly" ? priceConfig.yearly : priceConfig.monthly : void 0;
+      if (!priceId) {
+        return res.status(400).json({ error: "Add-on price not configured. Contact support." });
       }
       const user = await storage.getUser(req.user.id);
       if (!user) {
@@ -9034,39 +9961,103 @@ async function registerRoutes(app2) {
         stripeCustomerId = customer.id;
         await storage.updateUser(user.id, { stripeCustomerId });
       }
-      const price = billingPeriod === "yearly" ? plan.priceYearly : plan.priceMonthly;
-      const session2 = await stripe.checkout.sessions.create({
-        customer: stripeCustomerId,
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "brl",
-              product_data: {
-                name: plan.displayName,
-                description: plan.description || void 0
-              },
-              unit_amount: price,
-              recurring: {
-                interval: billingPeriod === "yearly" ? "year" : "month"
-              }
-            },
-            quantity: 1
+      const createCheckoutSession = async (customerId) => {
+        return await stripe.checkout.sessions.create({
+          customer: customerId,
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1
+            }
+          ],
+          mode: "subscription",
+          success_url: `${req.headers.origin}/addons?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${req.headers.origin}/addons`,
+          metadata: {
+            userId: user.id,
+            addonKey,
+            billingPeriod
           }
-        ],
-        mode: "subscription",
-        success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/pricing`,
-        metadata: {
-          userId: req.user.id,
-          planId: plan.id,
-          billingPeriod
+        });
+      };
+      let session2;
+      try {
+        session2 = await createCheckoutSession(stripeCustomerId);
+      } catch (err) {
+        const raw = err?.raw;
+        if (raw?.code === "resource_missing" && raw?.param === "customer") {
+          console.warn("[Stripe] Customer not found for current API key, recreating customer and retrying checkout...");
+          const customer = await stripe.customers.create({
+            email: user.username,
+            metadata: {
+              userId: user.id
+            }
+          });
+          stripeCustomerId = customer.id;
+          await storage.updateUser(user.id, { stripeCustomerId });
+          session2 = await createCheckoutSession(stripeCustomerId);
+        } else {
+          throw err;
         }
-      });
+      }
       res.json({ url: session2.url });
     } catch (error) {
-      console.error("Error creating checkout session:", error);
-      res.status(500).json({ error: "Failed to create checkout session" });
+      console.error("Error creating add-on checkout session:", error);
+      res.status(500).json({ error: "Failed to create add-on checkout session" });
+    }
+  });
+  app2.post("/api/addons/cancel-subscription", requireAuth, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ error: "Stripe not configured" });
+      }
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      const { addonKey } = req.body;
+      if (!addonKey) {
+        return res.status(400).json({ error: "Addon key is required" });
+      }
+      const activeAddons = await storage.getActiveUserAddons(req.user.id);
+      const addonsForKey = activeAddons.filter(
+        (addon) => addon.addonKey === addonKey && addon.source === "stripe" && addon.stripeSubscriptionId
+      );
+      if (addonsForKey.length === 0) {
+        return res.status(400).json({
+          error: "No active Stripe add-on subscription found for this key"
+        });
+      }
+      const uniqueSubscriptions = Array.from(
+        new Set(addonsForKey.map((a) => a.stripeSubscriptionId))
+      );
+      if (process.env.NODE_ENV === "development") {
+        await Promise.all(
+          uniqueSubscriptions.map(async (subId) => {
+            await stripe.subscriptions.cancel(subId);
+            await storage.updateUserAddonsByStripeSubscription(subId, {
+              status: "canceled",
+              currentPeriodEnd: /* @__PURE__ */ new Date()
+            });
+          })
+        );
+        return res.json({
+          success: true,
+          message: "Add-on cancelado imediatamente (ambiente de desenvolvimento)."
+        });
+      }
+      await Promise.all(
+        uniqueSubscriptions.map(
+          (subId) => stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+        )
+      );
+      res.json({
+        success: true,
+        message: "Add-on cancelado com sucesso. Ele permanecer\xE1 ativo at\xE9 o fim do per\xEDodo atual de cobran\xE7a."
+      });
+    } catch (error) {
+      console.error("Error canceling add-on subscription:", error);
+      res.status(500).json({ error: "Failed to cancel add-on subscription" });
     }
   });
   app2.post("/api/cancel-subscription", requireAuth, async (req, res) => {
@@ -9186,6 +10177,7 @@ async function registerRoutes(app2) {
         const results = await storage.getTestResults(testPlan.id);
         testResults2.push(...results);
       }
+      const guidingCriteria2 = await storage.getGuidingCriteria(projectId);
       const analysisData = {
         project,
         empathyMaps: empathyMaps2,
@@ -9197,7 +10189,9 @@ async function registerRoutes(app2) {
         ideas: ideas2,
         prototypes: prototypes2,
         testPlans: testPlans2,
-        testResults: testResults2
+        testResults: testResults2,
+        guidingCriteria: guidingCriteria2,
+        language: req.body?.language
       };
       const analysis = await designThinkingAI.analyzeCompleteProject(analysisData);
       res.json(analysis);
@@ -9563,16 +10557,6 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Error deleting lovability metric:", error);
       res.status(500).json({ error: "Failed to delete lovability metric" });
-    }
-  });
-  app2.get("/api/project-analytics/:projectId", requireAuth, async (req, res) => {
-    try {
-      const { projectId } = req.params;
-      const analytics = await storage.getProjectAnalytics(projectId);
-      res.json(analytics);
-    } catch (error) {
-      console.error("Error fetching project analytics:", error);
-      res.status(500).json({ error: "Failed to fetch project analytics" });
     }
   });
   app2.post("/api/project-analytics", requireAuth, async (req, res) => {
@@ -10845,7 +11829,14 @@ var authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
-app.use(express2.json({ limit: "50mb" }));
+app.use(express2.json({
+  limit: "50mb",
+  verify: (req, res, buf, encoding) => {
+    if (req.originalUrl === "/api/stripe-webhook") {
+      req.rawBody = buf;
+    }
+  }
+}));
 app.use(express2.urlencoded({ extended: false, limit: "50mb" }));
 if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET environment variable is required");
@@ -10871,8 +11862,8 @@ app.use(session({
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1e3,
     // 24 hours
-    sameSite: isProduction ? "lax" : "none"
-    // Lax for production, none for development
+    sameSite: "lax"
+    // Lax for all environments to ensure cookies are accepted in local dev
   }
 }));
 setupPassport();

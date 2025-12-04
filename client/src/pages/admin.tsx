@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, ProtectedRoute } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ArticleEditor from "@/components/admin/ArticleEditor";
 import TestimonialsTab from "@/components/admin/TestimonialsTab";
@@ -303,6 +304,7 @@ function UsersTab() {
   const [editingUserLimits, setEditingUserLimits] = useState<Omit<User, 'password'> | null>(null);
   const [editingUserAddons, setEditingUserAddons] = useState<Omit<User, 'password'> | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: users = [], isLoading: usersLoading } = useQuery<Omit<User, "password">[]>({
     queryKey: ["/api/users"],
@@ -317,14 +319,14 @@ function UsersTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setIsCreating(false);
       toast({
-        title: "Usuário criado",
-        description: "O usuário foi criado com sucesso.",
+        title: t("admin.users.toast.create.success.title"),
+        description: t("admin.users.toast.create.success.description"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro ao criar usuário",
-        description: "Ocorreu um erro ao tentar criar o usuário.",
+        title: t("admin.users.toast.create.error.title"),
+        description: t("admin.users.toast.create.error.description"),
         variant: "destructive",
       });
     },
@@ -338,14 +340,14 @@ function UsersTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "Usuário atualizado",
-        description: "O papel do usuário foi atualizado com sucesso.",
+        title: t("admin.users.toast.update.success.title"),
+        description: t("admin.users.toast.update.success.description"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro ao atualizar usuário",
-        description: "Ocorreu um erro ao tentar atualizar o usuário.",
+        title: t("admin.users.toast.update.error.title"),
+        description: t("admin.users.toast.update.error.description"),
         variant: "destructive",
       });
     },
@@ -359,14 +361,14 @@ function UsersTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "Usuário excluído",
-        description: "O usuário foi removido com sucesso.",
+        title: t("admin.users.toast.delete.success.title"),
+        description: t("admin.users.toast.delete.success.description"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro ao excluir usuário",
-        description: "Ocorreu um erro ao tentar excluir o usuário.",
+        title: t("admin.users.toast.delete.error.title"),
+        description: t("admin.users.toast.delete.error.description"),
         variant: "destructive",
       });
     },
@@ -402,15 +404,15 @@ function UsersTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold" data-testid="users-title">
-            Gerenciar Usuários
+            {t("admin.users.title")}
           </h2>
           <p className="text-muted-foreground">
-            Crie, edite e gerencie os usuários do sistema
+            {t("admin.users.subtitle")}
           </p>
         </div>
         <Button onClick={() => setIsCreating(true)} data-testid="button-create-user">
           <UserPlus className="mr-2 h-4 w-4" />
-          Novo Usuário
+          {t("admin.users.new")}
         </Button>
       </div>
 
@@ -419,7 +421,7 @@ function UsersTab() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar usuários..."
+            placeholder={t("admin.users.search.placeholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -432,9 +434,9 @@ function UsersTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os papéis</SelectItem>
-            <SelectItem value="admin">Administradores</SelectItem>
-            <SelectItem value="user">Usuários</SelectItem>
+            <SelectItem value="all">{t("admin.users.filter.all")}</SelectItem>
+            <SelectItem value="admin">{t("admin.users.filter.admins")}</SelectItem>
+            <SelectItem value="user">{t("admin.users.filter.users")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -457,10 +459,10 @@ function UsersTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t("admin.users.table.username")}</TableHead>
+                  <TableHead>{t("admin.users.table.role")}</TableHead>
+                  <TableHead>{t("admin.users.table.createdAt")}</TableHead>
+                  <TableHead className="text-right">{t("admin.users.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -469,9 +471,8 @@ function UsersTab() {
                     <TableCell colSpan={4} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-users-message">
                         {searchTerm || roleFilter !== "all" 
-                          ? "Nenhum usuário encontrado com os filtros aplicados."
-                          : "Nenhum usuário encontrado."
-                        }
+                          ? t("admin.users.empty.filtered")
+                          : t("admin.users.empty.default")}
                       </p>
                     </TableCell>
                   </TableRow>
@@ -481,7 +482,9 @@ function UsersTab() {
                       <TableCell className="font-medium">{user.username}</TableCell>
                       <TableCell>
                         <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                          {user.role === "admin" ? "Administrador" : "Usuário"}
+                          {user.role === "admin"
+                            ? t("admin.users.role.admin")
+                            : t("admin.users.role.user")}
                         </Badge>
                       </TableCell>
                       <TableCell>{formatDate(user.createdAt)}</TableCell>
@@ -495,7 +498,9 @@ function UsersTab() {
                             data-testid={`button-toggle-role-${user.id}`}
                           >
                             <Edit className="mr-1 h-3 w-3" />
-                            {user.role === "admin" ? "Tornar Usuário" : "Tornar Admin"}
+                            {user.role === "admin"
+                              ? t("admin.users.action.toUser")
+                              : t("admin.users.action.toAdmin")}
                           </Button>
                           <Button
                             variant="outline"
@@ -503,7 +508,7 @@ function UsersTab() {
                             onClick={() => setEditingUserLimits(user)}
                           >
                             <Edit className="w-4 h-4 mr-1" />
-                            Limites
+                            {t("admin.users.action.limits")}
                           </Button>
                           <Button
                             variant="outline"
@@ -511,7 +516,7 @@ function UsersTab() {
                             onClick={() => setEditingUserAddons(user)}
                           >
                             <Diamond className="w-4 h-4 mr-1" />
-                            Add-ons
+                            {t("admin.users.action.addons")}
                           </Button>
                           
                           <AlertDialog>
@@ -527,19 +532,22 @@ function UsersTab() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  {t("admin.users.delete.title")}
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o usuário "{user.username}"? 
-                                  Esta ação não pode ser desfeita.
+                                  {t("admin.users.delete.description", { username: user.username })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogCancel>
+                                  {t("admin.users.delete.cancel")}
+                                </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => deleteUserMutation.mutate(user.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Excluir
+                                  {t("admin.users.delete.confirm")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -596,6 +604,8 @@ function UserCreateDialog({
   onSubmit: (data: z.infer<typeof userFormSchema>) => void;
   isSubmitting: boolean;
 }) {
+  const { t } = useLanguage();
+
   const form = useForm<z.infer<typeof userFormSchema>>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -616,9 +626,9 @@ function UserCreateDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]" data-testid="dialog-create-user">
         <DialogHeader>
-          <DialogTitle>Criar Novo Usuário</DialogTitle>
+          <DialogTitle>{t("admin.users.create.title")}</DialogTitle>
           <DialogDescription>
-            Preencha os dados para criar um novo usuário no sistema.
+            {t("admin.users.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -629,11 +639,11 @@ function UserCreateDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
+                  <FormLabel>{t("admin.users.create.field.name.label")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="João Silva"
+                      placeholder={t("admin.users.create.field.name.placeholder")}
                       data-testid="input-name"
                     />
                   </FormControl>
@@ -647,12 +657,12 @@ function UserCreateDialog({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("admin.users.create.field.email.label")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="email"
-                      placeholder="joao@exemplo.com"
+                      placeholder={t("admin.users.create.field.email.placeholder")}
                       data-testid="input-email"
                     />
                   </FormControl>
@@ -666,11 +676,11 @@ function UserCreateDialog({
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username (login)</FormLabel>
+                  <FormLabel>{t("admin.users.create.field.username.label")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="joao.silva"
+                      placeholder={t("admin.users.create.field.username.placeholder")}
                       data-testid="input-username"
                     />
                   </FormControl>
@@ -684,12 +694,12 @@ function UserCreateDialog({
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <FormLabel>{t("admin.users.create.field.password.label")}</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       {...field}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder={t("admin.users.create.field.password.placeholder")}
                       data-testid="input-password"
                     />
                   </FormControl>
@@ -703,16 +713,22 @@ function UserCreateDialog({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Papel</FormLabel>
+                  <FormLabel>{t("admin.users.create.field.role.label")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger data-testid="select-user-role">
-                        <SelectValue placeholder="Selecione o papel" />
+                        <SelectValue
+                          placeholder={t("admin.users.create.field.role.placeholder")}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="user">Usuário</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="user">
+                        {t("admin.users.create.field.role.option.user")}
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        {t("admin.users.create.field.role.option.admin")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -728,14 +744,16 @@ function UserCreateDialog({
                 disabled={isSubmitting}
                 data-testid="button-cancel"
               >
-                Cancelar
+                {t("admin.users.create.button.cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
                 data-testid="button-submit"
               >
-                {isSubmitting ? "Criando..." : "Criar Usuário"}
+                {isSubmitting
+                  ? t("admin.users.create.button.submitting")
+                  : t("admin.users.create.button.submit")}
               </Button>
             </div>
           </form>
@@ -801,15 +819,17 @@ function UserAddonsDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/subscription-info"] });
       toast({
-        title: "Add-ons atualizados",
-        description: `Os add-ons de ${user.username} foram salvos com sucesso.`,
+        title: t("admin.addons.toast.update.success.title"),
+        description: t("admin.addons.toast.update.success.description", {
+          username: user.username,
+        }),
       });
       onClose();
     },
     onError: () => {
       toast({
-        title: "Erro ao atualizar add-ons",
-        description: "Ocorreu um erro ao salvar os add-ons.",
+        title: t("admin.addons.toast.update.error.title"),
+        description: t("admin.addons.toast.update.error.description"),
         variant: "destructive",
       });
     },
@@ -828,11 +848,8 @@ function UserAddonsDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Ferramentas adicionais: {user.username}</DialogTitle>
-          <DialogDescription>
-            Ative ou desative add-ons específicos para este usuário. Esses
-            add-ons ajustam os limites e recursos além do plano base.
-          </DialogDescription>
+          <DialogTitle>{t("admin.addons.dialog.title", { username: user.username })}</DialogTitle>
+          <DialogDescription>{t("admin.addons.dialog.description")}</DialogDescription>
         </DialogHeader>
 
         {isLoading || !localAddons ? (
@@ -845,10 +862,8 @@ function UserAddonsDialog({
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium">Double Diamond Pro</p>
-                <p className="text-sm text-muted-foreground">
-                  Projetos Double Diamond ilimitados e exportações liberadas.
-                </p>
+                <p className="font-medium">{t("admin.addons.item.doubleDiamondPro.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("admin.addons.item.doubleDiamondPro.description")}</p>
               </div>
               <Switch
                 checked={localAddons.doubleDiamondPro}
@@ -860,10 +875,8 @@ function UserAddonsDialog({
 
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium">Export Pro</p>
-                <p className="text-sm text-muted-foreground">
-                  Libera exportação em PDF, PNG e CSV para projetos.
-                </p>
+                <p className="font-medium">{t("admin.addons.item.exportPro.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("admin.addons.item.exportPro.description")}</p>
               </div>
               <Switch
                 checked={localAddons.exportPro}
@@ -875,10 +888,8 @@ function UserAddonsDialog({
 
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium">IA Turbo</p>
-                <p className="text-sm text-muted-foreground">
-                  +300 mensagens de IA por mês (além do plano base).
-                </p>
+                <p className="font-medium">{t("admin.addons.item.aiTurbo.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("admin.addons.item.aiTurbo.description")}</p>
               </div>
               <Switch
                 checked={localAddons.aiTurbo}
@@ -890,11 +901,8 @@ function UserAddonsDialog({
 
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium">Colaboração Avançada</p>
-                <p className="text-sm text-muted-foreground">
-                  Colaboração em tempo real, comentários e workspace
-                  compartilhado.
-                </p>
+                <p className="font-medium">{t("admin.addons.item.collabAdvanced.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("admin.addons.item.collabAdvanced.description")}</p>
               </div>
               <Switch
                 checked={localAddons.collabAdvanced}
@@ -906,10 +914,8 @@ function UserAddonsDialog({
 
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium">Biblioteca Premium</p>
-                <p className="text-sm text-muted-foreground">
-                  Acesso completo à biblioteca de artigos e materiais.
-                </p>
+                <p className="font-medium">{t("admin.addons.item.libraryPremium.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("admin.addons.item.libraryPremium.description")}</p>
               </div>
               <Switch
                 checked={localAddons.libraryPremium}
@@ -923,14 +929,16 @@ function UserAddonsDialog({
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
+            {t("admin.addons.buttons.cancel")}
           </Button>
           <Button
             type="button"
             onClick={handleSave}
             disabled={updateAddonsMutation.isPending || !localAddons}
           >
-            {updateAddonsMutation.isPending ? "Salvando..." : "Salvar Add-ons"}
+            {updateAddonsMutation.isPending
+              ? t("admin.addons.buttons.saving")
+              : t("admin.addons.buttons.save")}
           </Button>
         </div>
       </DialogContent>
@@ -944,6 +952,7 @@ function ProjectsTab() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [phaseFilter, setPhaseFilter] = useState("all");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ["/api/admin/projects"],
@@ -957,21 +966,23 @@ function ProjectsTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/projects"] });
       toast({
-        title: "Projeto excluído",
-        description: "O projeto foi removido com sucesso.",
+        title: t("admin.projects.toast.delete.success.title"),
+        description: t("admin.projects.toast.delete.success.description"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro ao excluir projeto",
-        description: "Ocorreu um erro ao tentar excluir o projeto.",
+        title: t("admin.projects.toast.delete.error.title"),
+        description: t("admin.projects.toast.delete.error.description"),
         variant: "destructive",
       });
     },
   });
 
   const getStatusLabel = (status: string) => {
-    return status === "completed" ? "Concluído" : "Em Progresso";
+    return status === "completed"
+      ? t("admin.projects.status.completed")
+      : t("admin.projects.status.inProgress");
   };
 
   const getStatusColor = (status: string) => {
@@ -982,8 +993,7 @@ function ProjectsTab() {
 
   const getPhaseLabel = (phase: number | null) => {
     if (!phase) return "N/A";
-    const phases = ["Empatizar", "Definir", "Idear", "Prototipar", "Testar"];
-    return phases[phase - 1] || `Fase ${phase}`;
+    return t("admin.projects.phase.label", { phase: String(phase) });
   };
 
   const formatDate = (date: Date | string | null) => {
@@ -1013,10 +1023,10 @@ function ProjectsTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold" data-testid="projects-title">
-            Gerenciar Projetos
+            {t("admin.projects.title")}
           </h2>
           <p className="text-muted-foreground">
-            Visualize e gerencie todos os projetos do sistema
+            {t("admin.projects.subtitle")}
           </p>
         </div>
       </div>
@@ -1026,7 +1036,7 @@ function ProjectsTab() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar projetos..."
+            placeholder={t("admin.projects.search.placeholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -1039,9 +1049,9 @@ function ProjectsTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="in_progress">Em Progresso</SelectItem>
-            <SelectItem value="completed">Concluído</SelectItem>
+            <SelectItem value="all">{t("admin.projects.filter.status.all")}</SelectItem>
+            <SelectItem value="in_progress">{t("admin.projects.filter.status.inProgress")}</SelectItem>
+            <SelectItem value="completed">{t("admin.projects.filter.status.completed")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={phaseFilter} onValueChange={setPhaseFilter}>
@@ -1050,12 +1060,12 @@ function ProjectsTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as fases</SelectItem>
-            <SelectItem value="1">Fase 1 - Empatizar</SelectItem>
-            <SelectItem value="2">Fase 2 - Definir</SelectItem>
-            <SelectItem value="3">Fase 3 - Idear</SelectItem>
-            <SelectItem value="4">Fase 4 - Prototipar</SelectItem>
-            <SelectItem value="5">Fase 5 - Testar</SelectItem>
+            <SelectItem value="all">{t("admin.projects.filter.phase.all")}</SelectItem>
+            <SelectItem value="1">{t("admin.projects.filter.phase.1")}</SelectItem>
+            <SelectItem value="2">{t("admin.projects.filter.phase.2")}</SelectItem>
+            <SelectItem value="3">{t("admin.projects.filter.phase.3")}</SelectItem>
+            <SelectItem value="4">{t("admin.projects.filter.phase.4")}</SelectItem>
+            <SelectItem value="5">{t("admin.projects.filter.phase.5")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -1078,12 +1088,12 @@ function ProjectsTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome do Projeto</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Fase Atual</TableHead>
-                  <TableHead>Progresso</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t("admin.projects.table.name")}</TableHead>
+                  <TableHead>{t("admin.projects.table.status")}</TableHead>
+                  <TableHead>{t("admin.projects.table.phase")}</TableHead>
+                  <TableHead>{t("admin.projects.table.progress")}</TableHead>
+                  <TableHead>{t("admin.projects.table.createdAt")}</TableHead>
+                  <TableHead className="text-right">{t("admin.projects.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1095,8 +1105,8 @@ function ProjectsTab() {
                         data-testid="no-projects-message"
                       >
                         {searchTerm || statusFilter !== "all" || phaseFilter !== "all"
-                          ? "Nenhum projeto encontrado com os filtros aplicados."
-                          : "Nenhum projeto encontrado."}
+                          ? t("admin.projects.empty.filtered")
+                          : t("admin.projects.empty.default")}
                       </p>
                     </TableCell>
                   </TableRow>
@@ -1169,22 +1179,26 @@ function ProjectsTab() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  {t("admin.projects.delete.title")}
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o projeto "
-                                  {project.name}"? Esta ação não pode ser
-                                  desfeita.
+                                  {t("admin.projects.delete.description", {
+                                    name: project.name,
+                                  })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogCancel>
+                                  {t("admin.projects.delete.cancel")}
+                                </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() =>
                                     deleteProjectMutation.mutate(project.id)
                                   }
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Excluir
+                                  {t("admin.projects.delete.confirm")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -1208,6 +1222,7 @@ function DoubleDiamondTab() {
   const [searchTerm, setSearchTerm] = useState("");
   const [phaseFilter, setPhaseFilter] = useState("all");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: projects = [], isLoading } = useQuery<DoubleDiamondProject[]>({
     queryKey: ["/api/admin/double-diamond"],
@@ -1221,14 +1236,14 @@ function DoubleDiamondTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/double-diamond"] });
       toast({
-        title: "Projeto Double Diamond excluído",
-        description: "O projeto foi removido com sucesso.",
+        title: t("admin.dd.toast.delete.success.title"),
+        description: t("admin.dd.toast.delete.success.description"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro ao excluir projeto",
-        description: "Ocorreu um erro ao tentar excluir o projeto.",
+        title: t("admin.dd.toast.delete.error.title"),
+        description: t("admin.dd.toast.delete.error.description"),
         variant: "destructive",
       });
     },
@@ -1237,20 +1252,20 @@ function DoubleDiamondTab() {
   const getPhaseLabel = (phase: string | null) => {
     if (!phase) return "N/A";
     const phases: Record<string, string> = {
-      "discover": "Descobrir",
-      "define": "Definir",
-      "develop": "Desenvolver",
-      "deliver": "Entregar",
-      "dfv": "Análise DFV"
+      discover: t("admin.dd.phase.discover"),
+      define: t("admin.dd.phase.define"),
+      develop: t("admin.dd.phase.develop"),
+      deliver: t("admin.dd.phase.deliver"),
+      dfv: t("admin.dd.phase.dfv"),
     };
     return phases[phase] || phase;
   };
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
-      "pending": "Pendente",
-      "in_progress": "Em Progresso",
-      "completed": "Concluído"
+      pending: t("admin.dd.status.pending"),
+      in_progress: t("admin.dd.status.inProgress"),
+      completed: t("admin.dd.status.completed"),
     };
     return statusMap[status] || status;
   };
@@ -1286,10 +1301,10 @@ function DoubleDiamondTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold" data-testid="double-diamond-title">
-            Gerenciar Projetos Double Diamond
+            {t("admin.dd.title")}
           </h2>
           <p className="text-muted-foreground">
-            Visualize e gerencie todos os projetos Double Diamond do sistema
+            {t("admin.dd.subtitle")}
           </p>
         </div>
       </div>
@@ -1299,7 +1314,7 @@ function DoubleDiamondTab() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar projetos Double Diamond..."
+            placeholder={t("admin.dd.search.placeholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -1312,12 +1327,12 @@ function DoubleDiamondTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as fases</SelectItem>
-            <SelectItem value="discover">Descobrir</SelectItem>
-            <SelectItem value="define">Definir</SelectItem>
-            <SelectItem value="develop">Desenvolver</SelectItem>
-            <SelectItem value="deliver">Entregar</SelectItem>
-            <SelectItem value="dfv">Análise DFV</SelectItem>
+            <SelectItem value="all">{t("admin.dd.filter.phase.all")}</SelectItem>
+            <SelectItem value="discover">{t("admin.dd.filter.phase.discover")}</SelectItem>
+            <SelectItem value="define">{t("admin.dd.filter.phase.define")}</SelectItem>
+            <SelectItem value="develop">{t("admin.dd.filter.phase.develop")}</SelectItem>
+            <SelectItem value="deliver">{t("admin.dd.filter.phase.deliver")}</SelectItem>
+            <SelectItem value="dfv">{t("admin.dd.filter.phase.dfv")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -1340,12 +1355,12 @@ function DoubleDiamondTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome do Projeto</TableHead>
-                  <TableHead>Fase Atual</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Progresso</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t("admin.dd.table.name")}</TableHead>
+                  <TableHead>{t("admin.dd.table.currentPhase")}</TableHead>
+                  <TableHead>{t("admin.dd.table.status")}</TableHead>
+                  <TableHead>{t("admin.dd.table.progress")}</TableHead>
+                  <TableHead>{t("admin.dd.table.createdAt")}</TableHead>
+                  <TableHead className="text-right">{t("admin.dd.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1354,9 +1369,8 @@ function DoubleDiamondTab() {
                     <TableCell colSpan={6} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-double-diamond-message">
                         {searchTerm || phaseFilter !== "all"
-                          ? "Nenhum projeto Double Diamond encontrado com os filtros aplicados."
-                          : "Nenhum projeto Double Diamond encontrado."
-                        }
+                          ? t("admin.dd.empty.filtered")
+                          : t("admin.dd.empty.default")}
                       </p>
                     </TableCell>
                   </TableRow>
@@ -1381,11 +1395,11 @@ function DoubleDiamondTab() {
                       <TableCell>
                         <div className="space-y-1">
                           <Badge className={getStatusColor(project.discoverStatus || "pending")}>
-                            Descobrir: {getStatusLabel(project.discoverStatus || "pending")}
+                            {t("admin.dd.phase.discover")}: {getStatusLabel(project.discoverStatus || "pending")}
                           </Badge>
                           {project.deliverStatus === "completed" && (
                             <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                              Completo
+                              {t("admin.dd.badge.completed")}
                             </Badge>
                           )}
                         </div>
@@ -1414,7 +1428,7 @@ function DoubleDiamondTab() {
                           >
                             <Eye className="h-3 w-3" />
                           </Button>
-                          
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -1437,19 +1451,24 @@ function DoubleDiamondTab() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  {t("admin.dd.delete.title")}
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o projeto Double Diamond "{project.name}"? 
-                                  Esta ação não pode ser desfeita e removerá todos os dados associados.
+                                  {t("admin.dd.delete.description", {
+                                    name: project.name,
+                                  })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogCancel>
+                                  {t("admin.dd.delete.cancel")}
+                                </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => deleteProjectMutation.mutate(project.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Excluir
+                                  {t("admin.dd.delete.confirm")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -1489,13 +1508,17 @@ function DashboardTab() {
     queryKey: ["/api/admin/stats"],
   });
 
+  const { t } = useLanguage();
+
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold">Dashboard Administrativo</h2>
+          <h2 className="text-2xl font-bold">
+            {t("admin.dashboard.title")}
+          </h2>
           <p className="text-muted-foreground">
-            Visão geral do sistema e métricas de uso
+            {t("admin.dashboard.subtitle")}
           </p>
         </div>
         
@@ -1517,9 +1540,11 @@ function DashboardTab() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold">Dashboard Administrativo</h2>
+          <h2 className="text-2xl font-bold">
+            {t("admin.dashboard.title")}
+          </h2>
           <p className="text-muted-foreground">
-            Erro ao carregar estatísticas do sistema
+            {t("admin.dashboard.error.subtitle")}
           </p>
         </div>
       </div>
@@ -1531,10 +1556,10 @@ function DashboardTab() {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold" data-testid="dashboard-title">
-          Dashboard Administrativo
+          {t("admin.dashboard.title")}
         </h2>
         <p className="text-muted-foreground">
-          Visão geral do sistema e métricas de uso
+          {t("admin.dashboard.subtitle")}
         </p>
       </div>
 
@@ -1545,7 +1570,7 @@ function DashboardTab() {
             <div className="flex items-center">
               <Users className="h-4 w-4 text-blue-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Total de Usuários
+                {t("admin.dashboard.card.totalUsers")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.totalUsers}</p>
@@ -1557,7 +1582,7 @@ function DashboardTab() {
             <div className="flex items-center">
               <FolderOpen className="h-4 w-4 text-green-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Projetos DT
+                {t("admin.dashboard.card.projectsDt")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.totalProjects}</p>
@@ -1569,7 +1594,7 @@ function DashboardTab() {
             <div className="flex items-center">
               <Diamond className="h-4 w-4 text-cyan-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Double Diamond
+                {t("admin.dashboard.card.doubleDiamond")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.totalDoubleDiamondProjects}</p>
@@ -1581,7 +1606,7 @@ function DashboardTab() {
             <div className="flex items-center">
               <Eye className="h-4 w-4 text-purple-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Total de Artigos
+                {t("admin.dashboard.card.totalArticles")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.totalArticles}</p>
@@ -1593,7 +1618,7 @@ function DashboardTab() {
             <div className="flex items-center">
               <Video className="h-4 w-4 text-red-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Vídeos Tutoriais
+                {t("admin.dashboard.card.totalVideos")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.totalVideos}</p>
@@ -1605,7 +1630,7 @@ function DashboardTab() {
             <div className="flex items-center">
               <MessageSquare className="h-4 w-4 text-yellow-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Depoimentos
+                {t("admin.dashboard.card.testimonials")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.totalTestimonials}</p>
@@ -1617,7 +1642,7 @@ function DashboardTab() {
             <div className="flex items-center">
               <BarChart3 className="h-4 w-4 text-orange-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Projetos Ativos
+                {t("admin.dashboard.card.activeProjects")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.projectsByStatus.in_progress}</p>
@@ -1629,12 +1654,14 @@ function DashboardTab() {
             <div className="flex items-center">
               <Globe className="h-4 w-4 text-indigo-600" />
               <h3 className="ml-2 text-sm font-medium text-muted-foreground">
-                Artigos Traduzidos
+                {t("admin.dashboard.card.translatedArticles")}
               </h3>
             </div>
             <p className="text-2xl font-bold">{stats.articlesWithTranslations?.fullyTranslated || 0}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              de {stats.totalArticles} total
+              {t("admin.dashboard.card.translatedArticles.ofTotal", {
+                total: String(stats.totalArticles),
+              })}
             </p>
           </CardContent>
         </Card>
@@ -1647,18 +1674,18 @@ function DashboardTab() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <BarChart3 className="mr-2 h-5 w-5" />
-              Projetos por Fase
+              {t("admin.dashboard.section.projectsByPhase.title")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Object.entries(stats.projectsByPhase).map(([phase, count]) => {
                 const phaseLabels = {
-                  phase1: "Fase 1 - Empatizar",
-                  phase2: "Fase 2 - Definir", 
-                  phase3: "Fase 3 - Idear",
-                  phase4: "Fase 4 - Prototipar",
-                  phase5: "Fase 5 - Testar"
+                  phase1: t("admin.dashboard.section.projectsByPhase.phase1"),
+                  phase2: t("admin.dashboard.section.projectsByPhase.phase2"),
+                  phase3: t("admin.dashboard.section.projectsByPhase.phase3"),
+                  phase4: t("admin.dashboard.section.projectsByPhase.phase4"),
+                  phase5: t("admin.dashboard.section.projectsByPhase.phase5"),
                 };
                 const percentage = stats.totalProjects > 0 ? (count as number / stats.totalProjects * 100) : 0;
                 
@@ -2003,6 +2030,7 @@ function PlanEditDialog({
   onClose: () => void;
 }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const form = useForm<z.infer<typeof planFormSchema>>({
     resolver: zodResolver(planFormSchema),
@@ -2039,15 +2067,15 @@ function PlanEditDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/subscription-plans"] });
       queryClient.invalidateQueries({ queryKey: ["/api/subscription-info"] });
       toast({
-        title: "Plano atualizado",
-        description: "As alterações foram salvas com sucesso.",
+        title: t("admin.plans.toast.update.success.title"),
+        description: t("admin.plans.toast.update.success.description"),
       });
       onClose();
     },
     onError: () => {
       toast({
-        title: "Erro ao atualizar plano",
-        description: "Ocorreu um erro ao salvar as alterações.",
+        title: t("admin.plans.toast.update.error.title"),
+        description: t("admin.plans.toast.update.error.description"),
         variant: "destructive",
       });
     },
@@ -2061,9 +2089,11 @@ function PlanEditDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Plano: {plan.displayName}</DialogTitle>
+          <DialogTitle>
+            {t("admin.plans.edit.title", { name: plan.displayName })}
+          </DialogTitle>
           <DialogDescription>
-            Atualize as configurações e limites do plano de assinatura
+            {t("admin.plans.edit.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -2075,9 +2105,16 @@ function PlanEditDialog({
                 name="displayName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome do Plano</FormLabel>
+                    <FormLabel>
+                      {t("admin.plans.edit.field.displayName.label")}
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Individual" />
+                      <Input 
+                        {...field}
+                        placeholder={t(
+                          "admin.plans.edit.field.displayName.placeholder"
+                        )}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -2089,9 +2126,16 @@ function PlanEditDialog({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descrição</FormLabel>
+                    <FormLabel>
+                      {t("admin.plans.edit.field.description.label")}
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Para profissionais individuais" />
+                      <Input
+                        {...field}
+                        placeholder={t(
+                          "admin.plans.edit.field.description.placeholder"
+                        )}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -2104,7 +2148,9 @@ function PlanEditDialog({
                   name="priceMonthly"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Preço Mensal (R$)</FormLabel>
+                      <FormLabel>
+                        {t("admin.plans.edit.field.priceMonthly.label")}
+                      </FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -2124,7 +2170,9 @@ function PlanEditDialog({
                   name="priceYearly"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Preço Anual (R$)</FormLabel>
+                      <FormLabel>
+                        {t("admin.plans.edit.field.priceYearly.label")}
+                      </FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -2141,21 +2189,27 @@ function PlanEditDialog({
               </div>
 
               <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold mb-4">Limites do Plano</h3>
+                <h3 className="text-sm font-semibold mb-4">
+                  {t("admin.plans.edit.section.limits.title")}
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="maxProjects"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Máx. Projetos (vazio = ilimitado)</FormLabel>
+                        <FormLabel>
+                          {t("admin.plans.edit.field.maxProjects.label")}
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
                             {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                            placeholder="Ilimitado" 
+                            placeholder={t(
+                              "admin.plans.edit.field.maxProjects.placeholder"
+                            )}
                           />
                         </FormControl>
                         <FormMessage />
@@ -2168,14 +2222,18 @@ function PlanEditDialog({
                     name="aiChatLimit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Limite Chat IA (vazio = ilimitado)</FormLabel>
+                        <FormLabel>
+                          {t("admin.plans.edit.field.aiChatLimit.label")}
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
                             {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                            placeholder="Ilimitado" 
+                            placeholder={t(
+                              "admin.plans.edit.field.aiChatLimit.placeholder"
+                            )}
                           />
                         </FormControl>
                         <FormMessage />
@@ -2188,14 +2246,20 @@ function PlanEditDialog({
                     name="maxDoubleDiamondProjects"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Máx. Projetos Double Diamond (vazio = ilimitado)</FormLabel>
+                        <FormLabel>
+                          {t(
+                            "admin.plans.edit.field.maxDoubleDiamondProjects.label"
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
                             {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                            placeholder="Ilimitado (ex: 3 para plano Free)" 
+                            placeholder={t(
+                              "admin.plans.edit.field.maxDoubleDiamondProjects.placeholder"
+                            )}
                           />
                         </FormControl>
                         <FormMessage />
@@ -2206,21 +2270,27 @@ function PlanEditDialog({
               </div>
 
               <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold mb-4">Usuários da Equipe</h3>
+                <h3 className="text-sm font-semibold mb-4">
+                  {t("admin.plans.edit.section.teamUsers.title")}
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="maxUsersPerTeam"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Máx. Usuários (vazio = ilimitado)</FormLabel>
+                        <FormLabel>
+                          {t("admin.plans.edit.field.maxUsersPerTeam.label")}
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
                             {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                            placeholder="Ilimitado" 
+                            placeholder={t(
+                              "admin.plans.edit.field.maxUsersPerTeam.placeholder"
+                            )}
                           />
                         </FormControl>
                         <FormMessage />
@@ -2233,14 +2303,18 @@ function PlanEditDialog({
                     name="includedUsers"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Usuários Incluídos no Preço</FormLabel>
+                        <FormLabel>
+                          {t("admin.plans.edit.field.includedUsers.label")}
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
                             {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                            placeholder="Ex: 10" 
+                            placeholder={t(
+                              "admin.plans.edit.field.includedUsers.placeholder"
+                            )}
                           />
                         </FormControl>
                         <FormMessage />
@@ -2253,7 +2327,11 @@ function PlanEditDialog({
                     name="pricePerAdditionalUser"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Preço/Usuário Adicional (R$)</FormLabel>
+                        <FormLabel>
+                          {t(
+                            "admin.plans.edit.field.pricePerAdditionalUser.label"
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
@@ -2261,7 +2339,9 @@ function PlanEditDialog({
                             {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                            placeholder="Ex: 29.00" 
+                            placeholder={t(
+                              "admin.plans.edit.field.pricePerAdditionalUser.placeholder"
+                            )}
                           />
                         </FormControl>
                         <FormMessage />
@@ -2272,7 +2352,9 @@ function PlanEditDialog({
               </div>
 
               <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold mb-4">Recursos Incluídos</h3>
+                <h3 className="text-sm font-semibold mb-4">
+                  {t("admin.plans.edit.section.features.title")}
+                </h3>
                 <div className="space-y-3">
                   <FormField
                     control={form.control}
@@ -2288,7 +2370,7 @@ function PlanEditDialog({
                           />
                         </FormControl>
                         <FormLabel className="!mt-0">
-                          Colaboração em Equipe (múltiplos usuários editando)
+                          {t("admin.plans.edit.field.hasCollaboration.label")}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -2308,7 +2390,7 @@ function PlanEditDialog({
                           />
                         </FormControl>
                         <FormLabel className="!mt-0">
-                          SSO - Single Sign-On (Login com Google, Microsoft, etc)
+                          {t("admin.plans.edit.field.hasSso.label")}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -2328,7 +2410,7 @@ function PlanEditDialog({
                           />
                         </FormControl>
                         <FormLabel className="!mt-0">
-                          Integrações Customizadas (APIs, CRM, Slack, etc)
+                          {t("admin.plans.edit.field.hasCustomIntegrations.label")}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -2344,13 +2426,15 @@ function PlanEditDialog({
                 onClick={onClose}
                 disabled={updatePlanMutation.isPending}
               >
-                Cancelar
+                {t("admin.plans.edit.button.cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={updatePlanMutation.isPending}
               >
-                {updatePlanMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                {updatePlanMutation.isPending
+                  ? t("admin.plans.edit.button.saving")
+                  : t("admin.plans.edit.button.save")}
               </Button>
             </div>
           </form>
@@ -2362,6 +2446,7 @@ function PlanEditDialog({
 
 function SubscriptionPlansTab() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const { data: plans = [], isLoading } = useQuery<SubscriptionPlan[]>({
     queryKey: ["/api/subscription-plans"],
@@ -2381,10 +2466,10 @@ function SubscriptionPlansTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold" data-testid="plans-title">
-            Planos de Assinatura
+            {t("admin.plans.title")}
           </h2>
           <p className="text-muted-foreground">
-            Gerencie os planos de assinatura do DTTools
+            {t("admin.plans.subtitle")}
           </p>
         </div>
       </div>
@@ -2419,25 +2504,35 @@ function SubscriptionPlansTab() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm font-medium">Mensal:</span>
+                    <span className="text-sm font-medium">
+                      {t("admin.plans.card.price.monthly")}
+                    </span>
                     <span className="text-sm font-bold">{formatPrice(plan.priceMonthly)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm font-medium">Anual:</span>
+                    <span className="text-sm font-medium">
+                      {t("admin.plans.card.price.yearly")}
+                    </span>
                     <span className="text-sm font-bold">{formatPrice(plan.priceYearly)}</span>
                   </div>
                   {plan.priceYearly > 0 && plan.priceMonthly > 0 && (
                     <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg border border-green-200 dark:border-green-800">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-medium text-green-700 dark:text-green-300">No plano anual sai por:</span>
+                        <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                          {t("admin.plans.card.yearlyEffective")}
+                        </span>
                         <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                          {formatPrice(Math.floor(plan.priceYearly / 12))}/mês
+                          {formatPrice(Math.floor(plan.priceYearly / 12))}
+                          {t("admin.plans.card.yearlyPerMonthSuffix")}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-xs text-green-600 dark:text-green-400">Economia:</span>
+                        <span className="text-xs text-green-600 dark:text-green-400">
+                          {t("admin.plans.card.savings.label")}
+                        </span>
                         <span className="text-xs font-semibold text-green-600 dark:text-green-400">
-                          {formatPrice((plan.priceMonthly * 12) - plan.priceYearly)}/ano
+                          {formatPrice((plan.priceMonthly * 12) - plan.priceYearly)}
+                          {t("admin.plans.card.savingsPerYearSuffix")}
                         </span>
                       </div>
                     </div>
@@ -2446,23 +2541,62 @@ function SubscriptionPlansTab() {
 
                 <div className="pt-4 border-t space-y-2">
                   <div className="text-sm">
-                    <span className="font-medium">Limites:</span>
+                    <span className="font-medium">
+                      {t("admin.plans.card.limits.title")}
+                    </span>
                     <ul className="mt-2 space-y-1 text-muted-foreground">
-                      <li>• Projetos: {plan.maxProjects != null ? plan.maxProjects : 'Ilimitado'}</li>
-                      <li>• Personas/Projeto: {plan.maxPersonasPerProject != null ? plan.maxPersonasPerProject : 'Ilimitado'}</li>
-                      <li>• Usuários/Equipe: {plan.maxUsersPerTeam != null ? plan.maxUsersPerTeam : 'Ilimitado'}</li>
-                      <li>• Chat IA: {plan.aiChatLimit != null ? plan.aiChatLimit : 'Ilimitado'}</li>
+                      <li>
+                        • {t("admin.plans.card.limits.projects")}: {" "}
+                        {plan.maxProjects != null
+                          ? plan.maxProjects
+                          : t("admin.plans.card.limits.unlimited")}
+                      </li>
+                      <li>
+                        • {t("admin.plans.card.limits.personasPerProject")}: {" "}
+                        {plan.maxPersonasPerProject != null
+                          ? plan.maxPersonasPerProject
+                          : t("admin.plans.card.limits.unlimited")}
+                      </li>
+                      <li>
+                        • {t("admin.plans.card.limits.usersPerTeam")}: {" "}
+                        {plan.maxUsersPerTeam != null
+                          ? plan.maxUsersPerTeam
+                          : t("admin.plans.card.limits.unlimited")}
+                      </li>
+                      <li>
+                        • {t("admin.plans.card.limits.aiChat")}: {" "}
+                        {plan.aiChatLimit != null
+                          ? plan.aiChatLimit
+                          : t("admin.plans.card.limits.unlimited")}
+                      </li>
                     </ul>
                   </div>
                   {plan.includedUsers && (
                     <div className="text-sm pt-2 border-t">
-                      <span className="font-medium text-primary">Modelo de Cobrança:</span>
+                      <span className="font-medium text-primary">
+                        {t("admin.plans.card.billing.title")}
+                      </span>
                       <p className="mt-1 text-muted-foreground">
-                        • {plan.includedUsers} usuário{plan.includedUsers > 1 ? 's' : ''} incluído{plan.includedUsers > 1 ? 's' : ''}
+                        •{
+                          plan.includedUsers === 1
+                            ? t("admin.plans.card.billing.includedUsers", {
+                                count: String(plan.includedUsers),
+                              })
+                            : t(
+                                "admin.plans.card.billing.includedUsers.plural",
+                                { count: String(plan.includedUsers) }
+                              )
+                        }
                       </p>
                       {plan.pricePerAdditionalUser && (
                         <p className="text-muted-foreground">
-                          • {formatPrice(plan.pricePerAdditionalUser)} por usuário adicional
+                          •
+                          {t(
+                            "admin.plans.card.billing.pricePerAdditionalUser",
+                            {
+                              price: formatPrice(plan.pricePerAdditionalUser),
+                            }
+                          )}
                         </p>
                       )}
                     </div>
@@ -2470,22 +2604,34 @@ function SubscriptionPlansTab() {
                 </div>
 
                 <div className="pt-4 border-t">
-                  <span className="text-sm font-medium">Recursos:</span>
+                  <span className="text-sm font-medium">
+                    {t("admin.plans.card.features.title")}
+                  </span>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {plan.hasCollaboration && (
-                      <Badge variant="secondary" className="text-xs">Colaboração</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {t("admin.plans.card.features.collaboration")}
+                      </Badge>
                     )}
                     {plan.hasPermissionManagement && (
-                      <Badge variant="secondary" className="text-xs">Permissões</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {t("admin.plans.card.features.permissions")}
+                      </Badge>
                     )}
                     {plan.hasSharedWorkspace && (
-                      <Badge variant="secondary" className="text-xs">Workspace</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {t("admin.plans.card.features.workspace")}
+                      </Badge>
                     )}
                     {plan.hasCommentsAndFeedback && (
-                      <Badge variant="secondary" className="text-xs">Comentários</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {t("admin.plans.card.features.comments")}
+                      </Badge>
                     )}
                     {plan.hasSso && (
-                      <Badge variant="secondary" className="text-xs">SSO</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {t("admin.plans.card.features.sso")}
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -2499,7 +2645,7 @@ function SubscriptionPlansTab() {
                     data-testid={`button-edit-plan-${plan.id}`}
                   >
                     <Edit className="h-4 w-4 mr-2" />
-                    Editar
+                    {t("admin.plans.card.button.edit")}
                   </Button>
                 </div>
               </CardContent>
@@ -2521,6 +2667,7 @@ function SubscriptionPlansTab() {
 
 export default function AdminPage() {
   const { isAdmin } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <ProtectedRoute adminOnly={true}>
@@ -2528,10 +2675,10 @@ export default function AdminPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight mb-2" data-testid="admin-title">
-              Administração
+              {t("admin.title")}
             </h1>
             <p className="text-muted-foreground">
-              Gerencie artigos, vídeos, usuários, projetos e configurações do sistema
+              {t("admin.subtitle")}
             </p>
           </div>
 
@@ -2544,7 +2691,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <BarChart3 className="mr-2 h-4 w-4" />
-                  Dashboard
+                  {t("admin.tab.dashboard")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="users"
@@ -2552,7 +2699,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <Users className="mr-2 h-4 w-4" />
-                  Usuários
+                  {t("admin.tab.users")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="projects"
@@ -2560,7 +2707,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <FolderOpen className="mr-2 h-4 w-4" />
-                  Projetos
+                  {t("admin.tab.projects")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="double-diamond"
@@ -2568,7 +2715,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <Diamond className="mr-2 h-4 w-4" />
-                  Double Diamond
+                  {t("admin.tab.doubleDiamond")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="articles"
@@ -2576,7 +2723,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Artigos
+                  {t("admin.tab.articles")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="videos"
@@ -2584,7 +2731,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <Video className="mr-2 h-4 w-4" />
-                  Vídeos
+                  {t("admin.tab.videos")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="testimonials"
@@ -2592,7 +2739,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  Depoimentos
+                  {t("admin.tab.testimonials")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="plans"
@@ -2600,7 +2747,7 @@ export default function AdminPage() {
                   className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Planos
+                  {t("admin.tab.plans")}
                 </TabsTrigger>
               </TabsList>
             </div>
