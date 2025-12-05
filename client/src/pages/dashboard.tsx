@@ -659,10 +659,10 @@ export default function Dashboard() {
             {/* 5 Phases Section */}
             <section>
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-foreground mb-4">
                   {t("dashboard.5.phases.title")}
                 </h2>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-600 dark:text-muted-foreground">
                   {t("dashboard.5.phases.subtitle")}
                 </p>
               </div>
@@ -671,17 +671,16 @@ export default function Dashboard() {
                 {phases.map((phase) => {
                   const Icon = phase.icon;
                   const isHovered = selectedPhase === phase.id;
+                  const phaseBgWithAlpha = isDarkTheme ? `${phase.bgColor}33` : phase.bgColor;
                   
                   return (
                     <Card 
                       key={phase.id}
-                      className={`cursor-pointer transition-all duration-300 border-2 ${
-                        isHovered ? 'shadow-lg scale-105' : 'shadow-md'
-                      }`}
+                      className={`cursor-pointer transition-all duration-300 border ${
+                        isHovered ? 'shadow-xl scale-105' : 'shadow-md'
+                      } bg-white/90 dark:bg-slate-900/60 backdrop-blur-xl`}
                       style={{
-                        backgroundColor: isHovered ? phase.hoverColor : phase.bgColor,
-                        borderColor: phase.bgColor,
-                        color: phase.iconColor === 'text-black' ? '#000' : '#fff'
+                        borderColor: isDarkTheme ? 'rgba(148, 163, 184, 0.5)' : phase.bgColor
                       }}
                       onMouseEnter={() => setSelectedPhase(phase.id)}
                       onMouseLeave={() => setSelectedPhase(null)}
@@ -693,17 +692,19 @@ export default function Dashboard() {
                           <div 
                             className={`w-12 h-12 rounded-lg flex items-center justify-center ${phase.iconColor}`}
                             style={{ 
-                              backgroundColor: 'rgba(255,255,255,0.2)',
-                              backdropFilter: 'blur(10px)'
+                              backgroundColor: phaseBgWithAlpha,
+                              border: isDarkTheme ? '1px solid rgba(148,163,184,0.6)' : 'none',
+                              boxShadow: isDarkTheme ? '0 10px 25px rgba(15,23,42,0.6)' : 'none',
+                              backdropFilter: 'blur(12px)'
                             }}
                           >
                             <Icon className="w-6 h-6" />
                           </div>
                           <div>
-                            <CardTitle className="text-lg">
+                            <CardTitle className="text-lg text-gray-900 dark:text-foreground">
                               {phase.id}. {t(`phases.${phase.translationKey}`)}
                             </CardTitle>
-                            <CardDescription className="mt-1">
+                            <CardDescription className="mt-1 text-gray-700 dark:text-muted-foreground">
                               {t(`phases.${phase.translationKey}.desc`)}
                             </CardDescription>
                           </div>

@@ -30,9 +30,13 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const timestamp = Math.floor(Date.now() / 1000);
+  const isDarkTheme =
+    theme === "dark" ||
+    (typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark"));
   const logoHorizontal =
-    theme === "dark"
-      ? `/logo_DTTools_Dark.svg?v=${LOGO_VERSION}&t=${timestamp}`
+    isDarkTheme
+      ? `/logo_DTTools_dark.png?v=${LOGO_VERSION}&t=${timestamp}`
       : `/logo-horizontal.png?v=${LOGO_VERSION}&t=${timestamp}`;
   const logoIcon = `/logo-icon.png?v=${LOGO_VERSION}&t=${timestamp}`;
 
