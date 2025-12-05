@@ -136,14 +136,9 @@ function ProjectCard({ project }: { project: Project }) {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error(t("projects.export.error.sessionExpired"));
+          throw new Error('Sessão expirada. Faça login novamente.');
         }
-        throw new Error(
-          t("projects.export.error.http", {
-            status: String(response.status),
-            statusText: response.statusText,
-          })
-        );
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
 
       // Get the PDF as blob
@@ -245,129 +240,61 @@ function ProjectCard({ project }: { project: Project }) {
 
   return (
     <div className="relative group">
-      <Card
+      <Card 
         onClick={handleCardClick}
         className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
-        data-testid={`card-project-${project.id}`}
-      >
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <CardTitle
-                className="text-lg font-semibold text-gray-900"
-                data-testid={`text-project-name-${project.id}`}
-              >
-                {project.name}
-              </CardTitle>
-              <CardDescription className="mt-1 text-sm text-gray-600">
-                {project.description || t("projects.card.noDescription")}
-              </CardDescription>
-            </div>
-            <Badge
-              variant={project.status === "completed" ? "default" : "secondary"}
-              className={
-                project.status === "completed" ? "bg-green-100 text-green-800" : ""
-              }
-              data-testid={`badge-status-${project.id}`}
-            >
-              {project.status === "completed"
-                ? t("projects.status.completed")
-                : t("projects.status.inProgress")}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Current Phase */}
-            <div className="flex items-center gap-2">
-              <div className={`p-1.5 rounded-full ${currentPhaseConfig.color}`}>
-                <Icon className="w-4 h-4" />
-              </div>
-              <span
-                className="text-sm font-medium text-gray-700"
-                data-testid={`text-phase-${project.id}`}
-              >
-                {t("projects.card.phasePrefix", {
-                  phase: String(project.currentPhase),
                 })}
-                : {t(currentPhaseConfig.labelKey)}
               </span>
             </div>
 
-            {/* Progress */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">
-                  {t("projects.card.progress.label")}
-                </span>
-                <span className="font-medium" data-testid={`text-progress-${project.id}`}>
-                  {project.completionRate}%
-                </span>
-              </div>
-              <Progress value={project.completionRate || 0} className="h-2" />
-            </div>
-
-            {/* Created Date */}
-            <div className="flex items-center justify-between gap-2 text-xs text-gray-500 pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                <span>
-                  {t("projects.card.createdAt", {
-                    date: project.createdAt
-                      ? new Date(project.createdAt).toLocaleDateString(dateLocale)
-                      : "N/A",
-                  })}
-                </span>
-              </div>
-
-              {/* Export Dropdown - compacto e responsivo */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 px-2 whitespace-nowrap"
-                    data-testid={`button-export-${project.id}`}
-                    onClick={(e) => {
-                      // Evitar navegar para o card ao abrir o menu
-                      e.stopPropagation();
-                    }}
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    {t("projects.card.export.button")}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem
-                    onClick={handleExportPPTX}
-                    data-testid={`menu-export-pptx-${project.id}`}
-                  >
-                    <FileText className="w-3 h-3 mr-2" />
-                    {t("projects.card.export.pptx")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleExportPDF}
-                    data-testid={`menu-export-pdf-${project.id}`}
-                  >
-                    <FileText className="w-3 h-3 mr-2" />
-                    {t("projects.card.export.pdf")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleExportMarkdown}
-                    data-testid={`menu-export-markdown-${project.id}`}
-                  >
-                    <FileText className="w-3 h-3 mr-2" />
-                    {t("projects.card.export.markdown")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {/* Export Dropdown - compacto e responsivo */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-8 px-2 whitespace-nowrap"
+                  data-testid={`button-export-${project.id}`}
+                  onClick={(e) => {
+                    // Evitar navegar para o card ao abrir o menu
+                    e.stopPropagation();
+                  }}
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  {t("projects.card.export.button")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={handleExportPPTX}
+                  data-testid={`menu-export-pptx-${project.id}`}
+                >
+                  <FileText className="w-3 h-3 mr-2" />
+                  {t("projects.card.export.pptx")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportPDF}
+                  data-testid={`menu-export-pdf-${project.id}`}
+                >
+                  <FileText className="w-3 h-3 mr-2" />
+                  {t("projects.card.export.pdf")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportMarkdown}
+                  data-testid={`menu-export-markdown-${project.id}`}
+                >
+                  <FileText className="w-3 h-3 mr-2" />
+                  {t("projects.card.export.markdown")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 function CreateProjectDialog() {
   const { toast } = useToast();
   const { t } = useLanguage();

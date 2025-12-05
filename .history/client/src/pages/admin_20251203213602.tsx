@@ -31,7 +31,6 @@ function ArticlesTab() {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-  const { t, language } = useLanguage();
 
   const { data: articles = [], isLoading } = useQuery<Article[]>({
     queryKey: ["/api/articles"],
@@ -45,40 +44,40 @@ function ArticlesTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
       toast({
-        title: t("admin.articles.toast.delete.success.title"),
-        description: t("admin.articles.toast.delete.success.description"),
+        title: "Artigo deletado",
+        description: "O artigo foi removido com sucesso.",
       });
     },
     onError: () => {
       toast({
-        title: t("admin.articles.toast.delete.error.title"),
-        description: t("admin.articles.toast.delete.error.description"),
+        title: "Erro ao deletar artigo",
+        description: "Ocorreu um erro ao tentar deletar o artigo.",
         variant: "destructive",
       });
     },
   });
 
   const categories = [
-    { id: "all", labelKey: "admin.articles.category.all" },
-    { id: "empathize", labelKey: "admin.articles.category.empathize" },
-    { id: "define", labelKey: "admin.articles.category.define" },
-    { id: "ideate", labelKey: "admin.articles.category.ideate" },
-    { id: "prototype", labelKey: "admin.articles.category.prototype" },
-    { id: "test", labelKey: "admin.articles.category.test" },
-    { id: "design-thinking", labelKey: "admin.articles.category.designThinking" },
-    { id: "creativity", labelKey: "admin.articles.category.creativity" },
-    { id: "ux-ui", labelKey: "admin.articles.category.uxUi" },
+    { id: "all", label: "Todas as categorias" },
+    { id: "empathize", label: "Empatizar" },
+    { id: "define", label: "Definir" },
+    { id: "ideate", label: "Idear" },
+    { id: "prototype", label: "Prototipar" },
+    { id: "test", label: "Testar" },
+    { id: "design-thinking", label: "Design Thinking" },
+    { id: "creativity", label: "Criatividade" },
+    { id: "ux-ui", label: "UX/UI" },
   ];
 
   const getCategoryLabel = (category: string) => {
-    const cat = categories.find((c) => c.id === category);
-    return cat ? t(cat.labelKey) : category;
+    const cat = categories.find(c => c.id === category);
+    return cat?.label || category;
   };
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       empathize: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      define: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      define: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", 
       ideate: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       prototype: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
       test: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
@@ -91,23 +90,14 @@ function ArticlesTab() {
 
   const filteredArticles = articles.filter(article => {
     const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.author.toLowerCase().includes(searchTerm.toLowerCase());
+                         article.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || article.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
   const formatDate = (date: Date | string | null) => {
     if (!date) return "N/A";
-    const localeMap: Record<string, string> = {
-      "pt-BR": "pt-BR",
-      "en": "en-US",
-      "es": "es-ES",
-      "fr": "fr-FR",
-      "de": "de-DE",
-      "zh": "zh-CN",
-    };
-    const locale = localeMap[language] || "pt-BR";
-    return new Intl.DateTimeFormat(locale, {
+    return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
@@ -120,10 +110,10 @@ function ArticlesTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold" data-testid="articles-title">
-            {t("admin.articles.title")}
+            Gerenciar Artigos
           </h2>
           <p className="text-muted-foreground">
-            {t("admin.articles.subtitle")}
+            Crie, edite e gerencie os artigos da biblioteca
           </p>
         </div>
         <Button onClick={() => {
@@ -131,7 +121,7 @@ function ArticlesTab() {
           setIsCreating(true);
         }} data-testid="button-create-article">
           <Plus className="mr-2 h-4 w-4" />
-          {t("admin.articles.new")}
+          Novo Artigo
         </Button>
       </div>
 
@@ -140,7 +130,7 @@ function ArticlesTab() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t("admin.articles.search.placeholder")}
+            placeholder="Pesquisar artigos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -155,7 +145,7 @@ function ArticlesTab() {
           <SelectContent>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
-                {getCategoryLabel(category.id)}
+                {category.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -180,12 +170,12 @@ function ArticlesTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("admin.articles.table.title")}</TableHead>
-                  <TableHead>{t("admin.articles.table.category")}</TableHead>
-                  <TableHead>{t("admin.articles.table.author")}</TableHead>
-                  <TableHead>{t("admin.articles.table.date")}</TableHead>
-                  <TableHead>{t("admin.articles.table.status")}</TableHead>
-                  <TableHead className="text-right">{t("admin.articles.table.actions")}</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Autor</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -193,9 +183,9 @@ function ArticlesTab() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-articles-message">
-                        {searchTerm || categoryFilter !== "all"
-                          ? t("admin.articles.empty.filtered")
-                          : t("admin.articles.empty.default")
+                        {searchTerm || categoryFilter !== "all" 
+                          ? "Nenhum artigo encontrado com os filtros aplicados."
+                          : "Nenhum artigo encontrado. Crie o primeiro artigo!"
                         }
                       </p>
                     </TableCell>
@@ -222,9 +212,7 @@ function ArticlesTab() {
                       <TableCell>{formatDate(article.createdAt)}</TableCell>
                       <TableCell>
                         <Badge variant={article.published ? "default" : "secondary"}>
-                          {article.published
-                            ? t("admin.articles.status.published")
-                            : t("admin.articles.status.draft")}
+                          {article.published ? "Publicado" : "Rascunho"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -257,24 +245,19 @@ function ArticlesTab() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {t("admin.articles.delete.title")}
-                                </AlertDialogTitle>
+                                <AlertDialogTitle>Deletar artigo</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  {t("admin.articles.delete.description", {
-                                    title: article.title,
-                                  })}
+                                  Tem certeza que deseja deletar o artigo "{article.title}"? 
+                                  Esta ação não pode ser desfeita.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>
-                                  {t("admin.articles.delete.cancel")}
-                                </AlertDialogCancel>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => deleteArticleMutation.mutate(article.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  {t("admin.articles.delete.confirm")}
+                                  Deletar
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -487,7 +470,7 @@ function UsersTab() {
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-users-message">
-                        {searchTerm || roleFilter !== "all"
+                        {searchTerm || roleFilter !== "all" 
                           ? t("admin.users.empty.filtered")
                           : t("admin.users.empty.default")}
                       </p>
@@ -535,7 +518,7 @@ function UsersTab() {
                             <Diamond className="w-4 h-4 mr-1" />
                             {t("admin.users.action.addons")}
                           </Button>
-
+                          
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -581,7 +564,7 @@ function UsersTab() {
       </Card>
 
       {/* Create User Dialog */}
-      <UserCreateDialog
+      <UserCreateDialog 
         isOpen={isCreating}
         onClose={() => setIsCreating(false)}
         onSubmit={(data) => createUserMutation.mutate(data)}
@@ -596,7 +579,7 @@ function UsersTab() {
           onClose={() => setEditingUserLimits(null)}
         />
       )}
-
+      
       {/* User Add-ons Dialog */}
       {editingUserAddons && (
         <UserAddonsDialog
@@ -788,193 +771,6 @@ type UserAddonState = {
   libraryPremium: boolean;
 };
 
-function UserLimitsDialog({
-  user,
-  isOpen,
-  onClose,
-}: {
-  user: Omit<User, "password">;
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  const { t } = useLanguage();
-
-  const [localLimits, setLocalLimits] = useState<{
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customMaxDoubleDiamondExports: number | null;
-    customAiChatLimit: number | null;
-  } | null>(null);
-
-  const { data, isLoading } = useQuery<{
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customMaxDoubleDiamondExports: number | null;
-    customAiChatLimit: number | null;
-  } | null>({
-    queryKey: ["admin-user-limits", user.id],
-    queryFn: async () => {
-      const response = await apiRequest("GET", `/api/admin/users/${user.id}/limits`);
-      return response.json();
-    },
-    enabled: isOpen,
-  });
-
-  useEffect(() => {
-    if (isOpen && data) {
-      setLocalLimits(data);
-    }
-    if (!isOpen) {
-      setLocalLimits(null);
-    }
-  }, [isOpen, data]);
-
-  const updateLimitsMutation = useMutation({
-    mutationFn: async (limits: NonNullable<typeof localLimits>) => {
-      const response = await apiRequest(
-        "PUT",
-        `/api/admin/users/${user.id}/limits`,
-        limits
-      );
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: t("admin.users.toast.limits.success.title"),
-        description: t("admin.users.toast.limits.success.description", {
-          username: user.username,
-        }),
-      });
-      onClose();
-    },
-    onError: () => {
-      toast({
-        title: t("admin.users.toast.limits.error.title"),
-        description: t("admin.users.toast.limits.error.description"),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSave = () => {
-    if (!localLimits) return;
-    updateLimitsMutation.mutate(localLimits);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("admin.users.limits.title", { username: user.username })}</DialogTitle>
-          <DialogDescription>{t("admin.users.limits.description")}</DialogDescription>
-        </DialogHeader>
-
-        {isLoading || !localLimits ? (
-          <div className="space-y-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxProjects")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxProjects ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxProjects: e.target.value ? parseInt(e.target.value) : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("admin.users.limits.help.maxProjects")}
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxDoubleDiamondProjects")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxDoubleDiamondProjects ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxDoubleDiamondProjects: e.target.value
-                      ? parseInt(e.target.value)
-                      : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxDoubleDiamondExports")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxDoubleDiamondExports ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxDoubleDiamondExports: e.target.value
-                      ? parseInt(e.target.value)
-                      : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.aiChatLimit")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customAiChatLimit ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customAiChatLimit: e.target.value ? parseInt(e.target.value) : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("admin.common.cancel")}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={updateLimitsMutation.isPending || !localLimits}
-          >
-            {updateLimitsMutation.isPending
-              ? t("admin.common.saving")
-              : t("admin.common.save")}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function UserAddonsDialog({
   user,
   isOpen,
@@ -985,7 +781,6 @@ function UserAddonsDialog({
   onClose: () => void;
 }) {
   const { toast } = useToast();
-  const { t } = useLanguage();
   const [localAddons, setLocalAddons] = useState<UserAddonState | null>(null);
 
   const { data, isLoading } = useQuery<{ addons: UserAddonState } | null>({
@@ -1495,7 +1290,7 @@ function DoubleDiamondTab() {
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesPhase = phaseFilter === "all" || project.currentPhase === phaseFilter;
     return matchesSearch && matchesPhase;
   });
@@ -1612,7 +1407,7 @@ function DoubleDiamondTab() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
+                            <div 
                               className="h-full bg-blue-500 transition-all duration-300"
                               style={{ width: `${project.completionPercentage || 0}%` }}
                             />
@@ -1642,7 +1437,7 @@ function DoubleDiamondTab() {
                           >
                             <Edit className="h-3 w-3" />
                           </Button>
-
+                          
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -1726,7 +1521,7 @@ function DashboardTab() {
             {t("admin.dashboard.subtitle")}
           </p>
         </div>
-
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -1892,26 +1687,19 @@ function DashboardTab() {
                   phase4: t("admin.dashboard.section.projectsByPhase.phase4"),
                   phase5: t("admin.dashboard.section.projectsByPhase.phase5"),
                 };
-                const percentage =
-                  stats.totalProjects > 0
-                    ? ((count as number) / stats.totalProjects) * 100
-                    : 0;
-
+                const percentage = stats.totalProjects > 0 ? (count as number / stats.totalProjects * 100) : 0;
+                
                 return (
                   <div key={phase} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {phaseLabels[phase as keyof typeof phaseLabels]}
-                    </span>
+                    <span className="text-sm font-medium">{phaseLabels[phase as keyof typeof phaseLabels]}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
+                        <div 
                           className="h-full bg-blue-500 transition-all duration-300"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground w-8">
-                        {count as number}
-                      </span>
+                      <span className="text-sm text-muted-foreground w-8">{count as number}</span>
                     </div>
                   </div>
                 );
@@ -1925,51 +1713,37 @@ function DashboardTab() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Users className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.usersByRole.title")}
+              Usuários por Papel
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.usersByRole.admins")}
-                </span>
+                <span className="text-sm font-medium">Administradores</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalUsers > 0
-                          ? (stats.usersByRole.admin / stats.totalUsers) * 100
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalUsers > 0 ? (stats.usersByRole.admin / stats.totalUsers * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.usersByRole.admin}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.usersByRole.admin}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.usersByRole.users")}
-                </span>
+                <span className="text-sm font-medium">Usuários</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalUsers > 0
-                          ? (stats.usersByRole.user / stats.totalUsers) * 100
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalUsers > 0 ? (stats.usersByRole.user / stats.totalUsers * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.usersByRole.user}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.usersByRole.user}</span>
                 </div>
               </div>
             </div>
@@ -1981,39 +1755,32 @@ function DashboardTab() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Eye className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.articlesByCategory.title")}
+              Artigos por Categoria
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Object.entries(stats.articlesByCategory).map(([category, count]) => {
                 const categoryLabels = {
-                  empathize: t("admin.articles.category.empathize"),
-                  define: t("admin.articles.category.define"),
-                  ideate: t("admin.articles.category.ideate"),
-                  prototype: t("admin.articles.category.prototype"),
-                  test: t("admin.articles.category.test"),
+                  empathize: "Empatizar",
+                  define: "Definir",
+                  ideate: "Idear",
+                  prototype: "Prototipar",
+                  test: "Testar"
                 };
-                const percentage =
-                  stats.totalArticles > 0
-                    ? ((count as number) / stats.totalArticles) * 100
-                    : 0;
-
+                const percentage = stats.totalArticles > 0 ? (count as number / stats.totalArticles * 100) : 0;
+                
                 return (
                   <div key={category} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {categoryLabels[category as keyof typeof categoryLabels]}
-                    </span>
+                    <span className="text-sm font-medium">{categoryLabels[category as keyof typeof categoryLabels]}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
+                        <div 
                           className="h-full bg-purple-500 transition-all duration-300"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground w-8">
-                        {count as number}
-                      </span>
+                      <span className="text-sm text-muted-foreground w-8">{count as number}</span>
                     </div>
                   </div>
                 );
@@ -2027,39 +1794,32 @@ function DashboardTab() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Diamond className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.doubleDiamondByPhase.title")}
+              Double Diamond por Fase
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Object.entries(stats.doubleDiamondByPhase || {}).map(([phase, count]) => {
                 const phaseLabels: Record<string, string> = {
-                  discover: t("admin.dd.phase.discover"),
-                  define: t("admin.dd.phase.define"),
-                  develop: t("admin.dd.phase.develop"),
-                  deliver: t("admin.dd.phase.deliver"),
-                  dfv: t("admin.dd.phase.dfv"),
+                  discover: "Descobrir",
+                  define: "Definir",
+                  develop: "Desenvolver",
+                  deliver: "Entregar",
+                  dfv: "Análise DFV"
                 };
-                const percentage =
-                  stats.totalDoubleDiamondProjects > 0
-                    ? ((count as number) / stats.totalDoubleDiamondProjects) * 100
-                    : 0;
-
+                const percentage = stats.totalDoubleDiamondProjects > 0 ? (count as number / stats.totalDoubleDiamondProjects * 100) : 0;
+                
                 return (
                   <div key={phase} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {phaseLabels[phase] || phase}
-                    </span>
+                    <span className="text-sm font-medium">{phaseLabels[phase] || phase}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
+                        <div 
                           className="h-full bg-cyan-500 transition-all duration-300"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground w-8">
-                        {count as number}
-                      </span>
+                      <span className="text-sm text-muted-foreground w-8">{count as number}</span>
                     </div>
                   </div>
                 );
@@ -2073,75 +1833,51 @@ function DashboardTab() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Diamond className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.doubleDiamondStatus.title")}
+              Status Double Diamond
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dd.status.pending")}
-                </span>
+                <span className="text-sm font-medium">Pendentes</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-gray-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.pending || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalDoubleDiamondProjects > 0 ? ((stats.doubleDiamondByStatus?.pending || 0) / stats.totalDoubleDiamondProjects * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.doubleDiamondByStatus?.pending || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.doubleDiamondByStatus?.pending || 0}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dd.status.inProgress")}
-                </span>
+                <span className="text-sm font-medium">Em Progresso</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.in_progress || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalDoubleDiamondProjects > 0 ? ((stats.doubleDiamondByStatus?.in_progress || 0) / stats.totalDoubleDiamondProjects * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.doubleDiamondByStatus?.in_progress || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.doubleDiamondByStatus?.in_progress || 0}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dd.status.completed")}
-                </span>
+                <span className="text-sm font-medium">Completos</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.completed || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalDoubleDiamondProjects > 0 ? ((stats.doubleDiamondByStatus?.completed || 0) / stats.totalDoubleDiamondProjects * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.doubleDiamondByStatus?.completed || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.doubleDiamondByStatus?.completed || 0}</span>
                 </div>
               </div>
             </div>
@@ -2153,98 +1889,68 @@ function DashboardTab() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Globe className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.articleTranslations.title")}
+              Status de Tradução dos Artigos
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.articleTranslations.withEnglish")}
-                </span>
+                <span className="text-sm font-medium">Com Inglês</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withEnglish || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalArticles > 0 ? ((stats.articlesWithTranslations?.withEnglish || 0) / stats.totalArticles * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.withEnglish || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.articlesWithTranslations?.withEnglish || 0}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.articleTranslations.withSpanish")}
-                </span>
+                <span className="text-sm font-medium">Com Espanhol</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-yellow-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withSpanish || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalArticles > 0 ? ((stats.articlesWithTranslations?.withSpanish || 0) / stats.totalArticles * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.withSpanish || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.articlesWithTranslations?.withSpanish || 0}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.articleTranslations.withFrench")}
-                </span>
+                <span className="text-sm font-medium">Com Francês</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-purple-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withFrench || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalArticles > 0 ? ((stats.articlesWithTranslations?.withFrench || 0) / stats.totalArticles * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.withFrench || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.articlesWithTranslations?.withFrench || 0}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium flex items-center">
                   <CheckCircle className="h-3 w-3 mr-1 text-green-600" />
-                  {t("admin.dashboard.section.articleTranslations.fullyTranslated")}
+                  Totalmente Traduzidos
                 </span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.fullyTranslated || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalArticles > 0 ? ((stats.articlesWithTranslations?.fullyTranslated || 0) / stats.totalArticles * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.fullyTranslated || 0}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.articlesWithTranslations?.fullyTranslated || 0}</span>
                 </div>
               </div>
             </div>
@@ -2256,53 +1962,37 @@ function DashboardTab() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <FolderOpen className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.projectStatus.title")}
+              Status dos Projetos
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.projects.status.inProgress")}
-                </span>
+                <span className="text-sm font-medium">Em Progresso</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalProjects > 0
-                          ? ((stats.projectsByStatus.in_progress /
-                            stats.totalProjects) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalProjects > 0 ? (stats.projectsByStatus.in_progress / stats.totalProjects * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.projectsByStatus.in_progress}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.projectsByStatus.in_progress}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.projects.status.completed")}
-                </span>
+                <span className="text-sm font-medium">Concluídos</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalProjects > 0
-                          ? ((stats.projectsByStatus.completed /
-                            stats.totalProjects) * 100)
-                          : 0
-                          }%`,
+                      style={{ 
+                        width: `${stats.totalProjects > 0 ? (stats.projectsByStatus.completed / stats.totalProjects * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.projectsByStatus.completed}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.projectsByStatus.completed}</span>
                 </div>
               </div>
             </div>
@@ -2330,18 +2020,18 @@ const planFormSchema = z.object({
   hasCustomIntegrations: z.boolean(),
 });
 
-function PlanEditDialog({
-  plan,
-  isOpen,
-  onClose
-}: {
-  plan: SubscriptionPlan;
-  isOpen: boolean;
+function PlanEditDialog({ 
+  plan, 
+  isOpen, 
+  onClose 
+}: { 
+  plan: SubscriptionPlan; 
+  isOpen: boolean; 
   onClose: () => void;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
-
+  
   const form = useForm<z.infer<typeof planFormSchema>>({
     resolver: zodResolver(planFormSchema),
     defaultValues: {
@@ -2419,7 +2109,7 @@ function PlanEditDialog({
                       {t("admin.plans.edit.field.displayName.label")}
                     </FormLabel>
                     <FormControl>
-                      <Input
+                      <Input 
                         {...field}
                         placeholder={t(
                           "admin.plans.edit.field.displayName.placeholder"
@@ -2462,12 +2152,12 @@ function PlanEditDialog({
                         {t("admin.plans.edit.field.priceMonthly.label")}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <Input 
+                          type="number" 
                           step="0.01"
-                          {...field}
+                          {...field} 
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          placeholder="40.00"
+                          placeholder="40.00" 
                         />
                       </FormControl>
                       <FormMessage />
@@ -2484,12 +2174,12 @@ function PlanEditDialog({
                         {t("admin.plans.edit.field.priceYearly.label")}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <Input 
+                          type="number" 
                           step="0.01"
-                          {...field}
+                          {...field} 
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          placeholder="400.00"
+                          placeholder="400.00" 
                         />
                       </FormControl>
                       <FormMessage />
@@ -2512,9 +2202,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.maxProjects.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2536,9 +2226,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.aiChatLimit.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2562,9 +2252,9 @@ function PlanEditDialog({
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2593,9 +2283,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.maxUsersPerTeam.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2617,9 +2307,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.includedUsers.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2643,10 +2333,10 @@ function PlanEditDialog({
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
                             step="0.01"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder={t(
@@ -2890,12 +2580,12 @@ function SubscriptionPlansTab() {
                         •{
                           plan.includedUsers === 1
                             ? t("admin.plans.card.billing.includedUsers", {
-                              count: String(plan.includedUsers),
-                            })
+                                count: String(plan.includedUsers),
+                              })
                             : t(
-                              "admin.plans.card.billing.includedUsers.plural",
-                              { count: String(plan.includedUsers) }
-                            )
+                                "admin.plans.card.billing.includedUsers.plural",
+                                { count: String(plan.includedUsers) }
+                              )
                         }
                       </p>
                       {plan.pricePerAdditionalUser && (

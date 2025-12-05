@@ -136,14 +136,9 @@ function ProjectCard({ project }: { project: Project }) {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error(t("projects.export.error.sessionExpired"));
+          throw new Error('Sessão expirada. Faça login novamente.');
         }
-        throw new Error(
-          t("projects.export.error.http", {
-            status: String(response.status),
-            statusText: response.statusText,
-          })
-        );
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
 
       // Get the PDF as blob

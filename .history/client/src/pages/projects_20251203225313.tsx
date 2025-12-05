@@ -136,14 +136,9 @@ function ProjectCard({ project }: { project: Project }) {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error(t("projects.export.error.sessionExpired"));
+          throw new Error('Sessão expirada. Faça login novamente.');
         }
-        throw new Error(
-          t("projects.export.error.http", {
-            status: String(response.status),
-            statusText: response.statusText,
-          })
-        );
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
 
       // Get the PDF as blob
@@ -245,7 +240,7 @@ function ProjectCard({ project }: { project: Project }) {
 
   return (
     <div className="relative group">
-      <Card
+      <Card 
         onClick={handleCardClick}
         className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
         data-testid={`card-project-${project.id}`}
@@ -253,40 +248,13 @@ function ProjectCard({ project }: { project: Project }) {
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle
-                className="text-lg font-semibold text-gray-900"
-                data-testid={`text-project-name-${project.id}`}
-              >
+              <CardTitle className="text-lg font-semibold text-gray-900" data-testid={`text-project-name-${project.id}`}>
                 {project.name}
-              </CardTitle>
-              <CardDescription className="mt-1 text-sm text-gray-600">
-                {project.description || t("projects.card.noDescription")}
-              </CardDescription>
-            </div>
-            <Badge
-              variant={project.status === "completed" ? "default" : "secondary"}
-              className={
-                project.status === "completed" ? "bg-green-100 text-green-800" : ""
-              }
-              data-testid={`badge-status-${project.id}`}
-            >
-              {project.status === "completed"
-                ? t("projects.status.completed")
-                : t("projects.status.inProgress")}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Current Phase */}
             <div className="flex items-center gap-2">
-              <div className={`p-1.5 rounded-full ${currentPhaseConfig.color}`}>
+              <div className={`p-1.5 rounded-full ${currentPhase.color}`}>
                 <Icon className="w-4 h-4" />
               </div>
-              <span
-                className="text-sm font-medium text-gray-700"
-                data-testid={`text-phase-${project.id}`}
-              >
+              <span className="text-sm font-medium text-gray-700" data-testid={`text-phase-${project.id}`}>
                 {t("projects.card.phasePrefix", {
                   phase: String(project.currentPhase),
                 })}
@@ -368,6 +336,7 @@ function ProjectCard({ project }: { project: Project }) {
     </div>
   );
 }
+
 function CreateProjectDialog() {
   const { toast } = useToast();
   const { t } = useLanguage();

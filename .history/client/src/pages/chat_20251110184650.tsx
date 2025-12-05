@@ -42,59 +42,36 @@ interface DesignThinkingContext {
 }
 
 const phases = [
-  { id: 1, nameKey: "phases.empathize", icon: Users, color: "#90C5E0", focus: "empathize" },
-  { id: 2, nameKey: "phases.define", icon: Target, color: "#3A5A7E", focus: "define" },
-  { id: 3, nameKey: "phases.ideate", icon: Lightbulb, color: "#FFD700", focus: "ideate" },
-  { id: 4, nameKey: "phases.prototype", icon: Wrench, color: "#FF6B35", focus: "prototype" },
-  { id: 5, nameKey: "phases.test", icon: TestTube, color: "#2ECC71", focus: "test" }
+  { id: 1, name: "Empatizar", icon: Users, color: "#90C5E0", focus: "empathize" },
+  { id: 2, name: "Definir", icon: Target, color: "#3A5A7E", focus: "define" },
+  { id: 3, name: "Idear", icon: Lightbulb, color: "#FFD700", focus: "ideate" },
+  { id: 4, name: "Prototipar", icon: Wrench, color: "#FF6B35", focus: "prototype" },
+  { id: 5, name: "Testar", icon: TestTube, color: "#2ECC71", focus: "test" }
 ];
 
 const userLevels = [
-  {
-    value: "beginner",
-    labelKey: "chat.userLevel.beginner.label",
-    descriptionKey: "chat.userLevel.beginner.description",
-  },
-  {
-    value: "intermediate",
-    labelKey: "chat.userLevel.intermediate.label",
-    descriptionKey: "chat.userLevel.intermediate.description",
-  },
-  {
-    value: "advanced",
-    labelKey: "chat.userLevel.advanced.label",
-    descriptionKey: "chat.userLevel.advanced.description",
-  },
+  { value: 'beginner', label: 'Iniciante', description: 'Novo no Design Thinking' },
+  { value: 'intermediate', label: 'Intermediário', description: 'Alguma experiência' },
+  { value: 'advanced', label: 'Avançado', description: 'Experiência significativa' }
 ];
 
 export default function ChatPage() {
   const { isAuthenticated } = useAuth();
-  const { t, language } = useLanguage();
-
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+  const { language } = useLanguage();
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      role: "assistant",
-      content: t("chat.initialMessage"),
-      timestamp: new Date(),
-    },
+      role: 'assistant',
+      content: 'Olá! Sou seu mentor de Design Thinking. Como posso ajudá-lo hoje? Você pode me perguntar sobre qualquer fase do processo, pedir sugestões de ferramentas ou orientações específicas para seu projeto.',
+      timestamp: new Date()
+    }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [context, setContext] = useState<DesignThinkingContext>({
     currentPhase: 1,
-    userLevel: 'beginner',
+    userLevel: 'beginner'
   });
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const localeMap: Record<string, string> = {
-    "pt-BR": "pt-BR",
-    en: "en-US",
-    es: "es-ES",
-    fr: "fr-FR",
-    de: "de-DE",
-    zh: "zh-CN",
-  };
-  const timeLocale = localeMap[language] || "pt-BR";
 
   // Get projects for context selection
   const { data: projects = [] } = useQuery<Project[]>({
@@ -121,7 +98,7 @@ export default function ChatPage() {
       console.error('Chat error:', error);
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: t("chat.error.generic"),
+        content: 'Desculpe, ocorreu um erro. Verifique se a chave da API OpenAI está configurada corretamente.',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -150,7 +127,7 @@ export default function ChatPage() {
   const generateSuggestions = () => {
     if (messages.length > 0) {
       const lastUserMessage = messages.filter(m => m.role === 'user').pop();
-      const topic = lastUserMessage?.content || t("chat.defaultTopic");
+      const topic = lastUserMessage?.content || 'Design Thinking';
       suggestionsMutation.mutate({ context, topic });
     }
   };
@@ -178,7 +155,7 @@ export default function ChatPage() {
   const clearChat = () => {
     setMessages([{
       role: 'assistant',
-      content: t("chat.clear.message"),
+      content: 'Chat reiniciado! Como posso ajudá-lo com Design Thinking?',
       timestamp: new Date()
     }]);
     setSuggestions([]);
@@ -193,12 +170,12 @@ export default function ChatPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
-              {t("chat.title")}
+              Chat de IA - Design Thinking
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              {t("chat.unauth.message")}
+              Faça login para acessar o chat de IA sobre Design Thinking.
             </p>
           </CardContent>
         </Card>
@@ -213,10 +190,10 @@ export default function ChatPage() {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2">
             <Brain className="h-8 w-8 text-blue-600" />
-            {t("chat.title")}
+            Chat de IA - Design Thinking
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {t("chat.subtitle")}
+            Seu mentor pessoal para navegar pelo processo de Design Thinking
           </p>
         </div>
 
@@ -225,13 +202,13 @@ export default function ChatPage() {
           <div className="lg:col-span-1 space-y-3 lg:space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">{t("chat.settings.title")}</CardTitle>
+                <CardTitle className="text-sm">Configurações</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Phase Selection */}
                 <div>
                   <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    {t("chat.settings.phaseLabel")}
+                    Fase Atual
                   </label>
                   <div className="grid grid-cols-1 gap-2">
                     {phases.map((phase) => (
@@ -249,7 +226,7 @@ export default function ChatPage() {
                         data-testid={`button-phase-${phase.id}`}
                       >
                         <phase.icon className="h-3 w-3 mr-2" />
-                        {t(phase.nameKey)}
+                        {phase.name}
                       </Button>
                     ))}
                   </div>
@@ -258,7 +235,7 @@ export default function ChatPage() {
                 {/* User Level */}
                 <div>
                   <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    {t("chat.settings.levelLabel")}
+                    Nível de Experiência
                   </label>
                   <div className="space-y-1">
                     {userLevels.map((level) => (
@@ -273,7 +250,7 @@ export default function ChatPage() {
                         }))}
                         data-testid={`button-level-${level.value}`}
                       >
-                        {t(level.labelKey)}
+                        {level.label}
                       </Button>
                     ))}
                   </div>
@@ -283,7 +260,7 @@ export default function ChatPage() {
                 {projects.length > 0 && (
                   <div>
                     <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                      {t("chat.settings.projectLabel")}
+                      Projeto (Opcional)
                     </label>
                     <select
                       className="w-full p-2 text-xs border rounded-md bg-background"
@@ -299,7 +276,7 @@ export default function ChatPage() {
                       }}
                       data-testid="select-project"
                     >
-                      <option value="">{t("chat.settings.projectPlaceholder")}</option>
+                      <option value="">Selecione um projeto</option>
                       {projects.map((project) => (
                         <option key={project.id} value={project.id}>
                           {project.name}
@@ -317,7 +294,7 @@ export default function ChatPage() {
                   data-testid="button-clear-chat"
                 >
                   <RefreshCw className="h-3 w-3 mr-2" />
-                  {t("chat.clear.button")}
+                  Limpar Chat
                 </Button>
               </CardContent>
             </Card>
@@ -328,19 +305,16 @@ export default function ChatPage() {
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
                     <currentPhase.icon className="h-4 w-4" style={{ color: currentPhase.color }} />
-                    {t("chat.context.title")}
+                    Contexto Atual
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     <Badge variant="secondary" className="text-xs" data-testid="badge-current-phase">
-                      {t(currentPhase.nameKey)}
+                      {currentPhase.name}
                     </Badge>
                     <Badge variant="outline" className="text-xs" data-testid="badge-user-level">
-                      {t(
-                        userLevels.find((l) => l.value === context.userLevel)?.labelKey ||
-                          "chat.userLevel.beginner.label"
-                      )}
+                      {userLevels.find(l => l.value === context.userLevel)?.label}
                     </Badge>
                   </div>
                 </CardContent>
@@ -353,7 +327,7 @@ export default function ChatPage() {
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    {t("chat.suggestions.title")}
+                    Sugestões
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -383,7 +357,7 @@ export default function ChatPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
-                  {t("chat.chatPanel.title")}
+                  Chat com IA
                   {chatMutation.isPending && (
                     <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                   )}
@@ -413,7 +387,7 @@ export default function ChatPage() {
                               {message.content}
                             </p>
                             <p className="text-xs opacity-70 mt-1">
-                              {message.timestamp.toLocaleTimeString(timeLocale)}
+                              {message.timestamp.toLocaleTimeString()}
                             </p>
                           </div>
                         </div>
@@ -430,7 +404,7 @@ export default function ChatPage() {
                   <Input
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder={t("chat.input.placeholder")}
+                    placeholder="Digite sua pergunta sobre Design Thinking..."
                     onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                     disabled={chatMutation.isPending}
                     data-testid="input-chat-message"

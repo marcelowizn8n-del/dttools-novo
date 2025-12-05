@@ -78,7 +78,7 @@ function ArticlesTab() {
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       empathize: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      define: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      define: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", 
       ideate: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       prototype: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
       test: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
@@ -91,7 +91,7 @@ function ArticlesTab() {
 
   const filteredArticles = articles.filter(article => {
     const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.author.toLowerCase().includes(searchTerm.toLowerCase());
+                         article.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || article.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -155,7 +155,7 @@ function ArticlesTab() {
           <SelectContent>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
-                {getCategoryLabel(category.id)}
+                {category.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -193,7 +193,7 @@ function ArticlesTab() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-articles-message">
-                        {searchTerm || categoryFilter !== "all"
+                        {searchTerm || categoryFilter !== "all" 
                           ? t("admin.articles.empty.filtered")
                           : t("admin.articles.empty.default")
                         }
@@ -487,7 +487,7 @@ function UsersTab() {
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-users-message">
-                        {searchTerm || roleFilter !== "all"
+                        {searchTerm || roleFilter !== "all" 
                           ? t("admin.users.empty.filtered")
                           : t("admin.users.empty.default")}
                       </p>
@@ -535,7 +535,7 @@ function UsersTab() {
                             <Diamond className="w-4 h-4 mr-1" />
                             {t("admin.users.action.addons")}
                           </Button>
-
+                          
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -581,7 +581,7 @@ function UsersTab() {
       </Card>
 
       {/* Create User Dialog */}
-      <UserCreateDialog
+      <UserCreateDialog 
         isOpen={isCreating}
         onClose={() => setIsCreating(false)}
         onSubmit={(data) => createUserMutation.mutate(data)}
@@ -596,7 +596,7 @@ function UsersTab() {
           onClose={() => setEditingUserLimits(null)}
         />
       )}
-
+      
       {/* User Add-ons Dialog */}
       {editingUserAddons && (
         <UserAddonsDialog
@@ -788,193 +788,6 @@ type UserAddonState = {
   libraryPremium: boolean;
 };
 
-function UserLimitsDialog({
-  user,
-  isOpen,
-  onClose,
-}: {
-  user: Omit<User, "password">;
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  const { t } = useLanguage();
-
-  const [localLimits, setLocalLimits] = useState<{
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customMaxDoubleDiamondExports: number | null;
-    customAiChatLimit: number | null;
-  } | null>(null);
-
-  const { data, isLoading } = useQuery<{
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customMaxDoubleDiamondExports: number | null;
-    customAiChatLimit: number | null;
-  } | null>({
-    queryKey: ["admin-user-limits", user.id],
-    queryFn: async () => {
-      const response = await apiRequest("GET", `/api/admin/users/${user.id}/limits`);
-      return response.json();
-    },
-    enabled: isOpen,
-  });
-
-  useEffect(() => {
-    if (isOpen && data) {
-      setLocalLimits(data);
-    }
-    if (!isOpen) {
-      setLocalLimits(null);
-    }
-  }, [isOpen, data]);
-
-  const updateLimitsMutation = useMutation({
-    mutationFn: async (limits: NonNullable<typeof localLimits>) => {
-      const response = await apiRequest(
-        "PUT",
-        `/api/admin/users/${user.id}/limits`,
-        limits
-      );
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: t("admin.users.toast.limits.success.title"),
-        description: t("admin.users.toast.limits.success.description", {
-          username: user.username,
-        }),
-      });
-      onClose();
-    },
-    onError: () => {
-      toast({
-        title: t("admin.users.toast.limits.error.title"),
-        description: t("admin.users.toast.limits.error.description"),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSave = () => {
-    if (!localLimits) return;
-    updateLimitsMutation.mutate(localLimits);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("admin.users.limits.title", { username: user.username })}</DialogTitle>
-          <DialogDescription>{t("admin.users.limits.description")}</DialogDescription>
-        </DialogHeader>
-
-        {isLoading || !localLimits ? (
-          <div className="space-y-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxProjects")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxProjects ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxProjects: e.target.value ? parseInt(e.target.value) : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("admin.users.limits.help.maxProjects")}
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxDoubleDiamondProjects")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxDoubleDiamondProjects ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxDoubleDiamondProjects: e.target.value
-                      ? parseInt(e.target.value)
-                      : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxDoubleDiamondExports")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxDoubleDiamondExports ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxDoubleDiamondExports: e.target.value
-                      ? parseInt(e.target.value)
-                      : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.aiChatLimit")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customAiChatLimit ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customAiChatLimit: e.target.value ? parseInt(e.target.value) : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("admin.common.cancel")}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={updateLimitsMutation.isPending || !localLimits}
-          >
-            {updateLimitsMutation.isPending
-              ? t("admin.common.saving")
-              : t("admin.common.save")}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function UserAddonsDialog({
   user,
   isOpen,
@@ -985,7 +798,6 @@ function UserAddonsDialog({
   onClose: () => void;
 }) {
   const { toast } = useToast();
-  const { t } = useLanguage();
   const [localAddons, setLocalAddons] = useState<UserAddonState | null>(null);
 
   const { data, isLoading } = useQuery<{ addons: UserAddonState } | null>({
@@ -1495,7 +1307,7 @@ function DoubleDiamondTab() {
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesPhase = phaseFilter === "all" || project.currentPhase === phaseFilter;
     return matchesSearch && matchesPhase;
   });
@@ -1612,7 +1424,7 @@ function DoubleDiamondTab() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
+                            <div 
                               className="h-full bg-blue-500 transition-all duration-300"
                               style={{ width: `${project.completionPercentage || 0}%` }}
                             />
@@ -1642,7 +1454,7 @@ function DoubleDiamondTab() {
                           >
                             <Edit className="h-3 w-3" />
                           </Button>
-
+                          
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -1726,7 +1538,7 @@ function DashboardTab() {
             {t("admin.dashboard.subtitle")}
           </p>
         </div>
-
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -1892,417 +1704,28 @@ function DashboardTab() {
                   phase4: t("admin.dashboard.section.projectsByPhase.phase4"),
                   phase5: t("admin.dashboard.section.projectsByPhase.phase5"),
                 };
-                const percentage =
-                  stats.totalProjects > 0
-                    ? ((count as number) / stats.totalProjects) * 100
-                    : 0;
-
+                const percentage = stats.totalProjects > 0 ? (count as number / stats.totalProjects * 100) : 0;
+                
                 return (
                   <div key={phase} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {phaseLabels[phase as keyof typeof phaseLabels]}
-                    </span>
+                    <span className="text-sm font-medium">{phaseLabels[phase as keyof typeof phaseLabels]}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
+                        <div 
                           className="h-full bg-blue-500 transition-all duration-300"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground w-8">
-                        {count as number}
-                      </span>
+                      <span className="text-sm text-muted-foreground w-8">{count as number}</span>
                     </div>
                   </div>
                 );
               })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Users by Role */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Users className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.usersByRole.title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.usersByRole.admins")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalUsers > 0
-                          ? (stats.usersByRole.admin / stats.totalUsers) * 100
-                          : 0
-                          }%`,
+                        width: `${stats.totalProjects > 0 ? (stats.projectsByStatus.completed / stats.totalProjects * 100) : 0}%` 
                       }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.usersByRole.admin}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.usersByRole.users")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalUsers > 0
-                          ? (stats.usersByRole.user / stats.totalUsers) * 100
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.usersByRole.user}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Articles by Category */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Eye className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.articlesByCategory.title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {Object.entries(stats.articlesByCategory).map(([category, count]) => {
-                const categoryLabels = {
-                  empathize: t("admin.articles.category.empathize"),
-                  define: t("admin.articles.category.define"),
-                  ideate: t("admin.articles.category.ideate"),
-                  prototype: t("admin.articles.category.prototype"),
-                  test: t("admin.articles.category.test"),
-                };
-                const percentage =
-                  stats.totalArticles > 0
-                    ? ((count as number) / stats.totalArticles) * 100
-                    : 0;
-
-                return (
-                  <div key={category} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {categoryLabels[category as keyof typeof categoryLabels]}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-purple-500 transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-muted-foreground w-8">
-                        {count as number}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Double Diamond by Phase */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Diamond className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.doubleDiamondByPhase.title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {Object.entries(stats.doubleDiamondByPhase || {}).map(([phase, count]) => {
-                const phaseLabels: Record<string, string> = {
-                  discover: t("admin.dd.phase.discover"),
-                  define: t("admin.dd.phase.define"),
-                  develop: t("admin.dd.phase.develop"),
-                  deliver: t("admin.dd.phase.deliver"),
-                  dfv: t("admin.dd.phase.dfv"),
-                };
-                const percentage =
-                  stats.totalDoubleDiamondProjects > 0
-                    ? ((count as number) / stats.totalDoubleDiamondProjects) * 100
-                    : 0;
-
-                return (
-                  <div key={phase} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {phaseLabels[phase] || phase}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-cyan-500 transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-muted-foreground w-8">
-                        {count as number}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Double Diamond Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Diamond className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.doubleDiamondStatus.title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dd.status.pending")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gray-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.pending || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.doubleDiamondByStatus?.pending || 0}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dd.status.inProgress")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.in_progress || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.doubleDiamondByStatus?.in_progress || 0}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dd.status.completed")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.completed || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.doubleDiamondByStatus?.completed || 0}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Articles Translation Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Globe className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.articleTranslations.title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.articleTranslations.withEnglish")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withEnglish || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.withEnglish || 0}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.articleTranslations.withSpanish")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-yellow-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withSpanish || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.withSpanish || 0}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.dashboard.section.articleTranslations.withFrench")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withFrench || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.withFrench || 0}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium flex items-center">
-                  <CheckCircle className="h-3 w-3 mr-1 text-green-600" />
-                  {t("admin.dashboard.section.articleTranslations.fullyTranslated")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.fullyTranslated || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.articlesWithTranslations?.fullyTranslated || 0}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Project Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FolderOpen className="mr-2 h-5 w-5" />
-              {t("admin.dashboard.section.projectStatus.title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.projects.status.inProgress")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalProjects > 0
-                          ? ((stats.projectsByStatus.in_progress /
-                            stats.totalProjects) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.projectsByStatus.in_progress}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {t("admin.projects.status.completed")}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all duration-300"
-                      style={{
-                        width: `${stats.totalProjects > 0
-                          ? ((stats.projectsByStatus.completed /
-                            stats.totalProjects) * 100)
-                          : 0
-                          }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground w-8">
-                    {stats.projectsByStatus.completed}
-                  </span>
+                  <span className="text-sm text-muted-foreground w-8">{stats.projectsByStatus.completed}</span>
                 </div>
               </div>
             </div>
@@ -2330,18 +1753,18 @@ const planFormSchema = z.object({
   hasCustomIntegrations: z.boolean(),
 });
 
-function PlanEditDialog({
-  plan,
-  isOpen,
-  onClose
-}: {
-  plan: SubscriptionPlan;
-  isOpen: boolean;
+function PlanEditDialog({ 
+  plan, 
+  isOpen, 
+  onClose 
+}: { 
+  plan: SubscriptionPlan; 
+  isOpen: boolean; 
   onClose: () => void;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
-
+  
   const form = useForm<z.infer<typeof planFormSchema>>({
     resolver: zodResolver(planFormSchema),
     defaultValues: {
@@ -2419,7 +1842,7 @@ function PlanEditDialog({
                       {t("admin.plans.edit.field.displayName.label")}
                     </FormLabel>
                     <FormControl>
-                      <Input
+                      <Input 
                         {...field}
                         placeholder={t(
                           "admin.plans.edit.field.displayName.placeholder"
@@ -2462,12 +1885,12 @@ function PlanEditDialog({
                         {t("admin.plans.edit.field.priceMonthly.label")}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <Input 
+                          type="number" 
                           step="0.01"
-                          {...field}
+                          {...field} 
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          placeholder="40.00"
+                          placeholder="40.00" 
                         />
                       </FormControl>
                       <FormMessage />
@@ -2484,12 +1907,12 @@ function PlanEditDialog({
                         {t("admin.plans.edit.field.priceYearly.label")}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <Input 
+                          type="number" 
                           step="0.01"
-                          {...field}
+                          {...field} 
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          placeholder="400.00"
+                          placeholder="400.00" 
                         />
                       </FormControl>
                       <FormMessage />
@@ -2512,9 +1935,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.maxProjects.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2536,9 +1959,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.aiChatLimit.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2562,9 +1985,9 @@ function PlanEditDialog({
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2593,9 +2016,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.maxUsersPerTeam.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2617,9 +2040,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.includedUsers.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2643,10 +2066,10 @@ function PlanEditDialog({
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
                             step="0.01"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder={t(
@@ -2890,12 +2313,12 @@ function SubscriptionPlansTab() {
                         •{
                           plan.includedUsers === 1
                             ? t("admin.plans.card.billing.includedUsers", {
-                              count: String(plan.includedUsers),
-                            })
+                                count: String(plan.includedUsers),
+                              })
                             : t(
-                              "admin.plans.card.billing.includedUsers.plural",
-                              { count: String(plan.includedUsers) }
-                            )
+                                "admin.plans.card.billing.includedUsers.plural",
+                                { count: String(plan.includedUsers) }
+                              )
                         }
                       </p>
                       {plan.pricePerAdditionalUser && (

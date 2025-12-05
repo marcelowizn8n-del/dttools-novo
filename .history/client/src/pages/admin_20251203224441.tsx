@@ -78,7 +78,7 @@ function ArticlesTab() {
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       empathize: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      define: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      define: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", 
       ideate: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       prototype: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
       test: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
@@ -91,7 +91,7 @@ function ArticlesTab() {
 
   const filteredArticles = articles.filter(article => {
     const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.author.toLowerCase().includes(searchTerm.toLowerCase());
+                         article.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || article.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -193,7 +193,7 @@ function ArticlesTab() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-articles-message">
-                        {searchTerm || categoryFilter !== "all"
+                        {searchTerm || categoryFilter !== "all" 
                           ? t("admin.articles.empty.filtered")
                           : t("admin.articles.empty.default")
                         }
@@ -487,7 +487,7 @@ function UsersTab() {
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8">
                       <p className="text-muted-foreground" data-testid="no-users-message">
-                        {searchTerm || roleFilter !== "all"
+                        {searchTerm || roleFilter !== "all" 
                           ? t("admin.users.empty.filtered")
                           : t("admin.users.empty.default")}
                       </p>
@@ -535,7 +535,7 @@ function UsersTab() {
                             <Diamond className="w-4 h-4 mr-1" />
                             {t("admin.users.action.addons")}
                           </Button>
-
+                          
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -581,7 +581,7 @@ function UsersTab() {
       </Card>
 
       {/* Create User Dialog */}
-      <UserCreateDialog
+      <UserCreateDialog 
         isOpen={isCreating}
         onClose={() => setIsCreating(false)}
         onSubmit={(data) => createUserMutation.mutate(data)}
@@ -596,7 +596,7 @@ function UsersTab() {
           onClose={() => setEditingUserLimits(null)}
         />
       )}
-
+      
       {/* User Add-ons Dialog */}
       {editingUserAddons && (
         <UserAddonsDialog
@@ -788,193 +788,6 @@ type UserAddonState = {
   libraryPremium: boolean;
 };
 
-function UserLimitsDialog({
-  user,
-  isOpen,
-  onClose,
-}: {
-  user: Omit<User, "password">;
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  const { t } = useLanguage();
-
-  const [localLimits, setLocalLimits] = useState<{
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customMaxDoubleDiamondExports: number | null;
-    customAiChatLimit: number | null;
-  } | null>(null);
-
-  const { data, isLoading } = useQuery<{
-    customMaxProjects: number | null;
-    customMaxDoubleDiamondProjects: number | null;
-    customMaxDoubleDiamondExports: number | null;
-    customAiChatLimit: number | null;
-  } | null>({
-    queryKey: ["admin-user-limits", user.id],
-    queryFn: async () => {
-      const response = await apiRequest("GET", `/api/admin/users/${user.id}/limits`);
-      return response.json();
-    },
-    enabled: isOpen,
-  });
-
-  useEffect(() => {
-    if (isOpen && data) {
-      setLocalLimits(data);
-    }
-    if (!isOpen) {
-      setLocalLimits(null);
-    }
-  }, [isOpen, data]);
-
-  const updateLimitsMutation = useMutation({
-    mutationFn: async (limits: NonNullable<typeof localLimits>) => {
-      const response = await apiRequest(
-        "PUT",
-        `/api/admin/users/${user.id}/limits`,
-        limits
-      );
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: t("admin.users.toast.limits.success.title"),
-        description: t("admin.users.toast.limits.success.description", {
-          username: user.username,
-        }),
-      });
-      onClose();
-    },
-    onError: () => {
-      toast({
-        title: t("admin.users.toast.limits.error.title"),
-        description: t("admin.users.toast.limits.error.description"),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSave = () => {
-    if (!localLimits) return;
-    updateLimitsMutation.mutate(localLimits);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("admin.users.limits.title", { username: user.username })}</DialogTitle>
-          <DialogDescription>{t("admin.users.limits.description")}</DialogDescription>
-        </DialogHeader>
-
-        {isLoading || !localLimits ? (
-          <div className="space-y-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxProjects")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxProjects ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxProjects: e.target.value ? parseInt(e.target.value) : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("admin.users.limits.help.maxProjects")}
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxDoubleDiamondProjects")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxDoubleDiamondProjects ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxDoubleDiamondProjects: e.target.value
-                      ? parseInt(e.target.value)
-                      : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.maxDoubleDiamondExports")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customMaxDoubleDiamondExports ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customMaxDoubleDiamondExports: e.target.value
-                      ? parseInt(e.target.value)
-                      : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">
-                {t("admin.users.limits.aiChatLimit")}
-              </label>
-              <Input
-                type="number"
-                value={localLimits.customAiChatLimit ?? ""}
-                onChange={(e) =>
-                  setLocalLimits({
-                    ...localLimits,
-                    customAiChatLimit: e.target.value ? parseInt(e.target.value) : null,
-                  })
-                }
-                placeholder={t("admin.users.limits.placeholder.default")}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("admin.common.cancel")}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={updateLimitsMutation.isPending || !localLimits}
-          >
-            {updateLimitsMutation.isPending
-              ? t("admin.common.saving")
-              : t("admin.common.save")}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function UserAddonsDialog({
   user,
   isOpen,
@@ -985,7 +798,6 @@ function UserAddonsDialog({
   onClose: () => void;
 }) {
   const { toast } = useToast();
-  const { t } = useLanguage();
   const [localAddons, setLocalAddons] = useState<UserAddonState | null>(null);
 
   const { data, isLoading } = useQuery<{ addons: UserAddonState } | null>({
@@ -1495,7 +1307,7 @@ function DoubleDiamondTab() {
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesPhase = phaseFilter === "all" || project.currentPhase === phaseFilter;
     return matchesSearch && matchesPhase;
   });
@@ -1612,7 +1424,7 @@ function DoubleDiamondTab() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
+                            <div 
                               className="h-full bg-blue-500 transition-all duration-300"
                               style={{ width: `${project.completionPercentage || 0}%` }}
                             />
@@ -1642,7 +1454,7 @@ function DoubleDiamondTab() {
                           >
                             <Edit className="h-3 w-3" />
                           </Button>
-
+                          
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -1726,7 +1538,7 @@ function DashboardTab() {
             {t("admin.dashboard.subtitle")}
           </p>
         </div>
-
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -1939,10 +1751,11 @@ function DashboardTab() {
                     <div
                       className="h-full bg-blue-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalUsers > 0
-                          ? (stats.usersByRole.admin / stats.totalUsers) * 100
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalUsers > 0
+                            ? (stats.usersByRole.admin / stats.totalUsers) * 100
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -1960,10 +1773,11 @@ function DashboardTab() {
                     <div
                       className="h-full bg-green-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalUsers > 0
-                          ? (stats.usersByRole.user / stats.totalUsers) * 100
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalUsers > 0
+                            ? (stats.usersByRole.user / stats.totalUsers) * 100
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2087,11 +1901,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-gray-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.pending || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalDoubleDiamondProjects > 0
+                            ? (((stats.doubleDiamondByStatus?.pending || 0) /
+                                stats.totalDoubleDiamondProjects) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2109,11 +1924,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-blue-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.in_progress || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalDoubleDiamondProjects > 0
+                            ? (((stats.doubleDiamondByStatus?.in_progress || 0) /
+                                stats.totalDoubleDiamondProjects) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2131,11 +1947,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-green-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalDoubleDiamondProjects > 0
-                          ? (((stats.doubleDiamondByStatus?.completed || 0) /
-                            stats.totalDoubleDiamondProjects) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalDoubleDiamondProjects > 0
+                            ? (((stats.doubleDiamondByStatus?.completed || 0) /
+                                stats.totalDoubleDiamondProjects) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2167,11 +1984,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-blue-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withEnglish || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalArticles > 0
+                            ? (((stats.articlesWithTranslations?.withEnglish || 0) /
+                                stats.totalArticles) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2189,11 +2007,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-yellow-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withSpanish || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalArticles > 0
+                            ? (((stats.articlesWithTranslations?.withSpanish || 0) /
+                                stats.totalArticles) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2211,11 +2030,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-purple-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.withFrench || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalArticles > 0
+                            ? (((stats.articlesWithTranslations?.withFrench || 0) /
+                                stats.totalArticles) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2234,11 +2054,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-green-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalArticles > 0
-                          ? (((stats.articlesWithTranslations?.fullyTranslated || 0) /
-                            stats.totalArticles) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalArticles > 0
+                            ? (((stats.articlesWithTranslations?.fullyTranslated || 0) /
+                                stats.totalArticles) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2270,11 +2091,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-blue-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalProjects > 0
-                          ? ((stats.projectsByStatus.in_progress /
-                            stats.totalProjects) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalProjects > 0
+                            ? ((stats.projectsByStatus.in_progress /
+                                stats.totalProjects) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2292,11 +2114,12 @@ function DashboardTab() {
                     <div
                       className="h-full bg-green-500 transition-all duration-300"
                       style={{
-                        width: `${stats.totalProjects > 0
-                          ? ((stats.projectsByStatus.completed /
-                            stats.totalProjects) * 100)
-                          : 0
-                          }%`,
+                        width: `${
+                          stats.totalProjects > 0
+                            ? ((stats.projectsByStatus.completed /
+                                stats.totalProjects) * 100)
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -2330,18 +2153,18 @@ const planFormSchema = z.object({
   hasCustomIntegrations: z.boolean(),
 });
 
-function PlanEditDialog({
-  plan,
-  isOpen,
-  onClose
-}: {
-  plan: SubscriptionPlan;
-  isOpen: boolean;
+function PlanEditDialog({ 
+  plan, 
+  isOpen, 
+  onClose 
+}: { 
+  plan: SubscriptionPlan; 
+  isOpen: boolean; 
   onClose: () => void;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
-
+  
   const form = useForm<z.infer<typeof planFormSchema>>({
     resolver: zodResolver(planFormSchema),
     defaultValues: {
@@ -2419,7 +2242,7 @@ function PlanEditDialog({
                       {t("admin.plans.edit.field.displayName.label")}
                     </FormLabel>
                     <FormControl>
-                      <Input
+                      <Input 
                         {...field}
                         placeholder={t(
                           "admin.plans.edit.field.displayName.placeholder"
@@ -2462,12 +2285,12 @@ function PlanEditDialog({
                         {t("admin.plans.edit.field.priceMonthly.label")}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <Input 
+                          type="number" 
                           step="0.01"
-                          {...field}
+                          {...field} 
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          placeholder="40.00"
+                          placeholder="40.00" 
                         />
                       </FormControl>
                       <FormMessage />
@@ -2484,12 +2307,12 @@ function PlanEditDialog({
                         {t("admin.plans.edit.field.priceYearly.label")}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <Input 
+                          type="number" 
                           step="0.01"
-                          {...field}
+                          {...field} 
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          placeholder="400.00"
+                          placeholder="400.00" 
                         />
                       </FormControl>
                       <FormMessage />
@@ -2512,9 +2335,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.maxProjects.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2536,9 +2359,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.aiChatLimit.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2562,9 +2385,9 @@ function PlanEditDialog({
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2593,9 +2416,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.maxUsersPerTeam.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2617,9 +2440,9 @@ function PlanEditDialog({
                           {t("admin.plans.edit.field.includedUsers.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder={t(
@@ -2643,10 +2466,10 @@ function PlanEditDialog({
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input
+                          <Input 
                             type="number"
                             step="0.01"
-                            {...field}
+                            {...field} 
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder={t(
@@ -2890,12 +2713,12 @@ function SubscriptionPlansTab() {
                         •{
                           plan.includedUsers === 1
                             ? t("admin.plans.card.billing.includedUsers", {
-                              count: String(plan.includedUsers),
-                            })
+                                count: String(plan.includedUsers),
+                              })
                             : t(
-                              "admin.plans.card.billing.includedUsers.plural",
-                              { count: String(plan.includedUsers) }
-                            )
+                                "admin.plans.card.billing.includedUsers.plural",
+                                { count: String(plan.includedUsers) }
+                              )
                         }
                       </p>
                       {plan.pricePerAdditionalUser && (
