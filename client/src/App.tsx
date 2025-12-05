@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Header from "@/components/Header";
 import LandingPage from "@/pages/landing";
 import ProjectsPage from "@/pages/projects";
@@ -189,17 +190,19 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <div className="bg-background min-h-screen">
-              <Header />
-              <main>
-                <Router />
-              </main>
-            </div>
-            <Toaster />
-          </AuthProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <div className="bg-background min-h-screen">
+                <Header />
+                <main>
+                  <Router />
+                </main>
+              </div>
+              <Toaster />
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -12,12 +12,15 @@ import {
   Video,
   TrendingUp,
   Sparkles,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { useTheme } from "@/contexts/ThemeContext";
 // Use direct path to logo in public root with cache busting
 const logoHorizontal = "/logo-horizontal.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
 const logoIcon = "/logo-icon.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
@@ -26,6 +29,7 @@ export default function Header() {
   const { isAuthenticated, isAdmin } = useAuth();
   const { t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="site-header bg-background border-b border-border">
@@ -282,6 +286,20 @@ export default function Header() {
             {/* Desktop: Full User Actions */}
             <div className="hidden lg:flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
               <LanguageSelector />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+                className="h-9 w-9"
+                data-testid="theme-toggle-desktop"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
               {isAuthenticated ? (
                 <UserMenu />
               ) : (
@@ -368,8 +386,22 @@ export default function Header() {
                 {/* Mobile User Actions - WITH UserMenu */}
                 <div className="pt-4 border-t border-border">
                   <div className="flex flex-col space-y-3">
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-2">
                       <LanguageSelector />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleTheme}
+                        aria-label={theme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+                        className="h-9 w-9"
+                        data-testid="theme-toggle-mobile"
+                      >
+                        {theme === "dark" ? (
+                          <Sun className="h-4 w-4" />
+                        ) : (
+                          <Moon className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
                     {isAuthenticated ? (
                       <div className="flex justify-center py-2">
