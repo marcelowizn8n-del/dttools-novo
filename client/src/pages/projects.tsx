@@ -372,6 +372,7 @@ function ProjectCard({ project }: { project: Project }) {
     </Card>
   </div>
 );
+}
 
 function CreateProjectDialog() {
   const { toast } = useToast();
