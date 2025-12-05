@@ -21,15 +21,20 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useTheme } from "@/contexts/ThemeContext";
-// Use direct path to logo in public root with cache busting
-const logoHorizontal = "/logo-horizontal.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
-const logoIcon = "/logo-icon.png?v=1.0.9&t=" + Math.floor(Date.now() / 1000);
+// Versão dos logos para controle de cache
+const LOGO_VERSION = "1.0.9";
 
 export default function Header() {
   const { isAuthenticated, isAdmin } = useAuth();
   const { t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const timestamp = Math.floor(Date.now() / 1000);
+  const logoHorizontal =
+    theme === "dark"
+      ? `/logo_DTTools_Dark.svg?v=${LOGO_VERSION}&t=${timestamp}`
+      : `/logo-horizontal.png?v=${LOGO_VERSION}&t=${timestamp}`;
+  const logoIcon = `/logo-icon.png?v=${LOGO_VERSION}&t=${timestamp}`;
 
   return (
     <header className="site-header bg-background border-b border-border">
@@ -38,7 +43,7 @@ export default function Header() {
           {/* Logo - Responsive logo component */}
           <div className="flex-shrink-0">
             <Link href="/" className="block">
-              <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="header-logo">
+              <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity dark:bg-slate-900/70 dark:rounded-md dark:px-2 dark:py-1" data-testid="header-logo">
                 {/* Mobile: Show only icon - Mobile Optimized */}
                 <img 
                   src={logoIcon}
@@ -63,7 +68,7 @@ export default function Header() {
                   onError={(e) => {
                     console.error('Logo horizontal failed to load:', e);
                     console.error('Failed URL:', logoHorizontal);
-                    // Force reload attempt
+                    // Se o logo específico do tema não existir, faz fallback para o padrão
                     setTimeout(() => {
                       (e.target as HTMLImageElement).src = `/logo-horizontal.png?force=${Date.now()}`;
                     }, 1000);

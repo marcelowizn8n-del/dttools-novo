@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import type { SubscriptionPlan } from "@shared/schema";
 
 interface PricingCardProps {
@@ -18,6 +19,7 @@ interface PricingCardProps {
   isPopular?: boolean;
   onSelectPlan: (planId: string, billingPeriod: "monthly" | "yearly") => void;
   isLoading?: boolean;
+  isDarkTheme: boolean;
 }
 
 // Helper function to generate localized features based on plan limits and capabilities
@@ -96,7 +98,7 @@ function getLocalizedFeatures(plan: SubscriptionPlan, t: (key: string, params?: 
   return features;
 }
 
-function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading }: PricingCardProps) {
+function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading, isDarkTheme }: PricingCardProps) {
   const { t, convertPrice } = useLanguage();
   
   // Get price with fallback - yearly defaults to monthly * 12 if not set
@@ -114,6 +116,7 @@ function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading }: Pri
   };
 
   const getButtonVariant = () => {
+    if (isDarkTheme) return "glass";
     if (isPopular) return "default";
     if (plan.name === "free") return "outline";
     return "outline";
@@ -121,7 +124,11 @@ function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading }: Pri
 
   return (
     <Card 
-      className={`relative h-full ${isPopular ? 'border-blue-500 shadow-lg' : 'border-gray-200'} transition-transform hover:scale-105`}
+      className={`relative flex flex-col h-full ${
+        isPopular
+          ? "border-blue-500 shadow-lg"
+          : "border-gray-200 dark:border-white/10"
+      } transition-transform hover:scale-105 dark:bg-slate-900/60`}
       data-testid={`card-plan-${plan.name}`}
     >
       {isPopular && (
@@ -155,7 +162,7 @@ function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading }: Pri
               {convertedPrice.formattedPrice}
             </span>
             {plan.priceMonthly > 0 && (
-              <span className="text-gray-500">
+              <span className="text-gray-500 dark:text-muted-foreground">
                 {isYearly ? t("currency.year") : t("currency.month")}
               </span>
             )}
@@ -172,20 +179,20 @@ function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading }: Pri
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="flex flex-col h-full">
+      <CardContent className="flex flex-col flex-1">
         <div className="flex-1">
           <ul className="space-y-3 mb-8">
             {getLocalizedFeatures(plan, t).map((feature, index) => (
               <li key={index} className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-gray-700">{feature}</span>
+                <span className="text-sm text-gray-700 dark:text-muted-foreground">{feature}</span>
               </li>
             ))}
           </ul>
           
           {/* Additional features for higher tier plans */}
           {plan.name !== "free" && (
-            <div className="mb-4 text-sm text-blue-600 font-medium">
+            <div className="mb-4 text-sm text-blue-600 dark:text-blue-300 font-medium">
               +{plan.name === "pro" ? "7" : plan.name === "team" ? "6" : "6"} {t("pricing.additional.features")}
             </div>
           )}
@@ -194,7 +201,14 @@ function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading }: Pri
         <Button
           onClick={() => onSelectPlan(plan.id, isYearly ? "yearly" : "monthly")}
           variant={getButtonVariant()}
-          className={`w-full ${isPopular ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
+          className={
+            "w-full " +
+            (isDarkTheme
+              ? "rounded-full"
+              : isPopular
+              ? "bg-blue-500 hover:bg-blue-600"
+              : "")
+          }
           disabled={isLoading}
           data-testid={`button-select-${plan.name}`}
         >
@@ -206,7 +220,7 @@ function PricingCard({ plan, isYearly, isPopular, onSelectPlan, isLoading }: Pri
         
         {(plan.name === "pro" || plan.name === "team") && (
           <div className="text-center mt-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-muted-foreground">
               {t("trial.info")}
             </span>
           </div>
@@ -221,6 +235,18 @@ export default function PricingPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t } = useLanguage();
+   const { theme } = useTheme();
+
+   const isDarkTheme =
+     theme === "dark" ||
+     (typeof document !== "undefined" &&
+       document.documentElement.classList.contains("dark"));
+
+   const pageBackgroundClass =
+     "min-h-screen bg-gradient-to-b " +
+     (isDarkTheme
+       ? "from-slate-950 via-slate-900 to-slate-950"
+       : "from-blue-50 to-white");
 
   const { data: plans = [], isLoading, error } = useQuery({
     queryKey: ["/api/subscription-plans"],
@@ -267,7 +293,7 @@ export default function PricingPage() {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-b from-blue-50 to-white flex items-center justify-center py-20">
+      <div className={`${pageBackgroundClass} flex items-center justify-center py-20`}>
         <div className="text-lg">{t("loading.plans")}</div>
       </div>
     );
@@ -275,26 +301,29 @@ export default function PricingPage() {
 
   if (error) {
     return (
-      <div className="bg-gradient-to-b from-blue-50 to-white flex items-center justify-center py-20">
+      <div className={`${pageBackgroundClass} flex items-center justify-center py-20`}>
         <div className="text-lg text-red-600">Erro ao carregar planos</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-white">
+    <div className={pageBackgroundClass}>
       {/* Header */}
       <div className="text-center pt-16 pb-12 px-4">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-foreground mb-4">
           {t("pricing.title")}
         </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        <p className="text-xl text-gray-600 dark:text-muted-foreground max-w-3xl mx-auto leading-relaxed">
           {t("pricing.subtitle")}
         </p>
         
         {/* Billing Toggle */}
         <div className="flex items-center justify-center gap-4 mt-8">
-          <Label htmlFor="billing-toggle" className={`text-lg ${!isYearly ? 'font-semibold' : ''}`}>
+          <Label
+            htmlFor="billing-toggle"
+            className={`text-lg ${!isYearly ? 'font-semibold' : ''} dark:text-foreground`}
+          >
             {t("pricing.monthly")}
           </Label>
           <Switch
@@ -303,7 +332,10 @@ export default function PricingPage() {
             onCheckedChange={setIsYearly}
             data-testid="switch-billing"
           />
-          <Label htmlFor="billing-toggle" className={`text-lg ${isYearly ? 'font-semibold' : ''}`}>
+          <Label
+            htmlFor="billing-toggle"
+            className={`text-lg ${isYearly ? 'font-semibold' : ''} dark:text-foreground`}
+          >
             {t("pricing.yearly")}
             <Badge variant="secondary" className="ml-2 text-xs">
               {t("pricing.save")}
@@ -323,6 +355,7 @@ export default function PricingPage() {
               isPopular={plan.name === "pro"}
               onSelectPlan={handleSelectPlan}
               isLoading={createCheckoutMutation.isPending}
+              isDarkTheme={isDarkTheme}
             />
           ))}
         </div>
@@ -331,76 +364,79 @@ export default function PricingPage() {
       {/* Detailed Comparison */}
       <div className="max-w-7xl mx-auto px-4 pb-16 pt-8">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-foreground mb-4">
             {t("pricing.comparison")}
           </h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-600 dark:text-muted-foreground">
             {t("pricing.comparison.subtitle")}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-slate-900/70 rounded-xl shadow-lg overflow-hidden dark:border dark:border-white/10">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-slate-900">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-900 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-900 dark:text-foreground uppercase tracking-wider">
                     {t("feature.title")}
                   </th>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
-                    <th key={plan.id} className="px-6 py-4 text-center text-sm font-medium text-gray-900 uppercase tracking-wider">
+                    <th
+                      key={plan.id}
+                      className="px-6 py-4 text-center text-sm font-medium text-gray-900 dark:text-foreground uppercase tracking-wider"
+                    >
                       {t(`plan.${plan.name}`)}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-slate-950/60 dark:divide-white/10">
                 <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t("feature.projects")}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-foreground">{t("feature.projects")}</td>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
-                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700">
+                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700 dark:text-muted-foreground">
                       {plan.maxProjects && plan.maxProjects !== -1 ? plan.maxProjects : t("feature.unlimited")}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t("feature.personas")}</td>
+                <tr className="bg-gray-50 dark:bg-slate-900">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-foreground">{t("feature.personas")}</td>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
-                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700">
+                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700 dark:text-muted-foreground">
                       {plan.maxPersonasPerProject && plan.maxPersonasPerProject !== -1 ? plan.maxPersonasPerProject : t("feature.unlimited")}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t("feature.ai.chat")}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-foreground">{t("feature.ai.chat")}</td>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
-                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700">
+                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700 dark:text-muted-foreground">
                       {plan.aiChatLimit && plan.aiChatLimit !== -1 ? plan.aiChatLimit : t("feature.unlimited")}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t("feature.team.users")}</td>
+                <tr className="bg-gray-50 dark:bg-slate-900">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-foreground">{t("feature.team.users")}</td>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
-                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700">
+                    <td key={plan.id} className="px-6 py-4 text-center text-sm text-gray-700 dark:text-muted-foreground">
                       {plan.maxUsersPerTeam && plan.maxUsersPerTeam !== -1 ? plan.maxUsersPerTeam : t("feature.unlimited")}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t("feature.collaboration")}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-foreground">{t("feature.collaboration")}</td>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
                     <td key={plan.id} className="px-6 py-4 text-center">
                       {plan.hasCollaboration ? (
                         <Check className="w-5 h-5 text-green-500 mx-auto" />
                       ) : (
-                        <X className="w-5 h-5 text-gray-400 mx-auto" />
+                        <X className="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto" />
                       )}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t("feature.sso")}</td>
+                <tr className="bg-gray-50 dark:bg-slate-900">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-foreground">{t("feature.sso")}</td>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
                     <td key={plan.id} className="px-6 py-4 text-center">
                       {plan.hasSso ? (
@@ -412,7 +448,7 @@ export default function PricingPage() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t("feature.support")}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-foreground">{t("feature.support")}</td>
                   {sortedPlans.map((plan: SubscriptionPlan) => (
                     <td key={plan.id} className="px-6 py-4 text-center">
                       {plan.has24x7Support ? (
@@ -432,29 +468,29 @@ export default function PricingPage() {
       {/* FAQ Section */}
       <div className="max-w-4xl mx-auto px-4 pb-16">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-foreground mb-4">
             {t("faq.title")}
           </h2>
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900/70 rounded-lg p-6 shadow-sm">
             <h3 className="font-semibold text-lg mb-2">{t("faq.q1")}</h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-muted-foreground">
               {t("faq.a1")}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900/70 rounded-lg p-6 shadow-sm">
             <h3 className="font-semibold text-lg mb-2">{t("faq.q2")}</h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-muted-foreground">
               {t("faq.a2")}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900/70 rounded-lg p-6 shadow-sm">
             <h3 className="font-semibold text-lg mb-2">{t("faq.q3")}</h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-muted-foreground">
               {t("faq.a3")}
             </p>
           </div>

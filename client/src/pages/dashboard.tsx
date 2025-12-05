@@ -34,6 +34,7 @@ import { WelcomeMessage } from "@/components/ui/welcome-message";
 import { PhaseNavigator } from "@/components/ui/phase-navigator";
 import { NextStepCard } from "@/components/ui/next-step-card";
 import InvitesList from "@/components/InvitesList";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const phases = [
   {
@@ -151,6 +152,11 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showWelcome, setShowWelcome] = useState(true);
+  const { theme } = useTheme();
+  const isDarkTheme =
+    theme === "dark" ||
+    (typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark"));
 
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -378,7 +384,14 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div
+      className={
+        "min-h-screen bg-gradient-to-br " +
+        (isDarkTheme
+          ? "from-slate-950 via-slate-900 to-slate-950"
+          : "from-blue-50 via-indigo-50 to-purple-50")
+      }
+    >
       {/* Hero Section */}
       <section className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
@@ -403,12 +416,30 @@ export default function Dashboard() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/projects">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6">
+                <Button
+                  size="lg"
+                  variant={isDarkTheme ? "glass" : "default"}
+                  className={
+                    "text-lg px-8 py-6 " +
+                    (isDarkTheme
+                      ? "rounded-full"
+                      : "bg-blue-600 hover:bg-blue-700")
+                  }
+                >
                   <Play className="mr-2 h-5 w-5" />
                   {t("dashboard.start.project")}
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white bg-white transition-all duration-200">
+              <Button
+                variant={isDarkTheme ? "glass" : "outline"}
+                size="lg"
+                className={
+                  "text-lg px-8 py-6 " +
+                  (isDarkTheme
+                    ? "rounded-full border border-white/30 text-white/90"
+                    : "border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white bg-white transition-all duration-200")
+                }
+              >
                 {t("dashboard.explore.phases")}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
