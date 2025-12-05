@@ -14,6 +14,7 @@ import LandingPage from "@/pages/landing";
 import ProjectsPage from "@/pages/projects";
 import ProjectsMarketingPage from "@/pages/projects-marketing";
 import ProjectDetailPage from "@/pages/project-detail";
+import ProjectJourneyPage from "@/pages/project-journey";
 import LibraryPage from "@/pages/library";
 import ArticleDetailPage from "@/pages/article-detail";
 import AdminPage from "@/pages/admin";
@@ -97,6 +98,11 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/projects" component={ProjectsRoute} />
       <Route path="/projects/:id" component={ProtectedProjectDetail} />
+      <Route path="/projects/:id/journey">
+        <ProtectedRoute>
+          <ProjectJourneyPage />
+        </ProtectedRoute>
+      </Route>
       <Route path="/library" component={LibraryPage} />
       <Route path="/biblioteca" component={LibraryPage} />
       <Route path="/library/article/:id" component={ArticleDetailPage} />
