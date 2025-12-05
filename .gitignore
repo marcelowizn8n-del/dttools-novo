@@ -242,6 +242,11 @@ project_final_state.png
 !client/src/assets/*.gif
 !client/src/assets/*.svg
 
+# Keep public logos used in the app header (must be deployed)
+!client/public/logo-horizontal.png
+!client/public/logo_DTTools_dark.png
+!client/public/logo-icon.png
+
 # Existing package and secrets
 dttools_package.tar.gz
 stripe_secret_key

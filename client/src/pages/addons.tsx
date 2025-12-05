@@ -152,7 +152,7 @@ export default function AddonsPage() {
   const isUnlimited = (value: number | null | undefined) => value === null || value === undefined;
 
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-white min-h-[calc(100vh-80px)]">
+    <div className="min-h-[calc(100vh-80px)] bg-background">
       <div className="max-w-5xl mx-auto px-4 py-10">
         {/* Header */}
         <div className="mb-8">
@@ -161,7 +161,7 @@ export default function AddonsPage() {
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">{t("addons.header.title")}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t("addons.header.title")}</h1>
               <p className="text-sm sm:text-base text-muted-foreground">
                 {t("addons.header.subtitle")}
               </p>
@@ -170,7 +170,7 @@ export default function AddonsPage() {
         </div>
 
         {/* Plano atual */}
-        <Card className="mb-8">
+        <Card className="mb-8 border-slate-200/80 dark:border-slate-700/80 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between gap-4">
             <div>
               <CardTitle className="text-lg">{t("addons.currentPlan.title")}</CardTitle>
@@ -217,10 +217,13 @@ export default function AddonsPage() {
               const isActive = Boolean(addons && (addons as any)[addon.field]);
 
               return (
-                <Card key={addon.key} className="flex flex-col">
+                <Card
+                  key={addon.key}
+                  className="flex flex-col border-slate-200/80 dark:border-slate-700/80 shadow-lg hover:shadow-xl transition-shadow"
+                >
                   <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>
