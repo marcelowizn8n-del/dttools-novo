@@ -583,6 +583,15 @@ export type InsertPovStatement = z.infer<typeof insertPovStatementSchema>;
 export type HmwQuestion = typeof hmwQuestions.$inferSelect;
 export type InsertHmwQuestion = z.infer<typeof insertHmwQuestionSchema>;
 
+export type Journey = typeof journeys.$inferSelect;
+export type InsertJourney = z.infer<typeof insertJourneySchema>;
+
+export type JourneyStage = typeof journeyStages.$inferSelect;
+export type InsertJourneyStage = z.infer<typeof insertJourneyStageSchema>;
+
+export type JourneyTouchpoint = typeof journeyTouchpoints.$inferSelect;
+export type InsertJourneyTouchpoint = z.infer<typeof insertJourneyTouchpointSchema>;
+
 export type Idea = typeof ideas.$inferSelect;
 export type InsertIdea = z.infer<typeof insertIdeaSchema>;
 
@@ -694,6 +703,61 @@ export const guidingCriteria = pgTable("guiding_criteria", {
 });
 
 export const insertGuidingCriterionSchema = createInsertSchema(guidingCriteria).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const journeys = pgTable("journeys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  persona: text("persona"),
+  primaryGoal: text("primary_goal"),
+  status: text("status").default("active"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const journeyStages = pgTable("journey_stages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  journeyId: varchar("journey_id").references(() => journeys.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  order: integer("order").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const journeyTouchpoints = pgTable("journey_touchpoints", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stageId: varchar("stage_id").references(() => journeyStages.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  userGoal: text("user_goal"),
+  userAction: text("user_action"),
+  channel: text("channel"),
+  emotionScore: integer("emotion_score").default(3),
+  painPoints: text("pain_points"),
+  opportunities: text("opportunities"),
+  order: integer("order").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const insertJourneySchema = createInsertSchema(journeys).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertJourneyStageSchema = createInsertSchema(journeyStages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertJourneyTouchpointSchema = createInsertSchema(journeyTouchpoints).omit({
   id: true,
   createdAt: true,
   updatedAt: true,

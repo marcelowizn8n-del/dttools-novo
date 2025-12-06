@@ -20,6 +20,19 @@ export interface DesignThinkingContext {
   prototypes?: any[];
 }
 
+export interface JourneyMapSuggestion {
+  journey?: {
+    name?: string;
+    persona?: string;
+    primaryGoal?: string;
+    description?: string;
+  };
+  stages?: Array<{
+    title?: string;
+    description?: string;
+  }>;
+}
+
 export interface BenchmarkingData {
   // DVF Assessment data
   dvfAssessments?: Array<{
@@ -88,6 +101,155 @@ export class DesignThinkingGeminiAI {
     } catch (error) {
       console.error("Erro no chat da IA Gemini:", error);
       throw new Error("Erro ao processar sua mensagem. Verifique se a chave da API Gemini está configurada corretamente.");
+    }
+  }
+
+  async generateJourneyMap(input: {
+    projectName: string;
+    projectDescription?: string;
+    personas?: any[];
+    empathyMaps?: any[];
+    hmwQuestions?: any[];
+    guidingCriteria?: any[];
+    language?: string;
+  }): Promise<JourneyMapSuggestion> {
+    try {
+      const lang = input.language || "pt-BR";
+      const personasCount = input.personas?.length || 0;
+      const empathyCount = input.empathyMaps?.length || 0;
+      const hmwCount = input.hmwQuestions?.length || 0;
+      const criteriaCount = input.guidingCriteria?.length || 0;
+
+      const contextSummary = {
+        projectName: input.projectName,
+        projectDescription: input.projectDescription,
+        personas: (input.personas || []).slice(0, 5),
+        empathyMaps: (input.empathyMaps || []).slice(0, 3),
+        hmwQuestions: (input.hmwQuestions || []).slice(0, 10),
+        guidingCriteria: (input.guidingCriteria || []).slice(0, 10),
+      };
+
+      const languageInstruction = lang.startsWith("pt")
+        ? "Responda APENAS em português do Brasil."
+        : lang.startsWith("es")
+        ? "Responda APENAS em espanhol."
+        : lang.startsWith("fr")
+        ? "Responda APENAS em francês."
+        : "Responda APENAS em inglês.";
+
+      const prompt = `Você é um especialista em Design Thinking criando um MAPA DE JORNADA DO USUÁRIO.
+
+${languageInstruction}
+
+CONTEXTO DO PROJETO:
+- Nome do projeto: ${input.projectName}
+- Descrição do projeto: ${input.projectDescription || "Sem descrição detalhada"}
+- Quantidade de personas: ${personasCount}
+- Mapas de empatia: ${empathyCount}
+- Perguntas HMW: ${hmwCount}
+- Critérios norteadores: ${criteriaCount}
+
+Dados estruturados do projeto (resumidos):
+${JSON.stringify(contextSummary, null, 2)}
+
+TAREFA:
+- Propor UMA jornada principal coerente com o projeto.
+- Definir de 4 a 7 ETAPAS principais da jornada, em ordem lógica.
+- Cada etapa deve representar um momento claro da experiência do usuário (descoberta, consideração, compra, uso, etc.).
+
+Retorne APENAS um objeto JSON com esta estrutura exata:
+{
+  "journey": {
+    "name": "Nome da jornada",
+    "persona": "Persona foco (se houver)",
+    "primaryGoal": "Objetivo principal da jornada",
+    "description": "Breve descrição da jornada"
+  },
+  "stages": [
+    {
+      "title": "Nome da etapa",
+      "description": "Breve descrição da etapa"
+    }
+  ]
+}
+
+NÃO inclua comentários, markdown ou texto fora do JSON.`;
+
+      const response = await ai.models.generateContent({
+        model: this.model,
+        config: {
+          responseMimeType: "application/json",
+          responseJsonSchema: {
+            type: "object",
+            properties: {
+              journey: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  persona: { type: "string" },
+                  primaryGoal: { type: "string" },
+                  description: { type: "string" },
+                },
+                required: ["name"],
+              },
+              stages: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" },
+                  },
+                  required: ["title"],
+                },
+                minItems: 4,
+                maxItems: 7,
+              },
+            },
+            required: ["journey", "stages"],
+          },
+        },
+        contents: prompt,
+      });
+
+      const text = response.text || "{}";
+
+      try {
+        const parsed = JSON.parse(text) as JourneyMapSuggestion;
+        return parsed || {};
+      } catch (parseError) {
+        console.error(
+          "Erro ao interpretar JSON da jornada com IA (Gemini):",
+          parseError,
+        );
+
+        // Tentativa de recuperação: extrair o primeiro bloco JSON bem formado
+        const firstBrace = text.indexOf("{");
+        const lastBrace = text.lastIndexOf("}");
+
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          const candidate = text.slice(firstBrace, lastBrace + 1);
+          try {
+            const parsed = JSON.parse(candidate) as JourneyMapSuggestion;
+            return parsed || {};
+          } catch (innerError) {
+            console.error(
+              "Falha ao recuperar JSON da jornada com IA (Gemini):",
+              innerError,
+            );
+          }
+        }
+
+        console.error(
+          "Resposta bruta da IA (primeiros 500 caracteres):",
+          text.slice(0, 500),
+        );
+
+        return {};
+      }
+    } catch (error) {
+      console.error("Erro ao gerar jornada com IA (Gemini):", error);
+      return {};
     }
   }
 

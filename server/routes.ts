@@ -14,6 +14,9 @@ import {
   insertObservationSchema,
   insertPovStatementSchema,
   insertHmwQuestionSchema,
+  insertJourneySchema,
+  insertJourneyStageSchema,
+  insertJourneyTouchpointSchema,
   insertIdeaSchema,
   insertPrototypeSchema,
   insertTestPlanSchema,
@@ -1417,6 +1420,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete guiding criterion" });
+    }
+  });
+
+  // User Journey Maps - Journeys
+  app.get("/api/projects/:projectId/journeys", requireAuth, async (req, res) => {
+    try {
+      const journeys = await storage.getJourneys(req.params.projectId);
+      res.json(journeys);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journeys" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/journeys", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneySchema.parse({
+        ...req.body,
+        projectId: req.params.projectId,
+      });
+      const journey = await storage.createJourney(validatedData);
+      res.status(201).json(journey);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey data" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/journeys/ai-generate", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const projectId = req.params.projectId;
+
+      const project = await storage.getProject(projectId, userId);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      const [personas, empathyMaps, hmwQuestions, guidingCriteria] = await Promise.all([
+        storage.getPersonas(projectId),
+        storage.getEmpathyMaps(projectId),
+        storage.getHmwQuestions(projectId),
+        storage.getGuidingCriteria(projectId),
+      ]);
+
+      const language = (req.body?.language as string | undefined) || "pt-BR";
+
+      const suggestion = await designThinkingGeminiAI.generateJourneyMap({
+        projectName: project.name,
+        projectDescription:
+          (project as any).description || (project as any).userProblemDescription || "",
+        personas,
+        empathyMaps,
+        hmwQuestions,
+        guidingCriteria,
+        language,
+      });
+
+      res.json(suggestion);
+    } catch (error) {
+      console.error("[AI Journey] Failed to generate journey", error);
+      res.status(500).json({ error: "Failed to generate journey with AI" });
+    }
+  });
+
+  app.get("/api/journeys/:id", requireAuth, async (req, res) => {
+    try {
+      const journey = await storage.getJourney(req.params.id);
+      if (!journey) {
+        return res.status(404).json({ error: "Journey not found" });
+      }
+      res.json(journey);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journey" });
+    }
+  });
+
+  app.put("/api/journeys/:id", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneySchema
+        .omit({ projectId: true })
+        .partial()
+        .parse(req.body);
+      const journey = await storage.updateJourney(req.params.id, validatedData);
+      if (!journey) {
+        return res.status(404).json({ error: "Journey not found" });
+      }
+      res.json(journey);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey data" });
+    }
+  });
+
+  app.delete("/api/journeys/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteJourney(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Journey not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete journey" });
+    }
+  });
+
+  // User Journey Maps - Stages
+  app.get("/api/journeys/:journeyId/stages", requireAuth, async (req, res) => {
+    try {
+      const stages = await storage.getJourneyStages(req.params.journeyId);
+      res.json(stages);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journey stages" });
+    }
+  });
+
+  app.post("/api/journeys/:journeyId/stages", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyStageSchema.parse({
+        ...req.body,
+        journeyId: req.params.journeyId,
+      });
+      const stage = await storage.createJourneyStage(validatedData);
+      res.status(201).json(stage);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey stage data" });
+    }
+  });
+
+  app.put("/api/journey-stages/:id", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyStageSchema
+        .omit({ journeyId: true })
+        .partial()
+        .parse(req.body);
+      const stage = await storage.updateJourneyStage(req.params.id, validatedData);
+      if (!stage) {
+        return res.status(404).json({ error: "Journey stage not found" });
+      }
+      res.json(stage);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey stage data" });
+    }
+  });
+
+  app.delete("/api/journey-stages/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteJourneyStage(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Journey stage not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete journey stage" });
+    }
+  });
+
+  // User Journey Maps - Touchpoints
+  app.get("/api/journey-stages/:stageId/touchpoints", requireAuth, async (req, res) => {
+    try {
+      const touchpoints = await storage.getJourneyTouchpoints(req.params.stageId);
+      res.json(touchpoints);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journey touchpoints" });
+    }
+  });
+
+  app.post("/api/journey-stages/:stageId/touchpoints", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyTouchpointSchema.parse({
+        ...req.body,
+        stageId: req.params.stageId,
+      });
+      const touchpoint = await storage.createJourneyTouchpoint(validatedData);
+      res.status(201).json(touchpoint);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey touchpoint data" });
+    }
+  });
+
+  app.put("/api/journey-touchpoints/:id", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyTouchpointSchema
+        .omit({ stageId: true })
+        .partial()
+        .parse(req.body);
+      const touchpoint = await storage.updateJourneyTouchpoint(req.params.id, validatedData);
+      if (!touchpoint) {
+        return res.status(404).json({ error: "Journey touchpoint not found" });
+      }
+      res.json(touchpoint);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey touchpoint data" });
+    }
+  });
+
+  app.delete("/api/journey-touchpoints/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteJourneyTouchpoint(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Journey touchpoint not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete journey touchpoint" });
     }
   });
 

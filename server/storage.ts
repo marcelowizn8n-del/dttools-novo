@@ -6,6 +6,9 @@ import {
   type Observation, type InsertObservation,
   type PovStatement, type InsertPovStatement,
   type HmwQuestion, type InsertHmwQuestion,
+  type Journey, type InsertJourney,
+  type JourneyStage, type InsertJourneyStage,
+  type JourneyTouchpoint, type InsertJourneyTouchpoint,
   type Idea, type InsertIdea,
   type Prototype, type InsertPrototype,
   type TestPlan, type InsertTestPlan,
@@ -39,7 +42,8 @@ import {
   type DoubleDiamondProject, type InsertDoubleDiamondProject,
   type DoubleDiamondExport, type InsertDoubleDiamondExport,
   projects, empathyMaps, personas, interviews, observations,
-  povStatements, hmwQuestions, ideas, prototypes, testPlans, testResults,
+  povStatements, hmwQuestions, journeys, journeyStages, journeyTouchpoints,
+  ideas, prototypes, testPlans, testResults,
   userProgress, users, articles, testimonials, videoTutorials, subscriptionPlans, userSubscriptions,
   userAddons,
   canvasDrawings, phaseCards, benchmarks, benchmarkAssessments,
@@ -101,6 +105,25 @@ export interface IStorage {
   createGuidingCriterion(criterion: InsertGuidingCriterion): Promise<GuidingCriterion>;
   updateGuidingCriterion(id: string, criterion: Partial<InsertGuidingCriterion>): Promise<GuidingCriterion | undefined>;
   deleteGuidingCriterion(id: string): Promise<boolean>;
+
+  // User Journeys (Journey Maps)
+  getJourneys(projectId: string): Promise<Journey[]>;
+  getJourney(id: string): Promise<Journey | undefined>;
+  createJourney(journey: InsertJourney): Promise<Journey>;
+  updateJourney(id: string, journey: Partial<InsertJourney>): Promise<Journey | undefined>;
+  deleteJourney(id: string): Promise<boolean>;
+
+  getJourneyStages(journeyId: string): Promise<JourneyStage[]>;
+  getJourneyStage(id: string): Promise<JourneyStage | undefined>;
+  createJourneyStage(stage: InsertJourneyStage): Promise<JourneyStage>;
+  updateJourneyStage(id: string, stage: Partial<InsertJourneyStage>): Promise<JourneyStage | undefined>;
+  deleteJourneyStage(id: string): Promise<boolean>;
+
+  getJourneyTouchpoints(stageId: string): Promise<JourneyTouchpoint[]>;
+  getJourneyTouchpoint(id: string): Promise<JourneyTouchpoint | undefined>;
+  createJourneyTouchpoint(touchpoint: InsertJourneyTouchpoint): Promise<JourneyTouchpoint>;
+  updateJourneyTouchpoint(id: string, touchpoint: Partial<InsertJourneyTouchpoint>): Promise<JourneyTouchpoint | undefined>;
+  deleteJourneyTouchpoint(id: string): Promise<boolean>;
 
   // Phase 3: Ideate
   getIdeas(projectId: string): Promise<Idea[]>;
@@ -881,6 +904,124 @@ export class DatabaseStorage implements IStorage {
 
   async deleteGuidingCriterion(id: string): Promise<boolean> {
     const result = await db.delete(guidingCriteria).where(eq(guidingCriteria.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // User Journeys (Journey Maps)
+  async getJourneys(projectId: string): Promise<Journey[]> {
+    return await db
+      .select()
+      .from(journeys)
+      .where(eq(journeys.projectId, projectId))
+      .orderBy(desc(journeys.createdAt));
+  }
+
+  async getJourney(id: string): Promise<Journey | undefined> {
+    const [journey] = await db.select().from(journeys).where(eq(journeys.id, id));
+    return journey;
+  }
+
+  async createJourney(journey: InsertJourney): Promise<Journey> {
+    const [newJourney] = await db.insert(journeys).values(journey).returning();
+    return newJourney;
+  }
+
+  async updateJourney(id: string, journey: Partial<InsertJourney>): Promise<Journey | undefined> {
+    const [updatedJourney] = await db
+      .update(journeys)
+      .set({ ...journey, updatedAt: new Date() })
+      .where(eq(journeys.id, id))
+      .returning();
+    return updatedJourney;
+  }
+
+  async deleteJourney(id: string): Promise<boolean> {
+    const result = await db.delete(journeys).where(eq(journeys.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Journey Stages
+  async getJourneyStages(journeyId: string): Promise<JourneyStage[]> {
+    return await db
+      .select()
+      .from(journeyStages)
+      .where(eq(journeyStages.journeyId, journeyId))
+      .orderBy(journeyStages.order, journeyStages.createdAt);
+  }
+
+  async getJourneyStage(id: string): Promise<JourneyStage | undefined> {
+    const [stage] = await db
+      .select()
+      .from(journeyStages)
+      .where(eq(journeyStages.id, id));
+    return stage;
+  }
+
+  async createJourneyStage(stage: InsertJourneyStage): Promise<JourneyStage> {
+    const [newStage] = await db.insert(journeyStages).values(stage).returning();
+    return newStage;
+  }
+
+  async updateJourneyStage(
+    id: string,
+    stage: Partial<InsertJourneyStage>,
+  ): Promise<JourneyStage | undefined> {
+    const [updatedStage] = await db
+      .update(journeyStages)
+      .set({ ...stage, updatedAt: new Date() })
+      .where(eq(journeyStages.id, id))
+      .returning();
+    return updatedStage;
+  }
+
+  async deleteJourneyStage(id: string): Promise<boolean> {
+    const result = await db.delete(journeyStages).where(eq(journeyStages.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Journey Touchpoints
+  async getJourneyTouchpoints(stageId: string): Promise<JourneyTouchpoint[]> {
+    return await db
+      .select()
+      .from(journeyTouchpoints)
+      .where(eq(journeyTouchpoints.stageId, stageId))
+      .orderBy(journeyTouchpoints.order, journeyTouchpoints.createdAt);
+  }
+
+  async getJourneyTouchpoint(id: string): Promise<JourneyTouchpoint | undefined> {
+    const [touchpoint] = await db
+      .select()
+      .from(journeyTouchpoints)
+      .where(eq(journeyTouchpoints.id, id));
+    return touchpoint;
+  }
+
+  async createJourneyTouchpoint(
+    touchpoint: InsertJourneyTouchpoint,
+  ): Promise<JourneyTouchpoint> {
+    const [newTouchpoint] = await db
+      .insert(journeyTouchpoints)
+      .values(touchpoint)
+      .returning();
+    return newTouchpoint;
+  }
+
+  async updateJourneyTouchpoint(
+    id: string,
+    touchpoint: Partial<InsertJourneyTouchpoint>,
+  ): Promise<JourneyTouchpoint | undefined> {
+    const [updatedTouchpoint] = await db
+      .update(journeyTouchpoints)
+      .set({ ...touchpoint, updatedAt: new Date() })
+      .where(eq(journeyTouchpoints.id, id))
+      .returning();
+    return updatedTouchpoint;
+  }
+
+  async deleteJourneyTouchpoint(id: string): Promise<boolean> {
+    const result = await db
+      .delete(journeyTouchpoints)
+      .where(eq(journeyTouchpoints.id, id));
     return (result.rowCount || 0) > 0;
   }
 

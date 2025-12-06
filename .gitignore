@@ -252,4 +252,4 @@ dttools_package.tar.gz
 stripe_secret_key
 
 # Netlify deployment config (platform specific)
-netlify.toml
+netlify.toml.history/
