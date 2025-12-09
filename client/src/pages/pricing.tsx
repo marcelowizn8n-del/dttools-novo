@@ -302,7 +302,7 @@ export default function PricingPage() {
   if (error) {
     return (
       <div className={`${pageBackgroundClass} flex items-center justify-center py-20`}>
-        <div className="text-lg text-red-600">Erro ao carregar planos</div>
+        <div className="text-lg text-red-600">{t("toast.error")}</div>
       </div>
     );
   }

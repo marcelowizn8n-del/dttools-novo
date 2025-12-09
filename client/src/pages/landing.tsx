@@ -17,10 +17,8 @@ const phases = [
   {
     id: 1,
     icon: Users,
-    name: "Empatizar",
-    nameEn: "Empathize",
-    description: "Compreenda profundamente seus usuários",
-    descriptionEn: "Deeply understand your users",
+    titleKey: "landing.phase.empathize.title",
+    descKey: "landing.phase.empathize.desc",
     bgColor: "#90C5E0",
     hoverColor: "#69A1C5",
     iconColor: "text-white",
@@ -29,10 +27,8 @@ const phases = [
   {
     id: 2,
     icon: Target,
-    name: "Definir",
-    nameEn: "Define", 
-    description: "Defina claramente o problema e crie declarações de ponto de vista focadas.",
-    descriptionEn: "Clearly define the problem and create focused point of view statements.",
+    titleKey: "landing.phase.define.title",
+    descKey: "landing.phase.define.desc",
     bgColor: "#3A5A7E",
     hoverColor: "#2A4259",
     iconColor: "text-white",
@@ -41,10 +37,8 @@ const phases = [
   {
     id: 3,
     icon: Lightbulb,
-    name: "Idear", 
-    nameEn: "Ideate",
-    description: "Gere uma ampla gama de ideias criativas através de brainstorming estruturado.",
-    descriptionEn: "Generate a wide range of creative ideas through structured brainstorming.",
+    titleKey: "landing.phase.ideate.title",
+    descKey: "landing.phase.ideate.desc",
     bgColor: "#FFD700",
     hoverColor: "#E6C200",
     iconColor: "text-black",
@@ -53,10 +47,8 @@ const phases = [
   {
     id: 4,
     icon: Wrench,
-    name: "Prototipar",
-    nameEn: "Prototype",
-    description: "Construa protótipos rápidos e baratos para testar suas melhores ideias.",
-    descriptionEn: "Build quick and inexpensive prototypes to test your best ideas.",
+    titleKey: "landing.phase.prototype.title",
+    descKey: "landing.phase.prototype.desc",
     bgColor: "#FF8C42",
     hoverColor: "#E0773A",
     iconColor: "text-white",
@@ -65,10 +57,8 @@ const phases = [
   {
     id: 5,
     icon: TestTube,
-    name: "Testar",
-    nameEn: "Test",
-    description: "Teste seus protótipos com usuários reais e colete feedback valioso.",
-    descriptionEn: "Test your prototypes with real users and collect valuable feedback.",
+    titleKey: "landing.phase.test.title",
+    descKey: "landing.phase.test.desc",
     bgColor: "#76D7C4",
     hoverColor: "#48A9A6",
     iconColor: "text-black",
@@ -349,10 +339,10 @@ export default function LandingPage() {
                           </div>
                           <div>
                             <CardTitle className="text-lg">
-                              {phase.id}. {isEnglish ? phase.nameEn : phase.name}
+                              {phase.id}. {t(phase.titleKey)}
                             </CardTitle>
                             <CardDescription className="mt-1" style={{ color: phase.iconColor === 'text-black' ? '#666' : 'rgba(255,255,255,0.8)' }}>
-                              {isEnglish ? phase.descriptionEn : phase.description}
+                              {t(phase.descKey)}
                             </CardDescription>
                           </div>
                         </div>
@@ -845,7 +835,7 @@ export default function LandingPage() {
                 }
                 data-testid="button-explore-library"
               >
-                📚 Explorar Biblioteca
+                📚 {t("landing.explore.library")}
               </Button>
             </Link>
           </div>

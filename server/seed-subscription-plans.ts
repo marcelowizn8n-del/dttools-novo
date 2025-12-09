@@ -30,7 +30,7 @@ async function seedSubscriptionPlans() {
       includedUsers: 1,
       pricePerAdditionalUser: null,
       aiChatLimit: 50, // 50 AI chat messages
-      libraryArticlesCount: null, // all articles
+      libraryArticlesCount: 5, // up to 5 library articles (Library Premium add-on unlocks all)
       features: [
         "1 projeto gerado com IA por mês",
         "Projetos manuais ilimitados",
@@ -67,7 +67,7 @@ async function seedSubscriptionPlans() {
       includedUsers: 5,
       pricePerAdditionalUser: 5900, // R$ 59.00 per additional user
       aiChatLimit: null, // unlimited AI chat
-      libraryArticlesCount: null, // all articles
+      libraryArticlesCount: 5, // up to 5 library articles by default (Library Premium add-on unlocks all)
       features: [
         "Projetos IA ilimitados",
         "Projetos manuais ilimitados",

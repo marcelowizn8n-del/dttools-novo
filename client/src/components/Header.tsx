@@ -115,10 +115,10 @@ export default function Header() {
                 size="icon"
                 className="h-9 w-9"
                 data-testid="nav-video-tutorials-compact"
-                title="Tutoriais em vídeo"
+                title={t("nav.videoTutorials") || "Video Tutorials"}
               >
                 <Video className="h-4 w-4" />
-                <span className="sr-only">Tutoriais em vídeo</span>
+                <span className="sr-only">{t("nav.videoTutorials") || "Video Tutorials"}</span>
               </Button>
             </Link>
             {isAuthenticated && (
@@ -128,10 +128,10 @@ export default function Header() {
                   size="icon"
                   className="h-9 w-9"
                   data-testid="nav-chat-compact"
-                  title="Chat IA"
+                  title="AI Chat"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  <span className="sr-only">Chat IA</span>
+                  <span className="sr-only">AI Chat</span>
                 </Button>
               </Link>
             )}
@@ -223,14 +223,14 @@ export default function Header() {
             <Link href="/video-tutorials">
               <Button variant="ghost" className="text-sm" data-testid="nav-video-tutorials">
                 <Video className="mr-1 h-4 w-4" />
-                Tutoriais
+                {t("nav.videoTutorials") || "Video Tutorials"}
               </Button>
             </Link>
             {isAuthenticated && (
               <Link href="/chat">
                 <Button variant="ghost" className="text-sm" data-testid="nav-chat">
                   <MessageCircle className="mr-1 h-4 w-4" />
-                  Chat IA
+                  AI Chat
                 </Button>
               </Link>
             )}
@@ -342,14 +342,14 @@ export default function Header() {
                 <Link href="/video-tutorials">
                   <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-video-tutorials" onClick={() => setIsMobileMenuOpen(false)}>
                     <Video className="mr-2 h-4 w-4" />
-                    Tutoriais
+                    {t("nav.videoTutorials") || "Video Tutorials"}
                   </Button>
                 </Link>
                 {isAuthenticated && (
                   <Link href="/chat">
                     <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-chat" onClick={() => setIsMobileMenuOpen(false)}>
                       <MessageCircle className="mr-2 h-4 w-4" />
-                      Chat IA
+                      AI Chat
                     </Button>
                   </Link>
                 )}
@@ -373,7 +373,7 @@ export default function Header() {
                   <Link href="/addons">
                     <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-addons" onClick={() => setIsMobileMenuOpen(false)}>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Ferramentas adicionais
+                      {t("nav.addons")}
                     </Button>
                   </Link>
                 )}

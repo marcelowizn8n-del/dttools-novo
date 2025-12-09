@@ -168,6 +168,14 @@ export default function LibraryPage() {
     queryKey: ["/api/articles"],
   });
 
+  const { data: subscriptionInfo } = useQuery<any | null>({
+    queryKey: ["/api/subscription-info"],
+  });
+
+  const libraryLimit: number | null | undefined = subscriptionInfo?.limits?.libraryArticlesCount;
+  const hasLibraryPremium: boolean = Boolean(subscriptionInfo?.addons?.libraryPremium);
+  const isPortuguese = language === "pt-BR" || language.startsWith("pt");
+
   const filteredArticles = articles.filter(article => {
     const translated = getTranslatedArticle(article, language);
     const searchLower = searchTerm.toLowerCase();
@@ -187,6 +195,9 @@ export default function LibraryPage() {
     return articles.filter(article => article.category === categoryId).length;
   };
 
+  const totalArticles = articles.length;
+  const isLimited = typeof libraryLimit === "number" && libraryLimit >= 0 && !hasLibraryPremium;
+
   return (
     <div className="bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -199,6 +210,39 @@ export default function LibraryPage() {
             {t("library.subtitle")}
           </p>
         </div>
+
+        {/* Paywall / upgrade CTA for limited access */}
+        {isLimited && totalArticles > libraryLimit! && (
+          <div className="max-w-2xl mx-auto mb-6 p-4 border border-yellow-300/70 bg-yellow-50/80 dark:bg-yellow-900/20 rounded-lg text-center">
+            <p className="text-sm sm:text-base font-medium mb-2">
+              {isPortuguese
+                ? "Você está vendo apenas uma parte da biblioteca."
+                : language === "zh"
+                ? "你目前只看到部分资料库内容。"
+                : "You are only seeing part of the library."}
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3">
+              {isPortuguese ? (
+                <>
+                  Ative a <strong>Biblioteca Premium</strong> em Add-ons para ter acesso completo a todos os artigos, vídeos e materiais.
+                </>
+              ) : language === "zh" ? (
+                <>
+                  在 <strong>Add-ons</strong> 中激活 <strong>Premium 资料库</strong>，即可完整访问所有文章、视频和资料。
+                </>
+              ) : (
+                <>
+                  Enable the <strong>Library Premium</strong> add-on to get full access to all articles, videos and materials.
+                </>
+              )}
+            </p>
+            <Button asChild size="sm" variant="outline">
+              <a href="/addons">
+                {isPortuguese ? "Ir para Add-ons" : language === "zh" ? "前往 Add-ons" : "Go to Add-ons"}
+              </a>
+            </Button>
+          </div>
+        )}
 
         {/* Search */}
         <div className="max-w-md mx-auto mb-8">

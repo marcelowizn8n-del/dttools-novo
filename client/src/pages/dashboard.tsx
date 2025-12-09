@@ -112,24 +112,15 @@ const phases = [
 const benefits = [
   {
     icon: Users,
-    title: "Centrado no Ser Humano",
-    titleEn: "Human-Centered",
-    description: "Coloque as necessidades e experiências dos usuários no centro do processo de design.",
-    descriptionEn: "Put user needs and experiences at the center of the design process."
+    key: "benefits.human.centered",
   },
   {
     icon: TrendingUp,
-    title: "Processo Iterativo",
-    titleEn: "Iterative Process",
-    description: "Refine suas soluções através de ciclos contínuos de teste e aprendizado.",
-    descriptionEn: "Refine your solutions through continuous cycles of testing and learning."
+    key: "benefits.iterative.process",
   },
   {
     icon: Zap,
-    title: "Colaborativo",
-    titleEn: "Collaborative",
-    description: "Trabalhe em equipe e combine diferentes perspectivas para soluções mais ricas.",
-    descriptionEn: "Work as a team and combine different perspectives for richer solutions."
+    key: "benefits.collaborative",
   }
 ];
 
@@ -268,17 +259,17 @@ export default function Dashboard() {
   const getNextStep = () => {
     if (totalProjects === 0) {
       return {
-        title: "Crie seu Primeiro Projeto",
-        description: "Comece sua jornada no Design Thinking criando um projeto. Você pode criar manualmente ou usar nossa IA para gerar um MVP completo em minutos!",
-        estimatedTime: "2-10 min",
+        title: t("dashboard.nextStep.empty.title"),
+        description: t("dashboard.nextStep.empty.description"),
+        estimatedTime: t("dashboard.nextStep.empty.time"),
         action: {
-          label: "Criar Projeto",
+          label: t("dashboard.nextStep.empty.action"),
           onClick: () => setLocation('/projects')
         },
         tips: [
-          "Use a geração automática de MVP com IA para aprender rapidamente",
-          "Ou crie um projeto manual para controle total do processo",
-          "Você pode ter múltiplos projetos ativos simultaneamente"
+          t("dashboard.nextStep.empty.tip1"),
+          t("dashboard.nextStep.empty.tip2"),
+          t("dashboard.nextStep.empty.tip3"),
         ]
       };
     }
@@ -286,86 +277,27 @@ export default function Dashboard() {
     // Use the most recently updated project
     const currentPhase = activeProject?.currentPhase || 1;
 
-    if (currentPhase === 1) {
-      return {
-        title: "Empatize com Seus Usuários",
-        description: "Comece criando Mapas de Empatia e Personas para entender profundamente quem são seus usuários, suas necessidades e frustrações.",
-        estimatedTime: "15-20 min",
-        action: {
-          label: "Ir para Empatizar",
-          onClick: () => setLocation(`/projects/${activeProject!.id}`)
-        },
-        tips: [
-          "Crie pelo menos 2-3 personas diferentes",
-          "Mapeie as emoções, pensamentos e comportamentos dos usuários",
-          "Fale com usuários reais sempre que possível"
-        ]
-      };
-    }
+    const phaseKey =
+      currentPhase === 1 ? "phase1" :
+      currentPhase === 2 ? "phase2" :
+      currentPhase === 3 ? "phase3" :
+      currentPhase === 4 ? "phase4" :
+      "phase5";
 
-    if (currentPhase === 2) {
-      return {
-        title: "Defina o Problema Real",
-        description: "Sintetize suas descobertas da fase de Empatia em Declarações de Ponto de Vista (POV) claras que identifiquem o problema a ser resolvido.",
-        estimatedTime: "10-15 min",
-        action: {
-          label: "Ir para Definir",
-          onClick: () => setLocation(`/projects/${activeProject!.id}`)
-        },
-        tips: [
-          "Transforme insights em declarações POV: [Usuário] precisa [necessidade] porque [insight]",
-          "Crie perguntas 'Como Poderíamos' (HMW) para cada POV",
-          "Foque no problema, não na solução"
-        ]
-      };
-    }
-
-    if (currentPhase === 3) {
-      return {
-        title: "Gere Ideias Criativas",
-        description: "Brainstorm de soluções inovadoras usando as perguntas HMW como guia. Quantidade antes de qualidade!",
-        estimatedTime: "20-30 min",
-        action: {
-          label: "Ir para Idear",
-          onClick: () => setLocation(`/projects/${activeProject!.id}`)
-        },
-        tips: [
-          "Gere pelo menos 10-15 ideias diferentes",
-          "Não julgue ideias durante o brainstorm - seja livre!",
-          "Use a avaliação DVF (Desejabilidade, Viabilidade, Exequibilidade)"
-        ]
-      };
-    }
-
-    if (currentPhase === 4) {
-      return {
-        title: "Crie Protótipos Rápidos",
-        description: "Transforme suas melhores ideias em protótipos tangíveis para testar com usuários reais.",
-        estimatedTime: "30-60 min",
-        action: {
-          label: "Ir para Prototipar",
-          onClick: () => setLocation(`/projects/${activeProject!.id}`)
-        },
-        tips: [
-          "Comece com protótipos de baixa fidelidade (papel, desenhos)",
-          "Foque na funcionalidade core, não na estética",
-          "Crie versões iterativas baseadas em feedback"
-        ]
-      };
-    }
+    const baseKey = `dashboard.nextStep.${phaseKey}`;
 
     return {
-      title: "Teste com Usuários Reais",
-      description: "Valide seus protótipos com usuários reais, colete feedback e refine suas soluções.",
-      estimatedTime: "45-90 min",
+      title: t(`${baseKey}.title`),
+      description: t(`${baseKey}.description`),
+      estimatedTime: t(`${baseKey}.time`),
       action: {
-        label: "Ir para Testar",
+        label: t(`${baseKey}.action`),
         onClick: () => setLocation(`/projects/${activeProject!.id}`)
       },
       tips: [
-        "Teste com pelo menos 5 usuários diferentes",
-        "Observe comportamentos, não apenas ouça opiniões",
-        "Itere baseado nos aprendizados - DT é um processo cíclico!"
+        t(`${baseKey}.tip1`),
+        t(`${baseKey}.tip2`),
+        t(`${baseKey}.tip3`),
       ]
     };
   };
@@ -742,12 +674,10 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <CardTitle className="text-xl mb-2">
-                            Double Diamond + IA
+                            {t("dashboard.advanced.doubleDiamond.title")}
                           </CardTitle>
                           <CardDescription className="text-white/90">
-                            {language === 'pt-BR' 
-                              ? "Framework completo com geração automática de MVP, POV statements, ideias e análise DFV"
-                              : "Complete framework with automatic MVP generation, POV statements, ideas and DFV analysis"}
+                            {t("dashboard.advanced.doubleDiamond.description")}
                           </CardDescription>
                         </div>
                       </div>
@@ -756,17 +686,13 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2 text-sm text-white/80">
                         <Rocket className="w-4 h-4" />
                         <span>
-                          {language === 'pt-BR' 
-                            ? "100% automatizado com IA" 
-                            : "100% AI-powered automation"}
+                          {t("dashboard.advanced.doubleDiamond.badge.automation")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-white/80 mt-2">
                         <Zap className="w-4 h-4" />
                         <span>
-                          {language === 'pt-BR' 
-                            ? "Mínimo input, máximo output" 
-                            : "Minimum input, maximum output"}
+                          {t("dashboard.advanced.doubleDiamond.badge.minimum")}
                         </span>
                       </div>
                     </CardContent>
@@ -787,12 +713,10 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <CardTitle className="text-xl mb-2">
-                            Benchmarking
+                            {t("dashboard.advanced.benchmarking.title")}
                           </CardTitle>
                           <CardDescription className="text-white/90">
-                            {language === 'pt-BR' 
-                              ? "Compare seu processo com referências da indústria"
-                              : "Compare your process with industry references"}
+                            {t("dashboard.advanced.benchmarking.description")}
                           </CardDescription>
                         </div>
                       </div>
@@ -801,9 +725,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2 text-sm text-white/80">
                         <TrendingUp className="w-4 h-4" />
                         <span>
-                          {language === 'pt-BR' 
-                            ? "Análise de maturidade" 
-                            : "Maturity analysis"}
+                          {t("dashboard.advanced.benchmarking.badge.maturity")}
                         </span>
                       </div>
                     </CardContent>
@@ -831,12 +753,12 @@ export default function Dashboard() {
                           <Icon className="w-8 h-8 text-white" />
                         </div>
                         <CardTitle className="text-xl">
-                          {language === 'pt-BR' ? benefit.title : benefit.titleEn}
+                          {t(benefit.key)}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <CardDescription className="text-gray-600 leading-relaxed">
-                          {language === 'pt-BR' ? benefit.description : benefit.descriptionEn}
+                          {t(`${benefit.key}.desc`)}
                         </CardDescription>
                       </CardContent>
                     </Card>

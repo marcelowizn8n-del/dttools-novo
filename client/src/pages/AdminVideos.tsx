@@ -25,10 +25,12 @@ const videoFormSchema = z.object({
   titleEn: z.string().optional(),
   titleEs: z.string().optional(),
   titleFr: z.string().optional(),
+  titleZh: z.string().optional(),
   description: z.string().min(10, "Descrição deve ter pelo menos 10 caracteres"),
   descriptionEn: z.string().optional(),
   descriptionEs: z.string().optional(),
   descriptionFr: z.string().optional(),
+  descriptionZh: z.string().optional(),
   phase: z.enum(["overview", "empathize", "define", "ideate", "prototype", "test"]),
   youtubeUrl: z.string().url("URL do YouTube inválida").optional().or(z.literal("")),
   thumbnailUrl: z.string().url("URL da thumbnail inválida").optional().or(z.literal("")),
@@ -58,10 +60,12 @@ export default function AdminVideos() {
       titleEn: "",
       titleEs: "",
       titleFr: "",
+      titleZh: "",
       description: "",
       descriptionEn: "",
       descriptionEs: "",
       descriptionFr: "",
+      descriptionZh: "",
       phase: "overview",
       youtubeUrl: "",
       thumbnailUrl: "",
@@ -146,10 +150,12 @@ export default function AdminVideos() {
       form.setValue("descriptionEs", data.descriptionEs);
       form.setValue("titleFr", data.titleFr);
       form.setValue("descriptionFr", data.descriptionFr);
+      form.setValue("titleZh", data.titleZh || "");
+      form.setValue("descriptionZh", data.descriptionZh || "");
 
       toast({
         title: "Tradução completa! ✨",
-        description: "O vídeo foi traduzido para inglês, espanhol e francês automaticamente.",
+        description: "O vídeo foi traduzido para inglês, espanhol, francês e chinês automaticamente.",
       });
     },
     onError: (error: Error) => {
@@ -223,10 +229,12 @@ export default function AdminVideos() {
       titleEn: video.titleEn || "",
       titleEs: video.titleEs || "",
       titleFr: video.titleFr || "",
+      titleZh: (video as any).titleZh || "",
       description: video.description || "",
       descriptionEn: video.descriptionEn || "",
       descriptionEs: video.descriptionEs || "",
       descriptionFr: video.descriptionFr || "",
+      descriptionZh: (video as any).descriptionZh || "",
       phase: video.phase as any,
       youtubeUrl: video.youtubeUrl || "",
       thumbnailUrl: video.thumbnailUrl || "",
@@ -245,10 +253,12 @@ export default function AdminVideos() {
       titleEn: "",
       titleEs: "",
       titleFr: "",
+      titleZh: "",
       description: "",
       descriptionEn: "",
       descriptionEs: "",
       descriptionFr: "",
+      descriptionZh: "",
       phase: "overview",
       youtubeUrl: "",
       thumbnailUrl: "",
@@ -475,7 +485,7 @@ export default function AdminVideos() {
                 )}
               />
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <FormField
                   control={form.control}
                   name="titleEn"
@@ -512,6 +522,20 @@ export default function AdminVideos() {
                       <FormLabel>Título (FR)</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Titre en français" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="titleZh"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Título (ZH)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="标题（中文，可选）" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -557,7 +581,7 @@ export default function AdminVideos() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <FormField
                   control={form.control}
                   name="descriptionEn"
@@ -594,6 +618,20 @@ export default function AdminVideos() {
                       <FormLabel>Descrição (FR)</FormLabel>
                       <FormControl>
                         <Textarea {...field} rows={2} placeholder="Description en français" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="descriptionZh"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição (ZH)</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={2} placeholder="视频的中文描述（可选）" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

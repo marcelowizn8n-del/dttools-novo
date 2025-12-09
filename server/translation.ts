@@ -8,6 +8,7 @@ export interface TranslationResult {
   en: string;
   es: string;
   fr: string;
+  zh: string;
 }
 
 export async function translateText(
@@ -15,7 +16,7 @@ export async function translateText(
   context: "title" | "description" | "content" = "content"
 ): Promise<TranslationResult> {
   if (!portugueseText || portugueseText.trim() === "") {
-    return { en: "", es: "", fr: "" };
+    return { en: "", es: "", fr: "", zh: "" };
   }
 
   const contextInstructions = {
@@ -28,7 +29,7 @@ export async function translateText(
 
 ${contextInstructions[context]}
 
-Translate the following Portuguese text to English, Spanish, and French.
+Translate the following Portuguese text to English, Spanish, French, and Simplified Chinese.
 Maintain the exact same tone, style, and formatting.
 For Design Thinking terms, use standard industry terminology.
 
@@ -39,7 +40,8 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
 {
   "en": "English translation here",
   "es": "Spanish translation here",
-  "fr": "French translation here"
+  "fr": "French translation here",
+  "zh": "Simplified Chinese translation here"
 }`;
 
   try {
@@ -64,14 +66,16 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
     return {
       en: translations.en || "",
       es: translations.es || "",
-      fr: translations.fr || ""
+      fr: translations.fr || "",
+      zh: translations.zh || ""
     };
   } catch (error) {
     console.error("Translation error:", error);
     return {
       en: portugueseText,
       es: portugueseText,
-      fr: portugueseText
+      fr: portugueseText,
+      zh: portugueseText
     };
   }
 }
@@ -82,7 +86,7 @@ export async function translateLongContent(
   const MAX_CHUNK_SIZE = 2500;
 
   if (!portugueseText || portugueseText.trim() === "") {
-    return { en: "", es: "", fr: "" };
+    return { en: "", es: "", fr: "", zh: "" };
   }
 
   if (portugueseText.length <= MAX_CHUNK_SIZE) {
@@ -116,6 +120,7 @@ export async function translateLongContent(
     en: results.map((r) => r.en).join(""),
     es: results.map((r) => r.es).join(""),
     fr: results.map((r) => r.fr).join(""),
+    zh: results.map((r) => r.zh).join(""),
   };
 }
 
@@ -156,9 +161,11 @@ export async function translateVideo(video: {
     titleEn: titleTranslations.en,
     titleEs: titleTranslations.es,
     titleFr: titleTranslations.fr,
+    titleZh: titleTranslations.zh,
     descriptionEn: descTranslations.en,
     descriptionEs: descTranslations.es,
-    descriptionFr: descTranslations.fr
+    descriptionFr: descTranslations.fr,
+    descriptionZh: descTranslations.zh
   };
 }
 

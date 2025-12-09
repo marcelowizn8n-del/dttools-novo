@@ -10,11 +10,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserPlus, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { Link } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const signupSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -27,6 +28,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   const [error, setError] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { language } = useLanguage();
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -47,9 +49,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     if (/[a-z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
 
-    if (score <= 2) return { text: "Fraca", color: "text-red-600", bg: "bg-red-200" };
-    if (score <= 3) return { text: "Média", color: "text-yellow-600", bg: "bg-yellow-200" };
-    return { text: "Forte", color: "text-green-600", bg: "bg-green-200" };
+    if (score <= 2) return { text: language === "zh" ? "弱" : "Weak", color: "text-red-600", bg: "bg-red-200" };
+    if (score <= 3) return { text: language === "zh" ? "中等" : "Medium", color: "text-yellow-600", bg: "bg-yellow-200" };
+    return { text: language === "zh" ? "强" : "Strong", color: "text-green-600", bg: "bg-green-200" };
   };
 
   const onSubmit = async (data: SignupFormData) => {
@@ -73,15 +75,15 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao criar conta');
+        throw new Error(errorData.error || 'Error creating account');
       }
 
       onSuccess?.(data);
 
-      // Sucesso - redirecionar para o dashboard
+      // Success - redirect to dashboard
       window.location.href = "/dashboard";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar conta");
+      setError(err instanceof Error ? err.message : "Error creating account");
       setIsLoading(false);
     }
   };
@@ -93,21 +95,33 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       <CardHeader className="text-center">
         <CardTitle className="flex items-center justify-center gap-2">
           <UserPlus className="h-5 w-5 text-blue-600" />
-          Criar Conta
+          {language === "pt-BR" ? "Criar Conta" : language === "zh" ? "创建账户" : "Create Account"}
         </CardTitle>
         <CardDescription>
-          Preencha seus dados para começar a usar o DTTools
+          {language === "pt-BR"
+            ? "Preencha seus dados para começar a usar o DTTools"
+            : language === "zh"
+            ? "填写信息即可开始使用 DTTools"
+            : "Fill in your details to start using DTTools"}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Nome de Exibição */}
+          {/* Display Name */}
           <div className="space-y-2">
-            <Label htmlFor="name">Nome de Exibição</Label>
+            <Label htmlFor="name">
+              {language === "pt-BR" ? "Nome de Exibição" : language === "zh" ? "显示名称" : "Display Name"}
+            </Label>
             <Input
               id="name"
               type="text"
-              placeholder="Como você quer ser chamado? (ex: João Silva)"
+              placeholder={
+                language === "pt-BR"
+                  ? "Como você quer ser chamado? (ex: João Silva)"
+                  : language === "zh"
+                  ? "你希望我们如何称呼你？(例如：张伟)"
+                  : "How should we call you? (e.g. John Smith)"
+              }
               data-testid="input-name"
               {...form.register("name")}
             />
@@ -121,11 +135,17 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email (usado para login)</Label>
+            <Label htmlFor="email">
+              {language === "pt-BR"
+                ? "Email (usado para login)"
+                : language === "zh"
+                ? "邮箱（用于登录）"
+                : "Email (used for login)"}
+            </Label>
             <Input
               id="email"
               type="email"
-              placeholder="seu@email.com"
+              placeholder={language === "zh" ? "you@example.com" : "you@example.com"}
               data-testid="input-email"
               {...form.register("email")}
             />
@@ -137,14 +157,18 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             )}
           </div>
 
-          {/* Senha */}
+          {/* Password */}
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">
+              {language === "pt-BR" ? "Senha" : language === "zh" ? "密码" : "Password"}
+            </Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Digite uma senha"
+                placeholder={
+                  language === "pt-BR" ? "Digite uma senha" : language === "zh" ? "请输入密码" : "Enter a password"
+                }
                 data-testid="input-password"
                 {...form.register("password")}
               />
@@ -164,7 +188,8 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             {watchPassword && (
               <div className="space-y-1">
                 <div className={`text-xs ${passwordStrength?.color}`}>
-                  Força da senha: {passwordStrength?.text}
+                  {language === "pt-BR" ? "Força da senha: " : language === "zh" ? "密码强度：" : "Password strength: "}
+                  {passwordStrength?.text}
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1">
                   <div 
@@ -198,7 +223,17 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             disabled={isLoading}
             data-testid="button-submit"
           >
-            {isLoading ? "Criando conta..." : "Criar Conta"}
+            {isLoading
+              ? language === "pt-BR"
+                ? "Criando conta..."
+                : language === "zh"
+                ? "正在创建账户..."
+                : "Creating account..."
+              : language === "pt-BR"
+              ? "Criar Conta"
+              : language === "zh"
+              ? "创建账户"
+              : "Create Account"}
           </Button>
 
           <div className="relative">
@@ -207,7 +242,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Ou continue com
+                {language === "pt-BR" ? "Ou continue com" : language === "zh" ? "或使用以下方式继续" : "Or continue with"}
               </span>
             </div>
           </div>
@@ -220,14 +255,14 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             data-testid="button-google-signup"
           >
             <SiGoogle className="mr-2 h-4 w-4" />
-            Cadastrar com Google
+            {language === "pt-BR" ? "Cadastrar com Google" : language === "zh" ? "使用 Google 注册" : "Sign up with Google"}
           </Button>
 
           <div className="text-center text-sm text-gray-600">
-            Já tem uma conta?{" "}
+            {language === "pt-BR" ? "Já tem uma conta?" : language === "zh" ? "已经有账户？" : "Already have an account?"}{" "}
             <Link href="/login">
               <Button variant="link" className="p-0 h-auto font-medium text-blue-600 hover:text-blue-700">
-                Fazer login
+                {language === "pt-BR" ? "Fazer login" : language === "zh" ? "登录" : "Log in"}
               </Button>
             </Link>
           </div>

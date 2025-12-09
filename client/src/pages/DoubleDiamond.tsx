@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DoubleDiamondProject {
   id: string;
@@ -28,6 +29,7 @@ export default function DoubleDiamond() {
   const [showLimitAlert, setShowLimitAlert] = useState(false);
   const { toast } = useToast();
   const { isAdmin } = useAuth();
+  const { t } = useLanguage();
 
   const handleExportProject = async (projectId: string, projectName: string) => {
     try {
@@ -40,21 +42,21 @@ export default function DoubleDiamond() {
       
       if (data.success) {
         toast({
-          title: "✅ Projeto Exportado!",
-          description: "Projeto criado no sistema principal. Você será redirecionado...",
+          title: t("dd.list.export.toast.success.title"),
+          description: t("dd.list.export.toast.success.description"),
         });
         setTimeout(() => window.location.href = `/projects/${data.projectId}`, 2000);
       } else {
         toast({
-          title: "Erro ao exportar",
-          description: data.error || "Tente novamente",
+          title: t("dd.list.export.toast.error.title"),
+          description: data.error || t("dd.list.export.toast.error.description"),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Falha ao exportar projeto",
+        title: t("dd.list.export.toast.error.title"),
+        description: t("dd.list.export.toast.error.network"),
         variant: "destructive",
       });
     }
@@ -87,13 +89,14 @@ export default function DoubleDiamond() {
   const remainingProjects = effectiveLimit !== null ? Math.max(0, effectiveLimit - currentUsage) : null;
 
   const getPhaseLabel = (phase: string) => {
-    const phases: Record<string, string> = {
-      discover: "Descobrir",
-      define: "Definir",
-      develop: "Desenvolver",
-      deliver: "Entregar"
+    const phaseKeyMap: Record<string, string> = {
+      discover: "dd.list.phase.discover",
+      define: "dd.list.phase.define",
+      develop: "dd.list.phase.develop",
+      deliver: "dd.list.phase.deliver",
     };
-    return phases[phase] || phase;
+    const key = phaseKeyMap[phase];
+    return key ? t(key) : phase;
   };
 
   const getPhaseColor = (phase: string) => {
@@ -110,8 +113,10 @@ export default function DoubleDiamond() {
     if (hasReachedLimit) {
       setShowLimitAlert(true);
       toast({
-        title: "Limite atingido",
-        description: `Você atingiu o limite de ${effectiveLimit} projetos Double Diamond do seu plano. Faça upgrade para criar projetos ilimitados.`,
+        title: t("dd.list.limit.toast.title"),
+        description: t("dd.list.limit.toast.description", {
+          limit: String(effectiveLimit ?? 0),
+        }),
         variant: "destructive",
       });
       return;
@@ -131,11 +136,10 @@ export default function DoubleDiamond() {
           <div className="p-1.5 sm:p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
             <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Double Diamond</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("dd.list.hero.title")}</h1>
         </div>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Metodologia completa de Design Thinking com automação 100% IA. 
-          Input mínimo → Output máximo.
+          {t("dd.list.hero.description")}
         </p>
       </div>
 
@@ -143,16 +147,20 @@ export default function DoubleDiamond() {
       {showLimitAlert && !isAdmin && effectiveLimit !== null && (
         <Alert className="mb-6 sm:mb-8 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
           <AlertCircle className="h-4 w-4 text-orange-600" />
-          <AlertTitle className="text-orange-900 dark:text-orange-100">Limite de Projetos Atingido</AlertTitle>
+          <AlertTitle className="text-orange-900 dark:text-orange-100">
+            {t("dd.list.limit.alert.title")}
+          </AlertTitle>
           <AlertDescription className="text-orange-800 dark:text-orange-200">
-            Você atingiu o limite de {effectiveLimit} projetos Double Diamond do seu plano.
+            {t("dd.list.limit.alert.description", {
+              limit: String(effectiveLimit ?? 0),
+            })}
             <Button 
               variant="outline" 
               size="sm" 
               className="ml-4 mt-2 border-orange-300 text-orange-700 hover:bg-orange-100"
               onClick={handleUpgrade}
             >
-              Fazer Upgrade
+              {t("dd.list.limit.alert.button.upgrade")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </AlertDescription>
@@ -178,16 +186,21 @@ export default function DoubleDiamond() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-lg sm:text-xl font-semibold mb-1.5 sm:mb-2 leading-tight">
-                  {hasReachedLimit ? "Limite Atingido - Faça Upgrade" : "Criar Novo Projeto Double Diamond"}
+                  {hasReachedLimit
+                    ? t("dd.list.cta.limit.title")
+                    : t("dd.list.cta.create.title")}
                 </h3>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  {hasReachedLimit 
-                    ? `Você atingiu o limite de ${effectiveLimit} projetos. Faça upgrade para criar projetos ilimitados.`
-                    : `Preencha 5 campos e a IA gera todo o resto: pain points, POVs, ideias, MVP completo e análise DFV`
-                  }
+                  {hasReachedLimit
+                    ? t("dd.list.cta.limit.description", {
+                        limit: String(effectiveLimit ?? 0),
+                      })
+                    : t("dd.list.cta.create.description")}
                   {isFreeUser && !hasReachedLimit && remainingProjects !== null && (
                     <span className="block mt-1 text-xs font-medium text-blue-600">
-                      {remainingProjects} projeto{remainingProjects !== 1 ? 's' : ''} restante{remainingProjects !== 1 ? 's' : ''} no plano gratuito
+                      {t("dd.list.cta.remaining", {
+                        count: String(remainingProjects),
+                      })}
                     </span>
                   )}
                 </p>
@@ -200,12 +213,16 @@ export default function DoubleDiamond() {
                 {hasReachedLimit ? (
                   <>
                     <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="font-medium">Upgrade Necessário</span>
+                    <span className="font-medium">
+                      {t("dd.list.cta.badge.limit")}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="font-medium">IA Automática</span>
+                    <span className="font-medium">
+                      {t("dd.list.cta.badge.ai")}
+                    </span>
                   </>
                 )}
               </div>
@@ -215,7 +232,7 @@ export default function DoubleDiamond() {
 
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl sm:text-2xl">Criar Projeto Double Diamond</DialogTitle>
+            <DialogTitle className="text-xl sm:text-2xl">{t("dd.list.wizard.title")}</DialogTitle>
           </DialogHeader>
           <DoubleDiamondWizard onComplete={() => setShowWizard(false)} />
         </DialogContent>
@@ -236,9 +253,11 @@ export default function DoubleDiamond() {
             <div className="p-4 bg-muted rounded-full">
               <TrendingUp className="h-12 w-12 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold">Nenhum projeto criado ainda</h3>
+            <h3 className="text-xl font-semibold">
+              {t("dd.list.empty.title")}
+            </h3>
             <p className="text-muted-foreground max-w-md">
-              Crie seu primeiro projeto Double Diamond e deixe a IA guiar você pelas 4 fases do Design Thinking
+              {t("dd.list.empty.description")}
             </p>
           </div>
         </Card>
@@ -256,7 +275,7 @@ export default function DoubleDiamond() {
                   <div className="flex-1">
                     <CardTitle className="mb-2">{project.name}</CardTitle>
                     <CardDescription className="line-clamp-2">
-                      {project.description || "Sem descrição"}
+                      {project.description || t("dd.list.card.noDescription")}
                     </CardDescription>
                   </div>
                   {project.isCompleted && (
@@ -268,7 +287,9 @@ export default function DoubleDiamond() {
                 {/* Progresso */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2 text-sm">
-                    <span className="text-muted-foreground">Progresso</span>
+                    <span className="text-muted-foreground">
+                      {t("dd.list.card.progress.label")}
+                    </span>
                     <span className="font-medium">{project.completionPercentage}%</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -283,7 +304,10 @@ export default function DoubleDiamond() {
                 <div className="flex items-center gap-2">
                   <div className={`h-2 w-2 rounded-full ${getPhaseColor(project.currentPhase)}`} />
                   <span className="text-sm text-muted-foreground">
-                    Fase: <span className="font-medium text-foreground">{getPhaseLabel(project.currentPhase)}</span>
+                    {t("dd.list.card.phase.label")} {" "}
+                    <span className="font-medium text-foreground">
+                      {getPhaseLabel(project.currentPhase)}
+                    </span>
                   </span>
                 </div>
 
@@ -319,7 +343,7 @@ export default function DoubleDiamond() {
                     }}
                   >
                     <Eye className="mr-1 h-4 w-4" />
-                    Ver Detalhes
+                    {t("dd.list.card.button.details")}
                   </Button>
                   <Button
                     variant="outline"
@@ -329,10 +353,14 @@ export default function DoubleDiamond() {
                       handleExportProject(project.id, project.name);
                     }}
                     disabled={project.completionPercentage < 50}
-                    title={project.completionPercentage < 50 ? "Complete pelo menos 50% antes de exportar" : "Exportar para o sistema principal"}
+                    title={
+                      project.completionPercentage < 50
+                        ? t("dd.list.card.export.tooltip.disabled")
+                        : t("dd.list.card.export.tooltip.enabled")
+                    }
                   >
                     <Download className="mr-1 h-4 w-4" />
-                    Exportar
+                    {t("dd.list.card.button.export")}
                   </Button>
                 </div>
               </CardFooter>

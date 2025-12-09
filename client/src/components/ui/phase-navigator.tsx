@@ -1,5 +1,6 @@
 import { CheckCircle, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Phase {
   id: number;
@@ -15,6 +16,7 @@ interface PhaseNavigatorProps {
 }
 
 export function PhaseNavigator({ phases, onPhaseClick, className }: PhaseNavigatorProps) {
+  const { t } = useLanguage();
   const completedCount = phases.filter(p => p.completed).length;
   const totalCount = phases.length;
   const progressPercentage = Math.round((completedCount / totalCount) * 100);
@@ -25,10 +27,10 @@ export function PhaseNavigator({ phases, onPhaseClick, className }: PhaseNavigat
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">
-            Seu Progresso
+            {t("phaseNavigator.progress.title")}
           </span>
           <span className="text-sm font-bold text-blue-600">
-            {progressPercentage}% completo
+            {t("phaseNavigator.progress.percent", { percent: String(progressPercentage) })}
           </span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -38,7 +40,10 @@ export function PhaseNavigator({ phases, onPhaseClick, className }: PhaseNavigat
           />
         </div>
         <p className="text-xs text-gray-500 mt-1">
-          {completedCount} de {totalCount} fases concluídas
+          {t("phaseNavigator.progress.details", {
+            completed: String(completedCount),
+            total: String(totalCount),
+          })}
         </p>
       </div>
 
@@ -88,7 +93,7 @@ export function PhaseNavigator({ phases, onPhaseClick, className }: PhaseNavigat
               {phase.current && (
                 <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
                   <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full whitespace-nowrap shadow-md">
-                    Você está aqui
+                    {t("phaseNavigator.current.label")}
                   </div>
                   <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-500 mx-auto" />
                 </div>

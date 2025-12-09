@@ -26,6 +26,7 @@ import Phase5Tools from "@/components/phase5/Phase5Tools";
 import AnalysisReport from "@/components/AnalysisReport";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const editProjectSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").transform(val => val.trim()).refine(val => val.length > 0, "Nome não pode ser apenas espaços"),
@@ -75,6 +76,7 @@ const phaseData = {
 function EditProjectDialog({ project, projectId }: { project: Project; projectId: string }) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const form = useForm<EditProjectData>({
     resolver: zodResolver(editProjectSchema),
@@ -92,15 +94,15 @@ function EditProjectDialog({ project, projectId }: { project: Project; projectId
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "stats"] });
       toast({
-        title: "Projeto atualizado",
-        description: "As informações do projeto foram atualizadas com sucesso.",
+        title: t("project.detail.edit.toast.success.title"),
+        description: t("project.detail.edit.toast.success.description"),
       });
       setOpen(false);
     },
     onError: () => {
       toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o projeto.",
+        title: t("project.detail.edit.toast.error.title"),
+        description: t("project.detail.edit.toast.error.description"),
         variant: "destructive",
       });
     },
@@ -130,14 +132,14 @@ function EditProjectDialog({ project, projectId }: { project: Project; projectId
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" data-testid="button-edit-project">
           <Edit2 className="w-4 h-4 mr-2" />
-          Editar Projeto
+          {t("project.detail.edit.button.open")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar Projeto</DialogTitle>
+          <DialogTitle>{t("project.detail.edit.title")}</DialogTitle>
           <DialogDescription>
-            Atualize o nome e descrição do projeto
+            {t("project.detail.edit.description")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -147,9 +149,13 @@ function EditProjectDialog({ project, projectId }: { project: Project; projectId
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Projeto</FormLabel>
+                  <FormLabel>{t("project.detail.edit.field.name.label")}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Nome do projeto" data-testid="input-project-name" />
+                    <Input
+                      {...field}
+                      placeholder={t("project.detail.edit.field.name.placeholder")}
+                      data-testid="input-project-name"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -160,9 +166,14 @@ function EditProjectDialog({ project, projectId }: { project: Project; projectId
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>{t("project.detail.edit.field.description.label")}</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Descrição do projeto" rows={4} data-testid="input-project-description" />
+                    <Textarea
+                      {...field}
+                      placeholder={t("project.detail.edit.field.description.placeholder")}
+                      rows={4}
+                      data-testid="input-project-description"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -170,10 +181,12 @@ function EditProjectDialog({ project, projectId }: { project: Project; projectId
             />
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">
-                Cancelar
+                {t("project.detail.edit.button.cancel")}
               </Button>
               <Button type="submit" disabled={updateProjectMutation.isPending} data-testid="button-save">
-                {updateProjectMutation.isPending ? "Salvando..." : "Salvar"}
+                {updateProjectMutation.isPending
+                  ? t("project.detail.edit.button.saving")
+                  : t("project.detail.edit.button.save")}
               </Button>
             </div>
           </form>
@@ -202,9 +215,9 @@ function GuidingCriteriaSummaryCard({ projectId }: { projectId: string }) {
   };
 
   const importanceLabel = (importance: string | null | undefined) => {
-    if (importance === "high") return "Alta importância";
-    if (importance === "low") return "Baixa importância";
-    return "Importância média";
+    if (importance === "high") return t("project.detail.guiding.importance.high");
+    if (importance === "low") return t("project.detail.guiding.importance.low");
+    return t("project.detail.guiding.importance.medium");
   };
 
   return (
@@ -215,10 +228,10 @@ function GuidingCriteriaSummaryCard({ projectId }: { projectId: string }) {
         </div>
         <div className="flex-1">
           <CardTitle className="text-base font-semibold text-gray-900">
-            Critérios norteadores do projeto
+            {t("project.detail.guiding.title")}
           </CardTitle>
           <CardDescription className="text-sm text-gray-600">
-            Principais princípios que devem orientar decisões nas próximas fases.
+            {t("project.detail.guiding.description")}
           </CardDescription>
         </div>
       </CardHeader>
@@ -255,7 +268,9 @@ function GuidingCriteriaSummaryCard({ projectId }: { projectId: string }) {
         ))}
         {criteria.length > 3 && (
           <p className="text-xs text-gray-500 mt-1">
-            +{criteria.length - 3} critérios adicionais disponíveis na Fase 2.
+            {t("project.detail.guiding.more", {
+              count: String(criteria.length - 3),
+            })}
           </p>
         )}
       </CardContent>
@@ -365,10 +380,11 @@ function DvfSummaryCard({ projectId }: { projectId: string }) {
   const overall = assessment.overallScore || (desirability + feasibility + viability) / 3;
 
   const rec = (assessment.recommendation || "modify") as "proceed" | "modify" | "stop";
+  const { t } = useLanguage();
   const recLabel: Record<typeof rec, string> = {
-    proceed: "Prosseguir",
-    modify: "Modificar",
-    stop: "Parar",
+    proceed: t("project.detail.dfv.summary.rec.proceed"),
+    modify: t("project.detail.dfv.summary.rec.modify"),
+    stop: t("project.detail.dfv.summary.rec.stop"),
   };
   const recColor: Record<typeof rec, string> = {
     proceed: "bg-green-100 text-green-800",
@@ -384,35 +400,45 @@ function DvfSummaryCard({ projectId }: { projectId: string }) {
             <Brain className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <CardTitle className="text-lg text-indigo-900">Resumo DFV</CardTitle>
+            <CardTitle className="text-lg text-indigo-900">
+              {t("project.detail.dfv.summary.title")}
+            </CardTitle>
             <CardDescription className="text-sm text-indigo-700">
-              Desejabilidade, Viabilidade Técnica e de Negócio do projeto
+              {t("project.detail.dfv.summary.description")}
             </CardDescription>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-indigo-900">
               {overall.toFixed(1)}/5
             </div>
-            <div className="text-xs text-indigo-700">Score geral DVF</div>
+            <div className="text-xs text-indigo-700">
+              {t("project.detail.dfv.summary.overallLabel")}
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-3 gap-3 text-sm">
           <div className="space-y-1">
-            <div className="font-medium text-gray-800">Desirability</div>
+            <div className="font-medium text-gray-800">
+              {t("dd.project.dfv.score.desirability")}
+            </div>
             <div className="text-xl font-semibold text-red-600">
               {desirability.toFixed(1)}/5
             </div>
           </div>
           <div className="space-y-1">
-            <div className="font-medium text-gray-800">Feasibility</div>
+            <div className="font-medium text-gray-800">
+              {t("dd.project.dfv.score.feasibility")}
+            </div>
             <div className="text-xl font-semibold text-blue-600">
               {feasibility.toFixed(1)}/5
             </div>
           </div>
           <div className="space-y-1">
-            <div className="font-medium text-gray-800">Viability</div>
+            <div className="font-medium text-gray-800">
+              {t("dd.project.dfv.score.viability")}
+            </div>
             <div className="text-xl font-semibold text-green-600">
               {viability.toFixed(1)}/5
             </div>
@@ -420,7 +446,9 @@ function DvfSummaryCard({ projectId }: { projectId: string }) {
         </div>
 
         <div className="flex items-center justify-between mt-2">
-          <div className="text-sm text-gray-700">Recomendação Estratégica</div>
+          <div className="text-sm text-gray-700">
+            {t("project.detail.dfv.summary.recommendationLabel")}
+          </div>
           <div className={`px-3 py-1 rounded-full text-xs font-semibold ${recColor[rec]}`}>
             {recLabel[rec]}
           </div>
@@ -435,6 +463,16 @@ export default function ProjectDetailPage() {
   const projectId = params.id;
   const { user } = useAuth();
   const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
+   const { t, language } = useLanguage();
+
+  const localeMap: Record<string, string> = {
+    "pt-BR": "pt-BR",
+    en: "en-US",
+    es: "es-ES",
+    fr: "fr-FR",
+  };
+
+  const currentLocale = localeMap[language] || "en-US";
 
   const { data: project, isLoading } = useQuery<Project>({
     queryKey: ["/api/projects", projectId],
@@ -523,15 +561,15 @@ export default function ProjectDetailPage() {
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Projeto não encontrado
+            {t("project.detail.notFound.title")}
           </h2>
           <p className="text-gray-600 mb-6">
-            O projeto que você está procurando não existe ou foi removido.
+            {t("project.detail.notFound.description")}
           </p>
           <Link href="/projects">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar aos Projetos
+              {t("project.detail.notFound.backButton")}
             </Button>
           </Link>
         </div>
@@ -549,7 +587,7 @@ export default function ProjectDetailPage() {
           <Link href="/projects">
             <Button variant="ghost" size="sm" data-testid="button-back">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              {t("project.detail.header.back")}
             </Button>
           </Link>
           <div className="flex-1">
@@ -572,7 +610,7 @@ export default function ProjectDetailPage() {
             <Link href={`/projects/${project.id}/journey`}>
               <Button variant="outline" size="sm">
                 <Map className="w-4 h-4 mr-2" />
-                Jornada do Usuário
+                {t("project.detail.header.journey")}
               </Button>
             </Link>
             <EditProjectDialog project={project} projectId={projectId!} />
@@ -587,7 +625,9 @@ export default function ProjectDetailPage() {
               }
               data-testid="badge-project-status"
             >
-              {project.status === "completed" ? "Concluído" : "Em andamento"}
+              {project.status === "completed"
+                ? t("project.detail.header.status.completed")
+                : t("project.detail.header.status.inProgress")}
             </Badge>
           </div>
         </div>
@@ -597,7 +637,7 @@ export default function ProjectDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Progresso Geral
+                {t("project.detail.stats.progress.title")}
               </CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -613,12 +653,16 @@ export default function ProjectDetailPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Fase Atual</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("project.detail.stats.currentPhase.title")}
+              </CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-current-phase">
-                Fase {project.currentPhase}
+                {t("project.detail.stats.currentPhase.value", {
+                  phase: String(project.currentPhase),
+                })}
               </div>
               <p className="text-xs text-muted-foreground">
                 {project.currentPhase
@@ -631,7 +675,9 @@ export default function ProjectDetailPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Criado em</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("project.detail.stats.createdAt.title")}
+              </CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -640,11 +686,15 @@ export default function ProjectDetailPage() {
                 data-testid="text-created-date"
               >
                 {project.createdAt
-                  ? new Date(project.createdAt).toLocaleDateString("pt-BR")
+                  ? new Date(project.createdAt).toLocaleDateString(currentLocale)
                   : "N/A"}
               </div>
               <p className="text-xs text-muted-foreground">
-                {stats && `${stats.completedTools}/${stats.totalTools} ferramentas`}
+                {stats &&
+                  t("project.detail.stats.tools", {
+                    completed: String(stats.completedTools),
+                    total: String(stats.totalTools),
+                  })}
               </p>
             </CardContent>
           </Card>
@@ -660,7 +710,7 @@ export default function ProjectDetailPage() {
               data-testid="tab-phases"
               className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
             >
-              Fases & Ferramentas
+              {t("project.detail.tabs.phases")}
             </TabsTrigger>
             <TabsTrigger
               value="kanban"
@@ -668,7 +718,7 @@ export default function ProjectDetailPage() {
               className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
             >
               <Columns3 className="w-4 h-4 mr-2 hidden sm:inline" />
-              Board Kanban
+              {t("project.detail.tabs.kanban")}
             </TabsTrigger>
             <TabsTrigger
               value="analysis"
@@ -676,7 +726,7 @@ export default function ProjectDetailPage() {
               className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
             >
               <Brain className="w-4 h-4 mr-2 hidden sm:inline" />
-              Análise Inteligente IA
+              {t("project.detail.tabs.analysis")}
             </TabsTrigger>
             <TabsTrigger
               value="team"
@@ -684,7 +734,7 @@ export default function ProjectDetailPage() {
               className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap py-2"
             >
               <Users className="w-4 h-4 mr-2 hidden sm:inline" />
-              Equipe
+              {t("project.detail.tabs.team")}
             </TabsTrigger>
           </TabsList>
 
@@ -692,7 +742,7 @@ export default function ProjectDetailPage() {
             {/* Design Thinking Phases */}
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">
-                Fases do Design Thinking
+                {t("project.detail.phases.title")}
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5].map((phaseNumber) => (
@@ -715,10 +765,10 @@ export default function ProjectDetailPage() {
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-lg text-purple-900">
-                          Benchmarking
+                          {t("project.detail.benchmarking.title")}
                         </CardTitle>
                         <CardDescription className="text-sm text-purple-700">
-                          Compare sua maturidade em Design Thinking
+                          {t("project.detail.benchmarking.description")}
                         </CardDescription>
                       </div>
                     </div>
@@ -729,7 +779,7 @@ export default function ProjectDetailPage() {
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                         data-testid="button-benchmarking"
                       >
-                        Explorar Benchmarking
+                        {t("project.detail.benchmarking.button")}
                       </Button>
                     </Link>
                   </CardContent>
@@ -740,7 +790,9 @@ export default function ProjectDetailPage() {
             {/* Ferramentas da Fase Selecionada */}
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">
-                {`Ferramentas da Fase ${effectivePhase}`}
+                {t("project.detail.phaseTools.title", {
+                  phase: String(effectivePhase),
+                })}
               </h2>
               {effectivePhase === 1 && <Phase1Tools projectId={project.id} />}
               {effectivePhase === 2 && <Phase2Tools projectId={project.id} />}
@@ -752,7 +804,7 @@ export default function ProjectDetailPage() {
             {/* DFV Assessment Section */}
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">
-                Avaliação DFV (Desirability, Feasibility, Viability)
+                {t("project.detail.dfvSection.title")}
               </h2>
               <DvfSummaryCard projectId={project.id} />
             </div>
@@ -767,9 +819,11 @@ export default function ProjectDetailPage() {
           </TabsContent>
 
           <TabsContent value="team" className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Colaboração em Equipe</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {t("project.detail.team.title")}
+            </h2>
             <p className="text-gray-600 mb-2">
-              Convide outros usuários para visualizar ou editar este projeto.
+              {t("project.detail.team.description")}
             </p>
             <TeamManagement
               projectId={project.id}

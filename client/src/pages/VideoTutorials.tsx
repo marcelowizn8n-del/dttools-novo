@@ -31,40 +31,54 @@ export default function VideoTutorials() {
         pt: "Visão Geral",
         en: "Overview",
         es: "Visión General",
-        fr: "Vue d'ensemble"
+        fr: "Vue d'ensemble",
+        zh: "概览"
       },
       empathize: {
         pt: "Empatizar",
         en: "Empathize",
         es: "Empatizar",
-        fr: "Empathiser"
+        fr: "Empathiser",
+        zh: "同理"
       },
       define: {
         pt: "Definir",
         en: "Define",
         es: "Definir",
-        fr: "Définir"
+        fr: "Définir",
+        zh: "定义"
       },
       ideate: {
         pt: "Idear",
         en: "Ideate",
         es: "Idear",
-        fr: "Idéer"
+        fr: "Idéer",
+        zh: "发想"
       },
       prototype: {
         pt: "Prototipar",
         en: "Prototype",
         es: "Prototipar",
-        fr: "Prototyper"
+        fr: "Prototyper",
+        zh: "原型"
       },
       test: {
         pt: "Testar",
         en: "Test",
         es: "Probar",
-        fr: "Tester"
+        fr: "Tester",
+        zh: "测试"
       }
     };
-    return labels[phase]?.[language] || phase;
+
+    const langKey =
+      language === "pt-BR"
+        ? "pt"
+        : language === "de"
+        ? "en"
+        : language;
+
+    return labels[phase]?.[langKey] || phase;
   };
 
   const getPhaseColor = (phase: string) => {
@@ -80,14 +94,26 @@ export default function VideoTutorials() {
   };
 
   const getLocalizedTitle = (video: VideoTutorial) => {
-    if (language === 'en' && video.titleEn) return video.titleEn;
+    if (language === 'zh') {
+      if ((video as any).titleZh) return (video as any).titleZh as string;
+      if (video.titleEn) return video.titleEn;
+      return video.title;
+    }
+
+    if ((language === 'en' || language === 'de') && video.titleEn) return video.titleEn;
     if (language === 'es' && video.titleEs) return video.titleEs;
     if (language === 'fr' && video.titleFr) return video.titleFr;
     return video.title;
   };
 
   const getLocalizedDescription = (video: VideoTutorial) => {
-    if (language === 'en' && video.descriptionEn) return video.descriptionEn;
+    if (language === 'zh') {
+      if ((video as any).descriptionZh) return (video as any).descriptionZh as string;
+      if (video.descriptionEn) return video.descriptionEn;
+      return video.description || "";
+    }
+
+    if ((language === 'en' || language === 'de') && video.descriptionEn) return video.descriptionEn;
     if (language === 'es' && video.descriptionEs) return video.descriptionEs;
     if (language === 'fr' && video.descriptionFr) return video.descriptionFr;
     return video.description || "";
@@ -162,10 +188,20 @@ export default function VideoTutorials() {
       comingSoon: "Bientôt disponible ! Les vidéos sont en cours de production.",
       expandDetails: "Voir les détails",
       collapseDetails: "Masquer les détails"
+    },
+    "zh": {
+      title: "教学视频",
+      subtitle: "通过循序渐进的教程学习设计思维",
+      noVideos: "该阶段暂时没有可用视频。",
+      watchVideo: "观看视频",
+      views: "次观看",
+      comingSoon: "即将推出！视频正在制作中。",
+      expandDetails: "查看详情",
+      collapseDetails: "收起详情"
     }
   };
 
-  const t = content[language] || content["pt"];
+  const t = content[language] || content[language === 'pt-BR' ? 'pt-BR' : 'en'];
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -290,14 +326,16 @@ export default function VideoTutorials() {
         <div className="mt-12 p-6 bg-muted/50 rounded-lg">
           <h3 className="font-semibold mb-2">
             {(language.startsWith('pt') || language === 'pt-BR') ? '📹 Vídeos em Produção' :
-             language === 'en' ? '📹 Videos in Production' :
+             language === 'en' || language === 'de' ? '📹 Videos in Production' :
              language === 'es' ? '📹 Videos en Producción' :
+             language === 'zh' ? '📹 视频制作中' :
              '📹 Vidéos en Production'}
           </h3>
           <p className="text-sm text-muted-foreground">
             {(language.startsWith('pt') || language === 'pt-BR') ? 'Os roteiros completos para Google Veo 3.1 estão prontos! Os vídeos serão gravados e adicionados em breve. Enquanto isso, você pode usar todas as ferramentas da plataforma.' :
-             language === 'en' ? 'Complete scripts for Google Veo 3.1 are ready! Videos will be recorded and added soon. Meanwhile, you can use all platform tools.' :
+             language === 'en' || language === 'de' ? 'Complete scripts for Google Veo 3.1 are ready! Videos will be recorded and added soon. Meanwhile, you can use all platform tools.' :
              language === 'es' ? '¡Los guiones completos para Google Veo 3.1 están listos! Los videos se grabarán y agregarán pronto. Mientras tanto, puedes usar todas las herramientas de la plataforma.' :
+             language === 'zh' ? 'Google Veo 3.1 的完整脚本已经准备好！视频将很快录制并添加。在此期间，你可以正常使用平台的所有工具。' :
              'Les scripts complets pour Google Veo 3.1 sont prêts ! Les vidéos seront enregistrées et ajoutées bientôt. En attendant, vous pouvez utiliser tous les outils de la plateforme.'}
           </p>
         </div>

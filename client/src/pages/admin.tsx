@@ -2325,6 +2325,7 @@ const planFormSchema = z.object({
   pricePerAdditionalUser: z.number().nullable(),
   aiChatLimit: z.number().nullable(),
   maxDoubleDiamondProjects: z.number().nullable(),
+  libraryArticlesCount: z.number().nullable(),
   hasCollaboration: z.boolean(),
   hasSso: z.boolean(),
   hasCustomIntegrations: z.boolean(),
@@ -2356,6 +2357,7 @@ function PlanEditDialog({
       pricePerAdditionalUser: plan.pricePerAdditionalUser ? plan.pricePerAdditionalUser / 100 : null,
       aiChatLimit: plan.aiChatLimit,
       maxDoubleDiamondProjects: plan.maxDoubleDiamondProjects,
+      libraryArticlesCount: plan.libraryArticlesCount ?? null,
       hasCollaboration: plan.hasCollaboration || false,
       hasSso: plan.hasSso || false,
       hasCustomIntegrations: plan.hasCustomIntegrations || false,
@@ -2516,7 +2518,9 @@ function PlanEditDialog({
                             type="number"
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                            }
                             placeholder={t(
                               "admin.plans.edit.field.maxProjects.placeholder"
                             )}
@@ -2540,7 +2544,9 @@ function PlanEditDialog({
                             type="number"
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                            }
                             placeholder={t(
                               "admin.plans.edit.field.aiChatLimit.placeholder"
                             )}
@@ -2566,9 +2572,37 @@ function PlanEditDialog({
                             type="number"
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                            }
                             placeholder={t(
                               "admin.plans.edit.field.maxDoubleDiamondProjects.placeholder"
+                            )}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="libraryArticlesCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t("admin.plans.edit.field.libraryArticlesCount.label")}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                            }
+                            placeholder={t(
+                              "admin.plans.edit.field.libraryArticlesCount.placeholder"
                             )}
                           />
                         </FormControl>

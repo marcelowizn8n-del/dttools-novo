@@ -413,10 +413,12 @@ export const videoTutorials = pgTable("video_tutorials", {
   titleEn: text("title_en"),
   titleEs: text("title_es"),
   titleFr: text("title_fr"),
+  titleZh: text("title_zh"),
   description: text("description"),
   descriptionEn: text("description_en"),
   descriptionEs: text("description_es"),
   descriptionFr: text("description_fr"),
+  descriptionZh: text("description_zh"),
   phase: text("phase").notNull(), // 'overview', 'empathize', 'define', 'ideate', 'prototype', 'test'
   duration: text("duration"), // e.g., '3-4 min'
   youtubeUrl: text("youtube_url"), // URL do vídeo no YouTube

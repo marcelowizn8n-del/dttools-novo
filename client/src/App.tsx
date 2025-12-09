@@ -103,8 +103,16 @@ function Router() {
           <ProjectJourneyPage />
         </ProtectedRoute>
       </Route>
-      <Route path="/library" component={LibraryPage} />
-      <Route path="/biblioteca" component={LibraryPage} />
+      <Route path="/library">
+        <ProtectedRoute>
+          <LibraryPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/biblioteca">
+        <ProtectedRoute>
+          <LibraryPage />
+        </ProtectedRoute>
+      </Route>
       <Route path="/library/article/:id" component={ArticleDetailPage} />
       <Route path="/biblioteca/artigo/:id" component={ArticleDetailPage} />
       <Route path="/video-tutorials" component={VideoTutorials} />

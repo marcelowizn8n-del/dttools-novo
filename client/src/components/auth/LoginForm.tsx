@@ -10,10 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LogIn, Eye, EyeOff } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(1, "Senha é obrigatória"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -27,6 +28,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [error, setError] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useLanguage();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -43,7 +45,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       await login(data.email, data.password);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao fazer login");
+      setError(err instanceof Error ? err.message : t("auth.login.error.generic"));
     } finally {
       setIsLoading(false);
     }
@@ -54,20 +56,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       <CardHeader className="text-center">
         <CardTitle className="flex items-center justify-center gap-2">
           <LogIn className="h-5 w-5" />
-          Entrar
+          {t("auth.login.title")}
         </CardTitle>
         <CardDescription>
-          Entre com suas credenciais para acessar a área administrativa
+          {t("auth.login.subtitle")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.login.email.label")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="seu@email.com"
+              placeholder={t("auth.login.email.placeholder")}
               data-testid="input-email"
               autoComplete="email"
               {...form.register("email")}
@@ -80,12 +82,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">
+              {t("auth.login.password.label")}
+            </Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Digite sua senha"
+                placeholder={t("auth.login.password.placeholder")}
                 data-testid="input-password"
                 autoComplete="off"
                 {...form.register("password")}
@@ -126,7 +130,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             disabled={isLoading}
             data-testid="button-submit"
           >
-            {isLoading ? "Entrando..." : "Entrar"}
+            {isLoading ? t("auth.login.submitting") : t("auth.login.submit")}
           </Button>
 
           <div className="relative">
@@ -135,7 +139,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Ou continue com
+                {t("auth.login.orContinueWith")}
               </span>
             </div>
           </div>
@@ -148,7 +152,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             data-testid="button-google-login"
           >
             <SiGoogle className="mr-2 h-4 w-4" />
-            Entrar com Google
+            {t("auth.login.google")}
           </Button>
         </form>
       </CardContent>

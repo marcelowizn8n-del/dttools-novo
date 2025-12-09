@@ -1806,10 +1806,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Articles routes
-  app.get("/api/articles", async (_req, res) => {
+  // Articles routes (Library) - respect subscription limits
+  app.get("/api/articles", requireAuth, loadUserSubscription, async (req, res) => {
     try {
       const articles = await storage.getArticles();
+
+      const limit = req.subscription?.limits?.libraryArticlesCount;
+      if (typeof limit === "number" && limit >= 0) {
+        return res.json(articles.slice(0, limit));
+      }
+
       res.json(articles);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch articles" });

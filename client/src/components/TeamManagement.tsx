@@ -54,7 +54,20 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
       setRole("viewer");
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'members'] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      const status = error?.status;
+      const body = error?.body;
+
+      if (status === 403 && body?.upgrade_required) {
+        toast({
+          title: "Colaboração não disponível",
+          description:
+            "Colaboração em tempo real não está disponível no seu plano atual. Ative o add-on Colaboração Avançada em Add-ons.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Erro ao enviar convite",
         description: "Não foi possível enviar o convite. Tente novamente.",

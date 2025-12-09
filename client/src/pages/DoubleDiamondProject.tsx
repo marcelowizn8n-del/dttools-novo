@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,19 +59,17 @@ interface DoubleDiamondProject {
   dfvFeedback?: string;
 }
 
-const initialBriefingSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  description: z.string().optional(),
-  sectorId: z.string().optional(),
-  successCaseId: z.string().optional(),
-  customSuccessCase: z.string().optional(),
-  customSuccessCaseUrl: z.string().optional(),
-  customSuccessCasePdfUrl: z.string().optional(),
-  targetAudience: z.string().min(10, "Descreva o público-alvo (mínimo 10 caracteres)"),
-  problemStatement: z.string().min(20, "Descreva o problema (mínimo 20 caracteres)"),
-});
-
-type InitialBriefingFormData = z.infer<typeof initialBriefingSchema>;
+type InitialBriefingFormData = {
+  name: string;
+  description?: string;
+  sectorId?: string;
+  successCaseId?: string;
+  customSuccessCase?: string;
+  customSuccessCaseUrl?: string;
+  customSuccessCasePdfUrl?: string;
+  targetAudience: string;
+  problemStatement: string;
+};
 
 export default function DoubleDiamondProject() {
   const { id } = useParams<{ id: string }>();
@@ -79,8 +77,20 @@ export default function DoubleDiamondProject() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [isEditingBriefing, setIsEditingBriefing] = useState(false);
+
+  const initialBriefingSchema = z.object({
+    name: z.string().min(3, t("dd.project.briefing.validation.name.min")),
+    description: z.string().optional(),
+    sectorId: z.string().optional(),
+    successCaseId: z.string().optional(),
+    customSuccessCase: z.string().optional(),
+    customSuccessCaseUrl: z.string().optional(),
+    customSuccessCasePdfUrl: z.string().optional(),
+    targetAudience: z.string().min(10, t("dd.project.briefing.validation.targetAudience.min")),
+    problemStatement: z.string().min(20, t("dd.project.briefing.validation.problemStatement.min")),
+  });
 
   // Fetch project
   const { data: project, isLoading, isError, error } = useQuery<DoubleDiamondProject>({
@@ -115,15 +125,15 @@ export default function DoubleDiamondProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
       toast({
-        title: "✨ Fase Discover gerada!",
-        description: "Pain points, insights e empathy map criados com sucesso."
+        title: t("dd.project.discover.toast.success.title"),
+        description: t("dd.project.discover.toast.success.description"),
       });
       setActiveTab("define");
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao gerar Discover",
-        description: error.message || "Tente novamente",
+        title: t("dd.project.discover.toast.error.title"),
+        description: error.message || t("dd.project.discover.toast.error.description"),
         variant: "destructive"
       });
     }
@@ -169,22 +179,22 @@ export default function DoubleDiamondProject() {
 
   const updateBriefingMutation = useMutation({
     mutationFn: async (data: InitialBriefingFormData) => {
-      if (!id) throw new Error("Projeto não encontrado");
+      if (!id) throw new Error(t("dd.project.error.notFound.internal"));
       const response = await apiRequest("PATCH", `/api/double-diamond/${id}`, data);
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
       toast({
-        title: "Briefing atualizado",
-        description: "As informações iniciais do projeto foram atualizadas.",
+        title: t("dd.project.briefing.toast.update.success.title"),
+        description: t("dd.project.briefing.toast.update.success.description"),
       });
       setIsEditingBriefing(false);
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao atualizar briefing",
-        description: error.message || "Tente novamente",
+        title: t("dd.project.briefing.toast.update.error.title"),
+        description: error.message || t("dd.project.briefing.toast.update.error.description"),
         variant: "destructive",
       });
     },
@@ -193,27 +203,29 @@ export default function DoubleDiamondProject() {
   const exportProjectMutation = useMutation({
     mutationFn: async () => {
       if (!id) {
-        throw new Error("ID do projeto não encontrado");
+        throw new Error(t("dd.project.export.error.notFound"));
       }
 
       const response = await fetch(`/api/double-diamond/${id}/export`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          projectName: `${project?.name || "Projeto"} (Continuação)`
+          projectName: `${
+            project?.name || t("dd.project.export.fallbackProjectName")
+          }${t("dd.project.export.projectNameSuffix")}`,
         }),
       });
 
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.error || "Falha ao exportar projeto");
+        throw new Error(data.error || t("dd.project.export.error.failed"));
       }
       return data;
     },
     onSuccess: (data: any) => {
       toast({
-        title: "✅ Projeto exportado!",
-        description: "Criamos um projeto completo nas 5 fases. Abrindo o projeto...",
+        title: t("dd.project.export.toast.success.title"),
+        description: t("dd.project.export.toast.success.description"),
       });
       setTimeout(() => {
         setLocation(`/projects/${data.projectId}`);
@@ -221,8 +233,8 @@ export default function DoubleDiamondProject() {
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao exportar",
-        description: error.message || "Não foi possível exportar o projeto. Tente novamente.",
+        title: t("dd.project.export.toast.error.title"),
+        description: error.message || t("dd.project.export.toast.error.description"),
         variant: "destructive",
       });
     },
@@ -236,15 +248,15 @@ export default function DoubleDiamondProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
       toast({
-        title: "✨ Fase Define gerada!",
-        description: "POV Statements e HMW Questions criados com sucesso."
+        title: t("dd.project.define.toast.success.title"),
+        description: t("dd.project.define.toast.success.description"),
       });
       setActiveTab("develop");
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao gerar Define",
-        description: error.message || "Tente novamente",
+        title: t("dd.project.define.toast.error.title"),
+        description: error.message || t("dd.project.define.toast.error.description"),
         variant: "destructive"
       });
     }
@@ -258,15 +270,15 @@ export default function DoubleDiamondProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
       toast({
-        title: "✨ Fase Develop gerada!",
-        description: "Ideias e soluções criativas geradas com sucesso."
+        title: t("dd.project.develop.toast.success.title"),
+        description: t("dd.project.develop.toast.success.description"),
       });
       setActiveTab("deliver");
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao gerar Develop",
-        description: error.message || "Tente novamente",
+        title: t("dd.project.develop.toast.error.title"),
+        description: error.message || t("dd.project.develop.toast.error.description"),
         variant: "destructive"
       });
     }
@@ -280,15 +292,15 @@ export default function DoubleDiamondProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
       toast({
-        title: "✨ Fase Deliver gerada!",
-        description: "MVP, logo, landing page e plano de testes criados!"
+        title: t("dd.project.deliver.toast.success.title"),
+        description: t("dd.project.deliver.toast.success.description"),
       });
       setActiveTab("dfv");
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao gerar Deliver",
-        description: error.message || "Tente novamente",
+        title: t("dd.project.deliver.toast.error.title"),
+        description: error.message || t("dd.project.deliver.toast.error.description"),
         variant: "destructive"
       });
     }
@@ -302,14 +314,14 @@ export default function DoubleDiamondProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
       toast({
-        title: "✨ Análise DFV concluída!",
-        description: "Desirability, Feasibility e Viability analisados."
+        title: t("dd.project.dfv.toast.generate.success.title"),
+        description: t("dd.project.dfv.toast.generate.success.description"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao gerar análise DFV",
-        description: error.message || "Tente novamente",
+        title: t("dd.project.dfv.toast.generate.error.title"),
+        description: error.message || t("dd.project.dfv.toast.generate.error.description"),
         variant: "destructive"
       });
     }
@@ -328,18 +340,18 @@ export default function DoubleDiamondProject() {
       <div className="container mx-auto p-6">
         <Card>
           <CardHeader>
-            <CardTitle>Erro ao carregar projeto</CardTitle>
+            <CardTitle>{t("dd.project.error.load.title")}</CardTitle>
             <CardDescription>
-              {(error as any)?.message || "Ocorreu um erro ao carregar o projeto. Tente novamente."}
+              {(error as any)?.message || t("dd.project.error.load.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] })}>
-              Tentar Novamente
+              {t("dd.project.button.retry")}
             </Button>
             <Button variant="outline" onClick={() => setLocation("/double-diamond")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
+              {t("dd.project.button.back")}
             </Button>
           </CardContent>
         </Card>
@@ -352,13 +364,13 @@ export default function DoubleDiamondProject() {
       <div className="container mx-auto p-6">
         <Card>
           <CardHeader>
-            <CardTitle>Projeto não encontrado</CardTitle>
-            <CardDescription>O projeto Double Diamond que você procura não existe.</CardDescription>
+            <CardTitle>{t("dd.project.error.notFound.title")}</CardTitle>
+            <CardDescription>{t("dd.project.error.notFound.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={() => setLocation("/double-diamond")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
+              {t("dd.project.button.back")}
             </Button>
           </CardContent>
         </Card>
@@ -378,7 +390,7 @@ export default function DoubleDiamondProject() {
       <div className="mb-6">
         <Button variant="ghost" onClick={() => setLocation("/double-diamond")} className="mb-4" data-testid="button-back">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar para Projetos
+          {t("dd.project.header.back")}
         </Button>
 
         <div className="flex items-start justify-between gap-6">
@@ -396,14 +408,14 @@ export default function DoubleDiamondProject() {
                 onClick={() => setIsEditingBriefing(true)}
                 data-testid="button-edit-briefing"
               >
-                Editar briefing inicial
+                {t("dd.project.header.editBriefing")}
               </Button>
             </div>
 
             {/* Progress */}
             <div className="space-y-2 mt-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Progresso Geral</span>
+                <span className="font-medium">{t("dd.project.header.progress")}</span>
                 <span className="text-muted-foreground">{project.completionPercentage}%</span>
               </div>
               <Progress value={project.completionPercentage} className="h-2" />
@@ -412,10 +424,18 @@ export default function DoubleDiamondProject() {
 
           <div className="flex flex-col gap-2">
             <Badge variant="secondary" className="text-lg px-4 py-2">
-              Fase Atual: {project.currentPhase === "discover" ? "Descobrir" :
-                project.currentPhase === "define" ? "Definir" :
-                  project.currentPhase === "develop" ? "Desenvolver" :
-                    project.currentPhase === "deliver" ? "Entregar" : "Análise DFV"}
+              {t("dd.project.header.currentPhase", {
+                phase:
+                  project.currentPhase === "discover"
+                    ? t("dd.list.phase.discover")
+                    : project.currentPhase === "define"
+                    ? t("dd.list.phase.define")
+                    : project.currentPhase === "develop"
+                    ? t("dd.list.phase.develop")
+                    : project.currentPhase === "deliver"
+                    ? t("dd.list.phase.deliver")
+                    : t("dd.project.phase.dfv"),
+              })}
             </Badge>
             <div className="flex flex-col gap-2">
               <Button
@@ -424,14 +444,14 @@ export default function DoubleDiamondProject() {
                 onClick={() => {
                   window.open(`/api/double-diamond/${id}/export/pdf`, '_blank');
                   toast({
-                    title: "📄 Gerando PDF",
-                    description: "O download começará em instantes."
+                    title: t("dd.project.header.exportPdf.toast.title"),
+                    description: t("dd.project.header.exportPdf.toast.description"),
                   });
                 }}
                 data-testid="button-export-pdf"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Exportar PDF
+                {t("dd.project.header.exportPdf.button")}
               </Button>
               {activeTab && (
                 <Button
@@ -460,7 +480,7 @@ export default function DoubleDiamondProject() {
                   data-testid={`button-recreate-${activeTab}`}
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Recriar
+                  {t("dd.project.header.recreate.button")}
                 </Button>
               )}
             </div>
@@ -471,7 +491,7 @@ export default function DoubleDiamondProject() {
       <Dialog open={isEditingBriefing} onOpenChange={setIsEditingBriefing}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Editar briefing inicial</DialogTitle>
+            <DialogTitle>{t("dd.project.briefing.dialog.title")}</DialogTitle>
           </DialogHeader>
           <Form {...briefingForm}>
             <form
@@ -483,7 +503,7 @@ export default function DoubleDiamondProject() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome do Projeto *</FormLabel>
+                    <FormLabel>{t("dd.project.briefing.form.name.label")}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -497,7 +517,7 @@ export default function DoubleDiamondProject() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descrição (opcional)</FormLabel>
+                    <FormLabel>{t("dd.project.briefing.form.description.label")}</FormLabel>
                     <FormControl>
                       <Textarea className="min-h-[60px]" {...field} />
                     </FormControl>
@@ -512,11 +532,11 @@ export default function DoubleDiamondProject() {
                   name="sectorId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Setor / Indústria</FormLabel>
+                      <FormLabel>{t("dd.project.briefing.form.sector.label")}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione um setor" />
+                            <SelectValue placeholder={t("dd.project.briefing.form.sector.placeholder")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -537,11 +557,11 @@ export default function DoubleDiamondProject() {
                   name="successCaseId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Case de Sucesso para Espelhar</FormLabel>
+                      <FormLabel>{t("dd.project.briefing.form.successCase.label")}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione um case" />
+                            <SelectValue placeholder={t("dd.project.briefing.form.successCase.placeholder")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -563,7 +583,7 @@ export default function DoubleDiamondProject() {
                 name="customSuccessCase"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ou descreva um case de sucesso personalizado</FormLabel>
+                    <FormLabel>{t("dd.project.briefing.form.customSuccessCase.label")}</FormLabel>
                     <FormControl>
                       <Textarea className="min-h-[60px]" {...field} />
                     </FormControl>
@@ -577,10 +597,10 @@ export default function DoubleDiamondProject() {
                 name="customSuccessCaseUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL de referência do case</FormLabel>
+                    <FormLabel>{t("dd.project.briefing.form.customSuccessCaseUrl.label")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Link para site, artigo ou vídeo sobre o case"
+                        placeholder={t("dd.project.briefing.form.customSuccessCaseUrl.placeholder")}
                         {...field}
                       />
                     </FormControl>
@@ -594,10 +614,10 @@ export default function DoubleDiamondProject() {
                 name="customSuccessCasePdfUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL do PDF de referência</FormLabel>
+                    <FormLabel>{t("dd.project.briefing.form.customSuccessCasePdfUrl.label")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Link para o PDF (Google Drive, Dropbox, etc.)"
+                        placeholder={t("dd.project.briefing.form.customSuccessCasePdfUrl.placeholder")}
                         {...field}
                       />
                     </FormControl>
@@ -611,7 +631,7 @@ export default function DoubleDiamondProject() {
                 name="targetAudience"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Público-alvo *</FormLabel>
+                    <FormLabel>{t("dd.project.briefing.form.targetAudience.label")}</FormLabel>
                     <FormControl>
                       <Textarea className="min-h-[60px]" {...field} />
                     </FormControl>
@@ -625,7 +645,7 @@ export default function DoubleDiamondProject() {
                 name="problemStatement"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Problema a ser resolvido *</FormLabel>
+                    <FormLabel>{t("dd.project.briefing.form.problemStatement.label")}</FormLabel>
                     <FormControl>
                       <Textarea className="min-h-[80px]" {...field} />
                     </FormControl>
@@ -640,10 +660,12 @@ export default function DoubleDiamondProject() {
                   variant="outline"
                   onClick={() => setIsEditingBriefing(false)}
                 >
-                  Cancelar
+                  {t("dd.project.briefing.form.buttons.cancel")}
                 </Button>
                 <Button type="submit" disabled={updateBriefingMutation.isPending}>
-                  {updateBriefingMutation.isPending ? "Salvando..." : "Salvar alterações"}
+                  {updateBriefingMutation.isPending
+                    ? t("dd.project.briefing.form.buttons.submit.loading")
+                    : t("dd.project.briefing.form.buttons.submit.idle")}
                 </Button>
               </div>
             </form>
@@ -656,7 +678,7 @@ export default function DoubleDiamondProject() {
         <Card className={activeTab === "discover" ? "border-blue-500" : ""}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">1. Descobrir</CardTitle>
+              <CardTitle className="text-sm font-medium">{`1. ${t("dd.list.phase.discover")}`}</CardTitle>
               {getPhaseIcon(project.discoverStatus)}
             </div>
           </CardHeader>
@@ -665,7 +687,7 @@ export default function DoubleDiamondProject() {
         <Card className={activeTab === "define" ? "border-blue-500" : ""}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">2. Definir</CardTitle>
+              <CardTitle className="text-sm font-medium">{`2. ${t("dd.list.phase.define")}`}</CardTitle>
               {getPhaseIcon(project.defineStatus)}
             </div>
           </CardHeader>
@@ -674,7 +696,7 @@ export default function DoubleDiamondProject() {
         <Card className={activeTab === "develop" ? "border-blue-500" : ""}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">3. Desenvolver</CardTitle>
+              <CardTitle className="text-sm font-medium">{`3. ${t("dd.list.phase.develop")}`}</CardTitle>
               {getPhaseIcon(project.developStatus)}
             </div>
           </CardHeader>
@@ -683,7 +705,7 @@ export default function DoubleDiamondProject() {
         <Card className={activeTab === "deliver" ? "border-blue-500" : ""}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">4. Entregar</CardTitle>
+              <CardTitle className="text-sm font-medium">{`4. ${t("dd.list.phase.deliver")}`}</CardTitle>
               {getPhaseIcon(project.deliverStatus)}
             </div>
           </CardHeader>
@@ -693,29 +715,29 @@ export default function DoubleDiamondProject() {
       {/* Main Content Tabs */}
       <Tabs value={activeTab || "discover"} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="w-full flex overflow-x-auto md:grid md:grid-cols-5 h-auto p-1 gap-1">
-          <TabsTrigger value="discover" data-testid="tab-discover">Descobrir</TabsTrigger>
-          <TabsTrigger value="define" data-testid="tab-define">Definir</TabsTrigger>
-          <TabsTrigger value="develop" data-testid="tab-develop">Desenvolver</TabsTrigger>
-          <TabsTrigger value="deliver" data-testid="tab-deliver">Entregar</TabsTrigger>
-          <TabsTrigger value="dfv" data-testid="tab-dfv">Análise DFV</TabsTrigger>
+          <TabsTrigger value="discover" data-testid="tab-discover">{t("dd.project.tabs.discover")}</TabsTrigger>
+          <TabsTrigger value="define" data-testid="tab-define">{t("dd.project.tabs.define")}</TabsTrigger>
+          <TabsTrigger value="develop" data-testid="tab-develop">{t("dd.project.tabs.develop")}</TabsTrigger>
+          <TabsTrigger value="deliver" data-testid="tab-deliver">{t("dd.project.tabs.deliver")}</TabsTrigger>
+          <TabsTrigger value="dfv" data-testid="tab-dfv">{t("dd.project.tabs.dfv")}</TabsTrigger>
         </TabsList>
 
         {/* DISCOVER TAB */}
         <TabsContent value="discover">
           <Card>
             <CardHeader>
-              <CardTitle>Fase 1: Discover (Divergência)</CardTitle>
+              <CardTitle>{t("dd.project.discover.title")}</CardTitle>
               <CardDescription>
-                Explore amplamente o problema, identifique pain points e gere insights profundos sobre o usuário
+                {t("dd.project.discover.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {project.discoverStatus === "pending" ? (
                 <div className="text-center py-8">
                   <Sparkles className="h-12 w-12 mx-auto mb-4 text-blue-500" />
-                  <h3 className="text-lg font-semibold mb-2">Pronto para descobrir!</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("dd.project.discover.empty.title")}</h3>
                   <p className="text-muted-foreground mb-6">
-                    A IA irá gerar automaticamente pain points, insights, user needs e um empathy map completo
+                    {t("dd.project.discover.empty.description")}
                   </p>
                   <Button
                     onClick={() => generateDiscoverMutation.mutate()}
@@ -727,12 +749,12 @@ export default function DoubleDiamondProject() {
                     {generateDiscoverMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Gerando com IA...
+                        {t("dd.project.phase.generate.loading")}
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        Gerar Fase Discover com IA
+                        {t("dd.project.discover.empty.button.generate")}
                       </>
                     )}
                   </Button>
@@ -742,7 +764,7 @@ export default function DoubleDiamondProject() {
                   {/* Pain Points */}
                   {project.discoverPainPoints && (
                     <div>
-                      <h4 className="font-semibold mb-3">Pain Points Identificados</h4>
+                      <h4 className="font-semibold mb-3">{t("dd.project.discover.section.painPoints.title")}</h4>
                       <div className="grid gap-2">
                         {(project.discoverPainPoints as any[]).map((item: any, idx: number) => (
                           <div key={idx} className="p-3 border rounded-lg bg-red-50 dark:bg-red-950/20">
@@ -759,7 +781,7 @@ export default function DoubleDiamondProject() {
                   {/* Insights */}
                   {project.discoverInsights && (
                     <div>
-                      <h4 className="font-semibold mb-3">Insights Gerados</h4>
+                      <h4 className="font-semibold mb-3">{t("dd.project.discover.section.insights.title")}</h4>
                       <div className="grid gap-2">
                         {(project.discoverInsights as any[]).map((item: any, idx: number) => (
                           <div key={idx} className="p-3 border rounded-lg bg-blue-50 dark:bg-blue-950/20">
@@ -773,7 +795,7 @@ export default function DoubleDiamondProject() {
                   {/* User Needs */}
                   {project.discoverUserNeeds && (
                     <div>
-                      <h4 className="font-semibold mb-3">Necessidades do Usuário</h4>
+                      <h4 className="font-semibold mb-3">{t("dd.project.discover.section.userNeeds.title")}</h4>
                       <div className="grid gap-2">
                         {(project.discoverUserNeeds as any[]).map((item: any, idx: number) => (
                           <div key={idx} className="p-3 border rounded-lg bg-green-50 dark:bg-green-950/20">
@@ -793,18 +815,18 @@ export default function DoubleDiamondProject() {
         <TabsContent value="define">
           <Card>
             <CardHeader>
-              <CardTitle>Fase 2: Define (Convergência)</CardTitle>
+              <CardTitle>{t("dd.project.define.title")}</CardTitle>
               <CardDescription>
-                Sintetize os insights em POV Statements e transforme em How Might We questions
+                {t("dd.project.define.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {project.defineStatus === "pending" ? (
                 <div className="text-center py-8">
                   <Sparkles className="h-12 w-12 mx-auto mb-4 text-purple-500" />
-                  <h3 className="text-lg font-semibold mb-2">Defina o problema</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("dd.project.define.empty.title")}</h3>
                   <p className="text-muted-foreground mb-6">
-                    A IA criará POV Statements e How Might We questions baseados nos insights da fase Discover
+                    {t("dd.project.define.empty.description")}
                   </p>
                   <Button
                     onClick={() => generateDefineMutation.mutate()}
@@ -816,18 +838,18 @@ export default function DoubleDiamondProject() {
                     {generateDefineMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Gerando com IA...
+                        {t("dd.project.phase.generate.loading")}
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        Gerar Fase Define com IA
+                        {t("dd.project.define.empty.button.generate")}
                       </>
                     )}
                   </Button>
                   {project.discoverStatus !== "completed" && (
                     <p className="text-sm text-muted-foreground mt-4">
-                      Complete a fase Discover primeiro
+                      {t("dd.project.define.empty.blocked")}
                     </p>
                   )}
                 </div>
@@ -836,12 +858,21 @@ export default function DoubleDiamondProject() {
                   {/* POV Statements */}
                   {project.definePovStatements && (
                     <div>
-                      <h4 className="font-semibold mb-3">POV Statements</h4>
+                      <h4 className="font-semibold mb-3">{t("dd.project.define.section.pov.title")}</h4>
                       <div className="grid gap-3">
                         {(project.definePovStatements as any[]).map((item: any, idx: number) => (
                           <div key={idx} className="p-4 border rounded-lg hover:border-purple-500 cursor-pointer transition-colors">
-                            <p className="font-medium">{item.user} precisa {item.need}</p>
-                            <p className="text-sm text-muted-foreground mt-1">Insight: {item.insight}</p>
+                            <p className="font-medium">
+                              {t("dd.project.define.section.pov.statement", {
+                                user: item.user,
+                                need: item.need,
+                              })}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {t("dd.project.define.section.pov.insightLabel")}
+                              {" "}
+                              {item.insight}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -851,7 +882,7 @@ export default function DoubleDiamondProject() {
                   {/* HMW Questions */}
                   {project.defineHmwQuestions && (
                     <div>
-                      <h4 className="font-semibold mb-3">How Might We Questions</h4>
+                      <h4 className="font-semibold mb-3">{t("dd.project.define.section.hmw.title")}</h4>
                       <div className="grid gap-2">
                         {(project.defineHmwQuestions as any[]).map((item: any, idx: number) => (
                           <div key={idx} className="p-3 border rounded-lg bg-purple-50 dark:bg-purple-950/20">
@@ -871,18 +902,18 @@ export default function DoubleDiamondProject() {
         <TabsContent value="develop">
           <Card>
             <CardHeader>
-              <CardTitle>Fase 3: Develop (Divergência)</CardTitle>
+              <CardTitle>{t("dd.project.develop.title")}</CardTitle>
               <CardDescription>
-                Gere múltiplas ideias criativas e soluções inovadoras
+                {t("dd.project.develop.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {project.developStatus === "pending" ? (
                 <div className="text-center py-8">
                   <Sparkles className="h-12 w-12 mx-auto mb-4 text-orange-500" />
-                  <h3 className="text-lg font-semibold mb-2">Hora de idear!</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("dd.project.develop.empty.title")}</h3>
                   <p className="text-muted-foreground mb-6">
-                    A IA gerará 20+ ideias criativas e soluções cross-pollinadas
+                    {t("dd.project.develop.empty.description")}
                   </p>
                   <Button
                     onClick={() => generateDevelopMutation.mutate()}
@@ -894,18 +925,18 @@ export default function DoubleDiamondProject() {
                     {generateDevelopMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Gerando com IA...
+                        {t("dd.project.phase.generate.loading")}
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        Gerar Fase Develop com IA
+                        {t("dd.project.develop.empty.button.generate")}
                       </>
                     )}
                   </Button>
                   {project.defineStatus !== "completed" && (
                     <p className="text-sm text-muted-foreground mt-4">
-                      Complete a fase Define primeiro
+                      {t("dd.project.develop.empty.blocked")}
                     </p>
                   )}
                 </div>
@@ -913,7 +944,7 @@ export default function DoubleDiamondProject() {
                 <div className="space-y-6">
                   {project.developIdeas && (
                     <div>
-                      <h4 className="font-semibold mb-3">Ideias Geradas</h4>
+                      <h4 className="font-semibold mb-3">{t("dd.project.develop.section.ideas.title")}</h4>
                       <div className="grid gap-3">
                         {(project.developIdeas as any[]).map((item: any, idx: number) => (
                           <div key={idx} className="p-4 border rounded-lg">
@@ -937,18 +968,18 @@ export default function DoubleDiamondProject() {
         <TabsContent value="deliver">
           <Card>
             <CardHeader>
-              <CardTitle>Fase 4: Deliver (Convergência)</CardTitle>
+              <CardTitle>{t("dd.project.deliver.title")}</CardTitle>
               <CardDescription>
-                Transforme ideias em MVP concreto com logo, landing page e plano de testes
+                {t("dd.project.deliver.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {project.deliverStatus === "pending" ? (
                 <div className="text-center py-8">
                   <Sparkles className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                  <h3 className="text-lg font-semibold mb-2">Entregue o MVP!</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("dd.project.deliver.empty.title")}</h3>
                   <p className="text-muted-foreground mb-6">
-                    A IA criará o conceito completo do MVP, sugestões de logo, landing page e plano de testes
+                    {t("dd.project.deliver.empty.description")}
                   </p>
                   <Button
                     onClick={() => generateDeliverMutation.mutate()}
@@ -960,18 +991,18 @@ export default function DoubleDiamondProject() {
                     {generateDeliverMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Gerando com IA...
+                        {t("dd.project.phase.generate.loading")}
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        Gerar Fase Deliver com IA
+                        {t("dd.project.deliver.empty.button.generate")}
                       </>
                     )}
                   </Button>
                   {project.developStatus !== "completed" && (
                     <p className="text-sm text-muted-foreground mt-4">
-                      Complete a fase Develop primeiro
+                      {t("dd.project.deliver.empty.blocked")}
                     </p>
                   )}
                 </div>
@@ -980,30 +1011,30 @@ export default function DoubleDiamondProject() {
                   {/* MVP Concept */}
                   {project.deliverMvpConcept && (
                     <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/20">
-                      <h4 className="font-semibold mb-3 text-lg">Conceito do MVP</h4>
+                      <h4 className="font-semibold mb-3 text-lg">{t("dd.project.deliver.section.mvpConcept.title")}</h4>
                       {(() => {
                         const mvp = project.deliverMvpConcept as any;
                         return (
                           <div className="space-y-3">
                             {mvp.name && (
                               <div>
-                                <span className="font-semibold">Nome:</span> {mvp.name}
+                                <span className="font-semibold">{t("dd.project.deliver.section.mvpConcept.nameLabel")}</span> {mvp.name}
                               </div>
                             )}
                             {mvp.tagline && (
                               <div>
-                                <span className="font-semibold">Tagline:</span> {mvp.tagline}
+                                <span className="font-semibold">{t("dd.project.deliver.section.mvpConcept.taglineLabel")}</span> {mvp.tagline}
                               </div>
                             )}
                             {mvp.valueProposition && (
                               <div>
-                                <span className="font-semibold">Proposta de Valor:</span>
+                                <span className="font-semibold">{t("dd.project.deliver.section.mvpConcept.valuePropositionLabel")}</span>
                                 <p className="mt-1 text-sm">{mvp.valueProposition}</p>
                               </div>
                             )}
                             {mvp.coreFeatures && Array.isArray(mvp.coreFeatures) && mvp.coreFeatures.length > 0 && (
                               <div>
-                                <span className="font-semibold">Recursos Principais:</span>
+                                <span className="font-semibold">{t("dd.project.deliver.section.mvpConcept.featuresLabel")}</span>
                                 <ul className="mt-1 list-disc list-inside space-y-1">
                                   {mvp.coreFeatures.map((feature: string, idx: number) => (
                                     <li key={idx} className="text-sm">{feature}</li>
@@ -1020,16 +1051,16 @@ export default function DoubleDiamondProject() {
                   {/* Logo Suggestions */}
                   {project.deliverLogoSuggestions && Array.isArray(project.deliverLogoSuggestions) && (project.deliverLogoSuggestions as any[]).length > 0 && (
                     <div>
-                      <h4 className="font-semibold mb-3 text-lg">Sugestões de Logo</h4>
+                      <h4 className="font-semibold mb-3 text-lg">{t("dd.project.deliver.section.logoSuggestions.title")}</h4>
                       <div className="grid gap-4">
                         {(project.deliverLogoSuggestions as any[]).map((logo: any, idx: number) => (
                           <div key={idx} className="p-4 border rounded-lg">
-                            <div className="font-medium mb-2">Opção {idx + 1}</div>
+                            <div className="font-medium mb-2">{t("dd.project.deliver.section.logoSuggestions.optionLabel", { index: idx + 1 })}</div>
                             {logo.description && <p className="text-sm mb-2">{logo.description}</p>}
                             <div className="flex gap-4 text-sm">
-                              {logo.style && <span><span className="font-semibold">Estilo:</span> {logo.style}</span>}
+                              {logo.style && <span><span className="font-semibold">{t("dd.project.deliver.section.logoSuggestions.styleLabel")}</span> {logo.style}</span>}
                               {logo.colors && Array.isArray(logo.colors) && (
-                                <span><span className="font-semibold">Cores:</span> {logo.colors.join(", ")}</span>
+                                <span><span className="font-semibold">{t("dd.project.deliver.section.logoSuggestions.colorsLabel")}</span> {logo.colors.join(", ")}</span>
                               )}
                             </div>
                             {logo.symbolism && (
@@ -1044,20 +1075,20 @@ export default function DoubleDiamondProject() {
                   {/* Landing Page */}
                   {project.deliverLandingPage && (
                     <div>
-                      <h4 className="font-semibold mb-3 text-lg">Landing Page</h4>
+                      <h4 className="font-semibold mb-3 text-lg">{t("dd.project.deliver.section.landingPage.title")}</h4>
                       {(() => {
                         const landing = project.deliverLandingPage as any;
                         return (
                           <div className="space-y-4">
                             {landing.headline && (
                               <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20">
-                                <div className="font-semibold mb-1">Headline:</div>
+                                <div className="font-semibold mb-1">{t("dd.project.deliver.section.landingPage.headlineLabel")}</div>
                                 <div className="text-lg">{landing.headline}</div>
                               </div>
                             )}
                             {landing.subheadline && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-1">Subheadline:</div>
+                                <div className="font-semibold mb-1">{t("dd.project.deliver.section.landingPage.subheadlineLabel")}</div>
                                 <div>{landing.subheadline}</div>
                               </div>
                             )}
@@ -1069,7 +1100,7 @@ export default function DoubleDiamondProject() {
                                     <p className="text-sm">{section.content}</p>
                                     {section.cta && (
                                       <div className="mt-2">
-                                        <span className="text-sm font-semibold">CTA:</span> {section.cta}
+                                        <span className="text-sm font-semibold">{t("dd.project.deliver.section.landingPage.ctaLabel")}</span> {section.cta}
                                       </div>
                                     )}
                                   </div>
@@ -1078,7 +1109,7 @@ export default function DoubleDiamondProject() {
                             )}
                             {landing.finalCta && (
                               <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/20">
-                                <div className="font-semibold mb-1">Call to Action Final:</div>
+                                <div className="font-semibold mb-1">{t("dd.project.deliver.section.landingPage.finalCtaLabel")}</div>
                                 <div>{landing.finalCta}</div>
                               </div>
                             )}
@@ -1091,14 +1122,14 @@ export default function DoubleDiamondProject() {
                   {/* Social Media Lines */}
                   {project.deliverSocialMediaLines && (
                     <div>
-                      <h4 className="font-semibold mb-3 text-lg">Linhas para Redes Sociais</h4>
+                      <h4 className="font-semibold mb-3 text-lg">{t("dd.project.deliver.section.socialLines.title")}</h4>
                       {(() => {
                         const social = project.deliverSocialMediaLines as any;
                         return (
                           <div className="grid gap-4 md:grid-cols-3">
                             {social.twitter && Array.isArray(social.twitter) && social.twitter.length > 0 && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-2">Twitter</div>
+                                <div className="font-semibold mb-2">{t("dd.project.deliver.section.socialLines.twitterLabel")}</div>
                                 <ul className="space-y-2 text-sm">
                                   {social.twitter.map((line: string, idx: number) => (
                                     <li key={idx}>• {line}</li>
@@ -1108,7 +1139,7 @@ export default function DoubleDiamondProject() {
                             )}
                             {social.linkedin && Array.isArray(social.linkedin) && social.linkedin.length > 0 && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-2">LinkedIn</div>
+                                <div className="font-semibold mb-2">{t("dd.project.deliver.section.socialLines.linkedinLabel")}</div>
                                 <ul className="space-y-2 text-sm">
                                   {social.linkedin.map((line: string, idx: number) => (
                                     <li key={idx}>• {line}</li>
@@ -1118,7 +1149,7 @@ export default function DoubleDiamondProject() {
                             )}
                             {social.instagram && Array.isArray(social.instagram) && social.instagram.length > 0 && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-2">Instagram</div>
+                                <div className="font-semibold mb-2">{t("dd.project.deliver.section.socialLines.instagramLabel")}</div>
                                 <ul className="space-y-2 text-sm">
                                   {social.instagram.map((line: string, idx: number) => (
                                     <li key={idx}>• {line}</li>
@@ -1135,14 +1166,14 @@ export default function DoubleDiamondProject() {
                   {/* Test Plan */}
                   {project.deliverTestPlan && (
                     <div>
-                      <h4 className="font-semibold mb-3 text-lg">Plano de Testes</h4>
+                      <h4 className="font-semibold mb-3 text-lg">{t("dd.project.deliver.section.testPlan.title")}</h4>
                       {(() => {
                         const plan = project.deliverTestPlan as any;
                         return (
                           <div className="space-y-3">
                             {plan.objectives && Array.isArray(plan.objectives) && plan.objectives.length > 0 && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-2">Objetivos:</div>
+                                <div className="font-semibold mb-2">{t("dd.project.deliver.section.testPlan.objectivesLabel")}</div>
                                 <ul className="list-disc list-inside space-y-1 text-sm">
                                   {plan.objectives.map((obj: string, idx: number) => (
                                     <li key={idx}>{obj}</li>
@@ -1152,13 +1183,13 @@ export default function DoubleDiamondProject() {
                             )}
                             {plan.targetUsers && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-1">Usuários-Alvo:</div>
+                                <div className="font-semibold mb-1">{t("dd.project.deliver.section.testPlan.targetUsersLabel")}</div>
                                 <div className="text-sm">{plan.targetUsers}</div>
                               </div>
                             )}
                             {plan.metrics && Array.isArray(plan.metrics) && plan.metrics.length > 0 && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-2">Métricas:</div>
+                                <div className="font-semibold mb-2">{t("dd.project.deliver.section.testPlan.metricsLabel")}</div>
                                 <ul className="list-disc list-inside space-y-1 text-sm">
                                   {plan.metrics.map((metric: string, idx: number) => (
                                     <li key={idx}>{metric}</li>
@@ -1168,7 +1199,7 @@ export default function DoubleDiamondProject() {
                             )}
                             {plan.testMethods && Array.isArray(plan.testMethods) && plan.testMethods.length > 0 && (
                               <div className="p-4 border rounded-lg">
-                                <div className="font-semibold mb-2">Métodos de Teste:</div>
+                                <div className="font-semibold mb-2">{t("dd.project.deliver.section.testPlan.testMethodsLabel")}</div>
                                 <ul className="list-disc list-inside space-y-1 text-sm">
                                   {plan.testMethods.map((method: string, idx: number) => (
                                     <li key={idx}>{method}</li>
@@ -1191,18 +1222,18 @@ export default function DoubleDiamondProject() {
         <TabsContent value="dfv">
           <Card>
             <CardHeader>
-              <CardTitle>Análise DFV (Desirability, Feasibility, Viability)</CardTitle>
+              <CardTitle>{t("dd.project.dfv.title")}</CardTitle>
               <CardDescription>
-                Avalie seu projeto nas três dimensões críticas de sucesso
+                {t("dd.project.dfv.subtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {!project.dfvDesirabilityScore ? (
                 <div className="text-center py-8">
                   <Sparkles className="h-12 w-12 mx-auto mb-4 text-indigo-500" />
-                  <h3 className="text-lg font-semibold mb-2">Análise Estratégica</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("dd.project.dfv.empty.title")}</h3>
                   <p className="text-muted-foreground mb-6">
-                    A IA analisará seu projeto em Desejabilidade, Viabilidade e Exequibilidade
+                    {t("dd.project.dfv.empty.description")}
                   </p>
                   <Button
                     onClick={() => generateDFVMutation.mutate()}
@@ -1214,18 +1245,18 @@ export default function DoubleDiamondProject() {
                     {generateDFVMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Analisando...
+                        {t("dd.project.dfv.generate.button.loading")}
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        Gerar Análise DFV
+                        {t("dd.project.dfv.generate.button.idle")}
                       </>
                     )}
                   </Button>
                   {project.deliverStatus !== "completed" && (
                     <p className="text-sm text-muted-foreground mt-4">
-                      Complete a fase Deliver primeiro
+                      {t("dd.project.dfv.generate.blocked")}
                     </p>
                   )}
                 </div>
@@ -1233,9 +1264,9 @@ export default function DoubleDiamondProject() {
                 <div className="space-y-6">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-semibold">Pronto para levar este projeto para as 5 fases?</h3>
+                      <h3 className="text-lg font-semibold">{t("dd.project.dfv.cta.title")}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Use esta análise DFV para criar automaticamente um projeto completo nas 5 fases de Design Thinking.
+                        {t("dd.project.dfv.cta.description")}
                       </p>
                     </div>
                     <Button
@@ -1248,12 +1279,12 @@ export default function DoubleDiamondProject() {
                       {exportProjectMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Exportando...
+                          {t("dd.project.dfv.cta.button.loading")}
                         </>
                       ) : (
                         <>
                           <Download className="mr-2 h-4 w-4" />
-                          Criar 5 Fases do seu projeto
+                          {t("dd.project.dfv.cta.button.idle")}
                         </>
                       )}
                     </Button>
@@ -1263,7 +1294,7 @@ export default function DoubleDiamondProject() {
                   <div className="grid grid-cols-3 gap-4">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-sm">Desirability</CardTitle>
+                        <CardTitle className="text-sm">{t("dd.project.dfv.score.desirability")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold text-blue-600">{project.dfvDesirabilityScore}/100</div>
@@ -1271,7 +1302,7 @@ export default function DoubleDiamondProject() {
                     </Card>
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-sm">Feasibility</CardTitle>
+                        <CardTitle className="text-sm">{t("dd.project.dfv.score.feasibility")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold text-green-600">{project.dfvFeasibilityScore}/100</div>
@@ -1279,12 +1310,26 @@ export default function DoubleDiamondProject() {
                     </Card>
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-sm">Viability</CardTitle>
+                        <CardTitle className="text-sm">{t("dd.project.dfv.score.viability")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold text-purple-600">{project.dfvViabilityScore}/100</div>
                       </CardContent>
                     </Card>
+                  </div>
+
+                  {/* Explanation of how scores are calculated */}
+                  <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground space-y-2">
+                    <h4 className="font-semibold text-foreground">{t("dd.dfv.explanation.title")}</h4>
+                    <p>
+                      {t("dd.dfv.explanation.intro")}
+                    </p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>{t("dd.dfv.explanation.item.desirability")}</li>
+                      <li>{t("dd.dfv.explanation.item.feasibility")}</li>
+                      <li>{t("dd.dfv.explanation.item.viability")}</li>
+                    </ul>
+                    <p>{t("dd.dfv.explanation.footer")}</p>
                   </div>
 
                   {/* Análise Detalhada */}
@@ -1299,12 +1344,12 @@ export default function DoubleDiamondProject() {
                             {dfvData.desirability && (
                               <Card>
                                 <CardHeader>
-                                  <CardTitle className="text-lg">Análise de Desirability (Desejabilidade)</CardTitle>
+                                  <CardTitle className="text-lg">{t("dd.project.dfv.detail.desirability.title")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                   {dfvData.desirability.strengths && Array.isArray(dfvData.desirability.strengths) && dfvData.desirability.strengths.length > 0 && (
                                     <div>
-                                      <h5 className="font-semibold mb-2 text-green-700 dark:text-green-400">Pontos Fortes:</h5>
+                                      <h5 className="font-semibold mb-2 text-green-700 dark:text-green-400">{t("dd.project.dfv.detail.section.strengths")}</h5>
                                       <ul className="list-disc list-inside space-y-1 text-sm">
                                         {dfvData.desirability.strengths.map((strength: string, idx: number) => (
                                           <li key={idx}>{strength}</li>
@@ -1314,7 +1359,7 @@ export default function DoubleDiamondProject() {
                                   )}
                                   {dfvData.desirability.concerns && Array.isArray(dfvData.desirability.concerns) && dfvData.desirability.concerns.length > 0 && (
                                     <div>
-                                      <h5 className="font-semibold mb-2 text-orange-700 dark:text-orange-400">Preocupações:</h5>
+                                      <h5 className="font-semibold mb-2 text-orange-700 dark:text-orange-400">{t("dd.project.dfv.detail.section.concerns")}</h5>
                                       <ul className="list-disc list-inside space-y-1 text-sm">
                                         {dfvData.desirability.concerns.map((concern: string, idx: number) => (
                                           <li key={idx}>{concern}</li>
@@ -1324,7 +1369,7 @@ export default function DoubleDiamondProject() {
                                   )}
                                   {dfvData.desirability.reasoning && (
                                     <div>
-                                      <h5 className="font-semibold mb-2">Raciocínio:</h5>
+                                      <h5 className="font-semibold mb-2">{t("dd.project.dfv.detail.section.reasoning")}</h5>
                                       <p className="text-sm text-muted-foreground">{dfvData.desirability.reasoning}</p>
                                     </div>
                                   )}
@@ -1336,12 +1381,12 @@ export default function DoubleDiamondProject() {
                             {dfvData.feasibility && (
                               <Card>
                                 <CardHeader>
-                                  <CardTitle className="text-lg">Análise de Feasibility (Viabilidade Técnica)</CardTitle>
+                                  <CardTitle className="text-lg">{t("dd.project.dfv.detail.feasibility.title")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                   {dfvData.feasibility.strengths && Array.isArray(dfvData.feasibility.strengths) && dfvData.feasibility.strengths.length > 0 && (
                                     <div>
-                                      <h5 className="font-semibold mb-2 text-green-700 dark:text-green-400">Pontos Fortes:</h5>
+                                      <h5 className="font-semibold mb-2 text-green-700 dark:text-green-400">{t("dd.project.dfv.detail.section.strengths")}</h5>
                                       <ul className="list-disc list-inside space-y-1 text-sm">
                                         {dfvData.feasibility.strengths.map((strength: string, idx: number) => (
                                           <li key={idx}>{strength}</li>
@@ -1351,7 +1396,7 @@ export default function DoubleDiamondProject() {
                                   )}
                                   {dfvData.feasibility.concerns && Array.isArray(dfvData.feasibility.concerns) && dfvData.feasibility.concerns.length > 0 && (
                                     <div>
-                                      <h5 className="font-semibold mb-2 text-orange-700 dark:text-orange-400">Preocupações:</h5>
+                                      <h5 className="font-semibold mb-2 text-orange-700 dark:text-orange-400">{t("dd.project.dfv.detail.section.concerns")}</h5>
                                       <ul className="list-disc list-inside space-y-1 text-sm">
                                         {dfvData.feasibility.concerns.map((concern: string, idx: number) => (
                                           <li key={idx}>{concern}</li>
@@ -1361,7 +1406,7 @@ export default function DoubleDiamondProject() {
                                   )}
                                   {dfvData.feasibility.reasoning && (
                                     <div>
-                                      <h5 className="font-semibold mb-2">Raciocínio:</h5>
+                                      <h5 className="font-semibold mb-2">{t("dd.project.dfv.detail.section.reasoning")}</h5>
                                       <p className="text-sm text-muted-foreground">{dfvData.feasibility.reasoning}</p>
                                     </div>
                                   )}
@@ -1373,12 +1418,12 @@ export default function DoubleDiamondProject() {
                             {dfvData.viability && (
                               <Card>
                                 <CardHeader>
-                                  <CardTitle className="text-lg">Análise de Viability (Viabilidade de Negócio)</CardTitle>
+                                  <CardTitle className="text-lg">{t("dd.project.dfv.detail.viability.title")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                   {dfvData.viability.strengths && Array.isArray(dfvData.viability.strengths) && dfvData.viability.strengths.length > 0 && (
                                     <div>
-                                      <h5 className="font-semibold mb-2 text-green-700 dark:text-green-400">Pontos Fortes:</h5>
+                                      <h5 className="font-semibold mb-2 text-green-700 dark:text-green-400">{t("dd.project.dfv.detail.section.strengths")}</h5>
                                       <ul className="list-disc list-inside space-y-1 text-sm">
                                         {dfvData.viability.strengths.map((strength: string, idx: number) => (
                                           <li key={idx}>{strength}</li>
@@ -1388,7 +1433,7 @@ export default function DoubleDiamondProject() {
                                   )}
                                   {dfvData.viability.concerns && Array.isArray(dfvData.viability.concerns) && dfvData.viability.concerns.length > 0 && (
                                     <div>
-                                      <h5 className="font-semibold mb-2 text-orange-700 dark:text-orange-400">Preocupações:</h5>
+                                      <h5 className="font-semibold mb-2 text-orange-700 dark:text-orange-400">{t("dd.project.dfv.detail.section.concerns")}</h5>
                                       <ul className="list-disc list-inside space-y-1 text-sm">
                                         {dfvData.viability.concerns.map((concern: string, idx: number) => (
                                           <li key={idx}>{concern}</li>
@@ -1398,7 +1443,7 @@ export default function DoubleDiamondProject() {
                                   )}
                                   {dfvData.viability.reasoning && (
                                     <div>
-                                      <h5 className="font-semibold mb-2">Raciocínio:</h5>
+                                      <h5 className="font-semibold mb-2">{t("dd.project.dfv.detail.section.reasoning")}</h5>
                                       <p className="text-sm text-muted-foreground">{dfvData.viability.reasoning}</p>
                                     </div>
                                   )}
@@ -1415,7 +1460,7 @@ export default function DoubleDiamondProject() {
                   {project.dfvFeedback && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Avaliação Geral</CardTitle>
+                        <CardTitle className="text-lg">{t("dd.project.dfv.overall.title")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm whitespace-pre-wrap">{project.dfvFeedback}</p>
@@ -1427,7 +1472,7 @@ export default function DoubleDiamondProject() {
                   {project.dfvAnalysis && (project.dfvAnalysis as any).recommendations && Array.isArray((project.dfvAnalysis as any).recommendations) && (project.dfvAnalysis as any).recommendations.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Recomendações</CardTitle>
+                        <CardTitle className="text-lg">{t("dd.project.dfv.recommendations.title")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ul className="list-disc list-inside space-y-2 text-sm">
@@ -1443,7 +1488,7 @@ export default function DoubleDiamondProject() {
                   {project.dfvAnalysis && (project.dfvAnalysis as any).nextSteps && Array.isArray((project.dfvAnalysis as any).nextSteps) && (project.dfvAnalysis as any).nextSteps.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Próximos Passos</CardTitle>
+                        <CardTitle className="text-lg">{t("dd.project.dfv.nextSteps.title")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ol className="list-decimal list-inside space-y-2 text-sm">
