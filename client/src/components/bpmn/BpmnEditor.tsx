@@ -3,7 +3,7 @@ import Modeler from "bpmn-js/lib/Modeler";
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, Save } from "lucide-react";
+import { Loader2, Download, Save, Maximize2, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -36,6 +36,7 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
   const modelerRef = useRef<any | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -126,6 +127,16 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
     }
   };
 
+  useEffect(() => {
+    if (!isPresentationMode || !isReady || !modelerRef.current) return;
+    try {
+      const canvas = modelerRef.current.get("canvas");
+      canvas.zoom("fit-viewport");
+    } catch (error) {
+      console.error("Error fitting BPMN diagram when entering presentation mode", error);
+    }
+  }, [isPresentationMode, isReady]);
+
   const handleExportSvg = async () => {
     if (!modelerRef.current) return;
 
@@ -187,8 +198,32 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
   };
 
   return (
-    <div className="space-y-3">
+    <div
+      className={
+        isPresentationMode
+          ? "fixed inset-0 z-50 bg-background p-4 flex flex-col space-y-3"
+          : "space-y-3"
+      }
+    >
       <div className="flex justify-end gap-2">
+        <Button
+          variant={isPresentationMode ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => setIsPresentationMode((prev) => !prev)}
+          disabled={!isReady}
+        >
+          {isPresentationMode ? (
+            <>
+              <Minimize2 className="mr-2 h-4 w-4" />
+              {t("dd.project.bpmn.editor.presentationExit")}
+            </>
+          ) : (
+            <>
+              <Maximize2 className="mr-2 h-4 w-4" />
+              {t("dd.project.bpmn.editor.presentationEnter")}
+            </>
+          )}
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -249,7 +284,7 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
           )}
         </Button>
       </div>
-      <div className="border rounded-md h-[500px]">
+      <div className={`border rounded-md ${isPresentationMode ? "flex-1" : "h-[500px]"}`}>
         <div ref={containerRef} className="w-full h-full" />
       </div>
     </div>

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Sparkles, Loader2, CheckCircle2, Circle, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, CheckCircle2, Circle, Download, Trash2, Pencil, Copy } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -92,6 +92,90 @@ const DEFAULT_BPMN_XML = `<?xml version="1.0" encoding="UTF-8"?>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
+const SALES_FUNNEL_BPMN_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_SalesFunnel" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_Sales" name="Início do funil de vendas" />
+    <bpmn:task id="Task_CaptureLeads" name="Capturar leads" />
+    <bpmn:task id="Task_QualifyLeads" name="Qualificar leads" />
+    <bpmn:task id="Task_DiagnosisMeeting" name="Reunião de diagnóstico" />
+    <bpmn:task id="Task_SendProposal" name="Enviar proposta" />
+    <bpmn:task id="Task_FollowUp" name="Follow up" />
+    <bpmn:endEvent id="EndEvent_ClosedWon" name="Cliente convertido" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BpmnDiagram_SalesFunnel">
+    <bpmndi:BPMNPlane id="BpmnPlane_SalesFunnel" bpmnElement="Process_SalesFunnel">
+      <bpmndi:BPMNShape id="StartEvent_Sales_di" bpmnElement="StartEvent_Sales">
+        <dc:Bounds x="120" y="150" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CaptureLeads_di" bpmnElement="Task_CaptureLeads">
+        <dc:Bounds x="200" y="140" width="100" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_QualifyLeads_di" bpmnElement="Task_QualifyLeads">
+        <dc:Bounds x="330" y="140" width="120" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_DiagnosisMeeting_di" bpmnElement="Task_DiagnosisMeeting">
+        <dc:Bounds x="480" y="140" width="140" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SendProposal_di" bpmnElement="Task_SendProposal">
+        <dc:Bounds x="650" y="140" width="130" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_FollowUp_di" bpmnElement="Task_FollowUp">
+        <dc:Bounds x="810" y="140" width="110" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_ClosedWon_di" bpmnElement="EndEvent_ClosedWon">
+        <dc:Bounds x="950" y="150" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`;
+
+const ONBOARDING_DTTOOLS_BPMN_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_OnboardingDttools" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_Onboarding" name="Início do onboarding" />
+    <bpmn:task id="Task_Kickoff" name="Reunião de kickoff" />
+    <bpmn:task id="Task_ConfigureWorkspace" name="Configurar workspace no DTTools" />
+    <bpmn:task id="Task_ImportData" name="Importar dados do cliente" />
+    <bpmn:task id="Task_TrainTeam" name="Treinar time do cliente" />
+    <bpmn:task id="Task_MonitorUsage" name="Acompanhar primeiros usos" />
+    <bpmn:endEvent id="EndEvent_OnboardingDone" name="Onboarding concluído" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BpmnDiagram_OnboardingDttools">
+    <bpmndi:BPMNPlane id="BpmnPlane_OnboardingDttools" bpmnElement="Process_OnboardingDttools">
+      <bpmndi:BPMNShape id="StartEvent_Onboarding_di" bpmnElement="StartEvent_Onboarding">
+        <dc:Bounds x="120" y="280" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Kickoff_di" bpmnElement="Task_Kickoff">
+        <dc:Bounds x="200" y="270" width="130" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ConfigureWorkspace_di" bpmnElement="Task_ConfigureWorkspace">
+        <dc:Bounds x="360" y="270" width="190" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ImportData_di" bpmnElement="Task_ImportData">
+        <dc:Bounds x="580" y="270" width="170" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_TrainTeam_di" bpmnElement="Task_TrainTeam">
+        <dc:Bounds x="780" y="270" width="170" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MonitorUsage_di" bpmnElement="Task_MonitorUsage">
+        <dc:Bounds x="980" y="270" width="190" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_OnboardingDone_di" bpmnElement="EndEvent_OnboardingDone">
+        <dc:Bounds x="1200" y="280" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`;
+
 export default function DoubleDiamondProject() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
@@ -104,6 +188,13 @@ export default function DoubleDiamondProject() {
   const [selectedBpmnDiagramId, setSelectedBpmnDiagramId] = useState<string | null>(null);
   const [newDiagramTitle, setNewDiagramTitle] = useState("");
   const [newDiagramType, setNewDiagramType] = useState<"as-is" | "to-be" | "other">("to-be");
+  const [isEditingBpmnDiagram, setIsEditingBpmnDiagram] = useState(false);
+  const [editingDiagramId, setEditingDiagramId] = useState<string | null>(null);
+  const [editingDiagramTitle, setEditingDiagramTitle] = useState("");
+  const [editingDiagramType, setEditingDiagramType] = useState<"as-is" | "to-be" | "other">("to-be");
+  const [newDiagramTemplate, setNewDiagramTemplate] = useState<
+    "blank" | "sales-funnel" | "onboarding-dttools"
+  >("blank");
 
   const initialBriefingSchema = z.object({
     name: z.string().min(3, t("dd.project.briefing.validation.name.min")),
@@ -229,6 +320,69 @@ export default function DoubleDiamondProject() {
       toast({
         title: t("dd.project.briefing.toast.update.error.title"),
         description: error.message || t("dd.project.briefing.toast.update.error.description"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateBpmnDiagramMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingDiagramId) {
+        throw new Error(t("dd.project.error.notFound.internal"));
+      }
+
+      await apiRequest("PUT", `/api/bpmn-diagrams/${editingDiagramId}`, {
+        title: editingDiagramTitle || t("dd.project.bpmn.defaultTitle"),
+        type: editingDiagramType,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id, "bpmn-diagrams"] });
+      setIsEditingBpmnDiagram(false);
+      setEditingDiagramId(null);
+      setEditingDiagramTitle("");
+      setEditingDiagramType("to-be");
+      toast({
+        title: t("dd.project.bpmn.toast.update.success.title"),
+        description: t("dd.project.bpmn.toast.update.success.description"),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("dd.project.bpmn.toast.update.error.title"),
+        description: error.message || t("dd.project.bpmn.toast.update.error.description"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const duplicateBpmnDiagramMutation = useMutation({
+    mutationFn: async (diagramId: string) => {
+      if (!id) throw new Error(t("dd.project.error.notFound.internal"));
+      const source = bpmnDiagrams.find((d) => d.id === diagramId);
+      if (!source) throw new Error(t("dd.project.error.notFound.internal"));
+
+      const response = await apiRequest("POST", `/api/double-diamond/${id}/bpmn-diagrams`, {
+        title: `${source.title || t("dd.project.bpmn.defaultTitle")}${t("dd.project.bpmn.duplicate.suffix")}`,
+        type: source.type as "as-is" | "to-be" | "other",
+        bpmnXml: (source as any).bpmnXml || DEFAULT_BPMN_XML,
+      });
+
+      const created = (await response.json()) as BpmnDiagram;
+      return created;
+    },
+    onSuccess: (created: BpmnDiagram) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id, "bpmn-diagrams"] });
+      setSelectedBpmnDiagramId(created.id);
+      toast({
+        title: t("dd.project.bpmn.toast.duplicate.success.title"),
+        description: t("dd.project.bpmn.toast.duplicate.success.description"),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("dd.project.bpmn.toast.duplicate.error.title"),
+        description: error.message || t("dd.project.bpmn.toast.duplicate.error.description"),
         variant: "destructive",
       });
     },
@@ -364,10 +518,16 @@ export default function DoubleDiamondProject() {
   const createBpmnDiagramMutation = useMutation({
     mutationFn: async () => {
       if (!id) throw new Error(t("dd.project.error.notFound.internal"));
+      let bpmnXml = DEFAULT_BPMN_XML;
+      if (newDiagramTemplate === "sales-funnel") {
+        bpmnXml = SALES_FUNNEL_BPMN_XML;
+      } else if (newDiagramTemplate === "onboarding-dttools") {
+        bpmnXml = ONBOARDING_DTTOOLS_BPMN_XML;
+      }
       const response = await apiRequest("POST", `/api/double-diamond/${id}/bpmn-diagrams`, {
         title: newDiagramTitle || t("dd.project.bpmn.defaultTitle"),
         type: newDiagramType,
-        bpmnXml: DEFAULT_BPMN_XML,
+        bpmnXml,
       });
       return await response.json();
     },
@@ -376,6 +536,7 @@ export default function DoubleDiamondProject() {
       setIsCreatingBpmnDiagram(false);
       setNewDiagramTitle("");
       setNewDiagramType("to-be");
+      setNewDiagramTemplate("blank");
       setSelectedBpmnDiagramId(diagram.id);
       toast({
         title: t("dd.project.bpmn.toast.create.success.title"),
@@ -956,18 +1117,48 @@ export default function DoubleDiamondProject() {
                                   : t("dd.project.bpmn.type.other")}
                               </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                deleteBpmnDiagramMutation.mutate(diagram.id);
-                              }}
-                              disabled={deleteBpmnDiagramMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setEditingDiagramId(diagram.id);
+                                  setEditingDiagramTitle(diagram.title || "");
+                                  setEditingDiagramType(
+                                    (diagram.type as "as-is" | "to-be" | "other") || "to-be"
+                                  );
+                                  setIsEditingBpmnDiagram(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  duplicateBpmnDiagramMutation.mutate(diagram.id);
+                                }}
+                                disabled={duplicateBpmnDiagramMutation.isPending}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  deleteBpmnDiagramMutation.mutate(diagram.id);
+                                }}
+                                disabled={deleteBpmnDiagramMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </button>
                       ))}
@@ -1030,11 +1221,40 @@ export default function DoubleDiamondProject() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>{t("dd.project.bpmn.form.template.label")}</Label>
+                  <Select
+                    value={newDiagramTemplate}
+                    onValueChange={(value) =>
+                      setNewDiagramTemplate(
+                        value as "blank" | "sales-funnel" | "onboarding-dttools"
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="blank">
+                        {t("dd.project.bpmn.form.template.blank")}
+                      </SelectItem>
+                      <SelectItem value="sales-funnel">
+                        {t("dd.project.bpmn.form.template.salesFunnel")}
+                      </SelectItem>
+                      <SelectItem value="onboarding-dttools">
+                        {t("dd.project.bpmn.form.template.onboardingDttools")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setIsCreatingBpmnDiagram(false)}
+                    onClick={() => {
+                      setIsCreatingBpmnDiagram(false);
+                      setNewDiagramTemplate("blank");
+                    }}
                   >
                     {t("dd.project.briefing.form.buttons.cancel")}
                   </Button>
@@ -1044,6 +1264,79 @@ export default function DoubleDiamondProject() {
                     disabled={createBpmnDiagramMutation.isPending || !newDiagramTitle.trim()}
                   >
                     {createBpmnDiagramMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {t("dd.project.briefing.form.buttons.submit.idle")}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={isEditingBpmnDiagram}
+            onOpenChange={(open) => {
+              setIsEditingBpmnDiagram(open);
+              if (!open) {
+                setEditingDiagramId(null);
+              }
+            }}
+          >
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t("dd.project.bpmn.dialog.editTitle")}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{t("dd.project.bpmn.form.title.label")}</Label>
+                  <Input
+                    value={editingDiagramTitle}
+                    onChange={(e) => setEditingDiagramTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("dd.project.bpmn.form.type.label")}</Label>
+                  <Select
+                    value={editingDiagramType}
+                    onValueChange={(value) =>
+                      setEditingDiagramType(value as "as-is" | "to-be" | "other")
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="as-is">
+                        {t("dd.project.bpmn.type.asIs")}
+                      </SelectItem>
+                      <SelectItem value="to-be">
+                        {t("dd.project.bpmn.type.toBe")}
+                      </SelectItem>
+                      <SelectItem value="other">
+                        {t("dd.project.bpmn.type.other")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => {
+                      setIsEditingBpmnDiagram(false);
+                      setEditingDiagramId(null);
+                    }}
+                  >
+                    {t("dd.project.briefing.form.buttons.cancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => updateBpmnDiagramMutation.mutate()}
+                    disabled={
+                      updateBpmnDiagramMutation.isPending || !editingDiagramTitle.trim()
+                    }
+                  >
+                    {updateBpmnDiagramMutation.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
                     {t("dd.project.briefing.form.buttons.submit.idle")}
