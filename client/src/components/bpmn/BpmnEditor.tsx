@@ -92,6 +92,40 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
     }
   };
 
+  const handleZoomIn = () => {
+    if (!modelerRef.current) return;
+    try {
+      const canvas = modelerRef.current.get("canvas");
+      const currentZoom = canvas.zoom();
+      const nextZoom = Math.min((typeof currentZoom === "number" ? currentZoom : 1) + 0.2, 4);
+      canvas.zoom(nextZoom);
+    } catch (error) {
+      console.error("Error zooming in BPMN diagram", error);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (!modelerRef.current) return;
+    try {
+      const canvas = modelerRef.current.get("canvas");
+      const currentZoom = canvas.zoom();
+      const nextZoom = Math.max((typeof currentZoom === "number" ? currentZoom : 1) - 0.2, 0.2);
+      canvas.zoom(nextZoom);
+    } catch (error) {
+      console.error("Error zooming out BPMN diagram", error);
+    }
+  };
+
+  const handleZoomFit = () => {
+    if (!modelerRef.current) return;
+    try {
+      const canvas = modelerRef.current.get("canvas");
+      canvas.zoom("fit-viewport");
+    } catch (error) {
+      console.error("Error fitting BPMN diagram to viewport", error);
+    }
+  };
+
   const handleExportSvg = async () => {
     if (!modelerRef.current) return;
 
@@ -126,6 +160,10 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
           URL.revokeObjectURL(url);
           return;
         }
+        // Fill with white background so exported PNG does not appear with a black/transparent background
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
         context.drawImage(image, 0, 0);
         URL.revokeObjectURL(url);
         canvas.toBlob((blob) => {
@@ -138,6 +176,10 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
           URL.revokeObjectURL(pngUrl);
         }, "image/png");
       };
+      image.onerror = (error) => {
+        console.error("Error loading SVG for PNG export", error);
+        URL.revokeObjectURL(url);
+      };
       image.src = url;
     } catch (error) {
       console.error("Error exporting PNG", error);
@@ -147,6 +189,30 @@ export function BpmnEditor({ diagramId, initialXml }: BpmnEditorProps) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleZoomOut}
+          disabled={!isReady}
+        >
+          {t("dd.project.bpmn.editor.zoomOut")}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleZoomIn}
+          disabled={!isReady}
+        >
+          {t("dd.project.bpmn.editor.zoomIn")}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleZoomFit}
+          disabled={!isReady}
+        >
+          {t("dd.project.bpmn.editor.zoomFit")}
+        </Button>
         <Button
           variant="outline"
           size="sm"
