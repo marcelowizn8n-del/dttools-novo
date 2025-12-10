@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Sparkles, Loader2, CheckCircle2, Circle, Download } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, CheckCircle2, Circle, Download, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,9 +15,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { BpmnDiagram } from "@shared/schema";
+import { BpmnEditor } from "@/components/bpmn/BpmnEditor";
 
 interface DoubleDiamondProject {
   id: string;
@@ -71,6 +74,24 @@ type InitialBriefingFormData = {
   problemStatement: string;
 };
 
+const DEFAULT_BPMN_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BpmnDiagram_1">
+    <bpmndi:BPMNPlane id="BpmnPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="172" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`;
+
 export default function DoubleDiamondProject() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
@@ -79,6 +100,10 @@ export default function DoubleDiamondProject() {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const { language, t } = useLanguage();
   const [isEditingBriefing, setIsEditingBriefing] = useState(false);
+  const [isCreatingBpmnDiagram, setIsCreatingBpmnDiagram] = useState(false);
+  const [selectedBpmnDiagramId, setSelectedBpmnDiagramId] = useState<string | null>(null);
+  const [newDiagramTitle, setNewDiagramTitle] = useState("");
+  const [newDiagramType, setNewDiagramType] = useState<"as-is" | "to-be" | "other">("to-be");
 
   const initialBriefingSchema = z.object({
     name: z.string().min(3, t("dd.project.briefing.validation.name.min")),
@@ -98,6 +123,11 @@ export default function DoubleDiamondProject() {
     enabled: !!id
   });
 
+  const { data: bpmnDiagrams = [], isLoading: isLoadingBpmnDiagrams } = useQuery<BpmnDiagram[]>({
+    queryKey: ["/api/double-diamond", id, "bpmn-diagrams"],
+    enabled: !!id,
+  });
+
   // Set initial active tab - always start with "discover" unless explicitly navigating
   if (project && activeTab === null) {
     // Force to "discover" if project is new or if discover phase is not completed
@@ -115,6 +145,10 @@ export default function DoubleDiamondProject() {
         setActiveTab("dfv");
       }
     }
+  }
+
+  if (bpmnDiagrams && bpmnDiagrams.length > 0 && !selectedBpmnDiagramId) {
+    setSelectedBpmnDiagramId(bpmnDiagrams[0].id);
   }
 
   // Generate Discover Phase
@@ -325,6 +359,57 @@ export default function DoubleDiamondProject() {
         variant: "destructive"
       });
     }
+  });
+
+  const createBpmnDiagramMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error(t("dd.project.error.notFound.internal"));
+      const response = await apiRequest("POST", `/api/double-diamond/${id}/bpmn-diagrams`, {
+        title: newDiagramTitle || t("dd.project.bpmn.defaultTitle"),
+        type: newDiagramType,
+        bpmnXml: DEFAULT_BPMN_XML,
+      });
+      return await response.json();
+    },
+    onSuccess: (diagram: BpmnDiagram) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id, "bpmn-diagrams"] });
+      setIsCreatingBpmnDiagram(false);
+      setNewDiagramTitle("");
+      setNewDiagramType("to-be");
+      setSelectedBpmnDiagramId(diagram.id);
+      toast({
+        title: t("dd.project.bpmn.toast.create.success.title"),
+        description: t("dd.project.bpmn.toast.create.success.description"),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("dd.project.bpmn.toast.create.error.title"),
+        description: error.message || t("dd.project.bpmn.toast.create.error.description"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteBpmnDiagramMutation = useMutation({
+    mutationFn: async (diagramId: string) => {
+      await apiRequest("DELETE", `/api/bpmn-diagrams/${diagramId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id, "bpmn-diagrams"] });
+      setSelectedBpmnDiagramId(null);
+      toast({
+        title: t("dd.project.bpmn.toast.delete.success.title"),
+        description: t("dd.project.bpmn.toast.delete.success.description"),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("dd.project.bpmn.toast.delete.error.title"),
+        description: error.message || t("dd.project.bpmn.toast.delete.error.description"),
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -714,11 +799,12 @@ export default function DoubleDiamondProject() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab || "discover"} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="w-full flex overflow-x-auto md:grid md:grid-cols-5 h-auto p-1 gap-1">
+        <TabsList className="w-full flex overflow-x-auto md:grid md:grid-cols-6 h-auto p-1 gap-1">
           <TabsTrigger value="discover" data-testid="tab-discover">{t("dd.project.tabs.discover")}</TabsTrigger>
           <TabsTrigger value="define" data-testid="tab-define">{t("dd.project.tabs.define")}</TabsTrigger>
           <TabsTrigger value="develop" data-testid="tab-develop">{t("dd.project.tabs.develop")}</TabsTrigger>
           <TabsTrigger value="deliver" data-testid="tab-deliver">{t("dd.project.tabs.deliver")}</TabsTrigger>
+          <TabsTrigger value="bpmn" data-testid="tab-bpmn">{t("dd.project.tabs.bpmn")}</TabsTrigger>
           <TabsTrigger value="dfv" data-testid="tab-dfv">{t("dd.project.tabs.dfv")}</TabsTrigger>
         </TabsList>
 
@@ -809,6 +895,163 @@ export default function DoubleDiamondProject() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* BPMN TAB */}
+        <TabsContent value="bpmn">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("dd.project.bpmn.title")}</CardTitle>
+              <CardDescription>
+                {t("dd.project.bpmn.description")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {t("dd.project.bpmn.list.emptyTitle")}
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => setIsCreatingBpmnDiagram(true)}
+                  data-testid="button-new-bpmn-diagram"
+                >
+                  {t("dd.project.bpmn.button.newDiagram")}
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  {isLoadingBpmnDiagrams ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
+                  ) : bpmnDiagrams.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("dd.project.bpmn.list.emptyDescription")}
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {bpmnDiagrams.map((diagram) => (
+                        <button
+                          key={diagram.id}
+                          type="button"
+                          onClick={() => setSelectedBpmnDiagramId(diagram.id)}
+                          className={`w-full text-left px-3 py-2 rounded-md border ${
+                            selectedBpmnDiagramId === diagram.id
+                              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                              : "border-border hover:bg-muted"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm truncate">
+                                {diagram.title}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {diagram.type === "as-is"
+                                  ? t("dd.project.bpmn.type.asIs")
+                                  : diagram.type === "to-be"
+                                  ? t("dd.project.bpmn.type.toBe")
+                                  : t("dd.project.bpmn.type.other")}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteBpmnDiagramMutation.mutate(diagram.id);
+                              }}
+                              disabled={deleteBpmnDiagramMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="lg:col-span-2">
+                  {selectedBpmnDiagramId && bpmnDiagrams.length > 0 ? (
+                    <BpmnEditor
+                      diagramId={selectedBpmnDiagramId}
+                      initialXml={
+                        bpmnDiagrams.find((d) => d.id === selectedBpmnDiagramId)?.bpmnXml || null
+                      }
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-[400px] border rounded-md text-sm text-muted-foreground">
+                      {t("dd.project.bpmn.list.emptyDescription")}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Dialog open={isCreatingBpmnDiagram} onOpenChange={setIsCreatingBpmnDiagram}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t("dd.project.bpmn.button.newDiagram")}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{t("dd.project.bpmn.form.title.label")}</Label>
+                  <Input
+                    value={newDiagramTitle}
+                    onChange={(e) => setNewDiagramTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("dd.project.bpmn.form.type.label")}</Label>
+                  <Select
+                    value={newDiagramType}
+                    onValueChange={(value) =>
+                      setNewDiagramType(value as "as-is" | "to-be" | "other")
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="as-is">
+                        {t("dd.project.bpmn.type.asIs")}
+                      </SelectItem>
+                      <SelectItem value="to-be">
+                        {t("dd.project.bpmn.type.toBe")}
+                      </SelectItem>
+                      <SelectItem value="other">
+                        {t("dd.project.bpmn.type.other")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setIsCreatingBpmnDiagram(false)}
+                  >
+                    {t("dd.project.briefing.form.buttons.cancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => createBpmnDiagramMutation.mutate()}
+                    disabled={createBpmnDiagramMutation.isPending || !newDiagramTitle.trim()}
+                  >
+                    {createBpmnDiagramMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {t("dd.project.briefing.form.buttons.submit.idle")}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* DEFINE TAB */}

@@ -43,7 +43,8 @@ import {
   insertAiGeneratedAssetSchema,
   insertDoubleDiamondProjectSchema,
   doubleDiamondExports,
-  insertGuidingCriterionSchema
+  insertGuidingCriterionSchema,
+  insertBpmnDiagramSchema
 } from "../shared/schema";
 import bcrypt from "bcrypt";
 import Stripe from "stripe";
@@ -4851,6 +4852,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting Double Diamond project:", error);
       res.status(500).json({ error: "Failed to delete Double Diamond project" });
+    }
+  });
+
+  // BPMN diagrams for Double Diamond projects
+  app.get("/api/double-diamond/:id/bpmn-diagrams", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+      if (!project) {
+        return res.status(404).json({ error: "Double Diamond project not found" });
+      }
+
+      const diagrams = await storage.getBpmnDiagramsByProject(project.id);
+      res.json(diagrams);
+    } catch (error) {
+      console.error("Error fetching BPMN diagrams:", error);
+      res.status(500).json({ error: "Failed to fetch BPMN diagrams" });
+    }
+  });
+
+  app.post("/api/double-diamond/:id/bpmn-diagrams", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+      if (!project) {
+        return res.status(404).json({ error: "Double Diamond project not found" });
+      }
+
+      const validatedData = insertBpmnDiagramSchema.parse({
+        ...req.body,
+        projectId: project.id,
+      });
+
+      const diagram = await storage.createBpmnDiagram(validatedData);
+      res.status(201).json(diagram);
+    } catch (error: any) {
+      console.error("Error creating BPMN diagram:", error);
+      res.status(500).json({ error: "Failed to create BPMN diagram" });
+    }
+  });
+
+  app.put("/api/bpmn-diagrams/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const existing = await storage.getBpmnDiagram(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "BPMN diagram not found" });
+      }
+
+      const project = await storage.getDoubleDiamondProject(existing.projectId, userId);
+      if (!project) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updates = insertBpmnDiagramSchema.partial().parse(req.body);
+      const updated = await storage.updateBpmnDiagram(req.params.id, updates);
+      if (!updated) {
+        return res.status(404).json({ error: "BPMN diagram not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating BPMN diagram:", error);
+      res.status(500).json({ error: "Failed to update BPMN diagram" });
+    }
+  });
+
+  app.delete("/api/bpmn-diagrams/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const existing = await storage.getBpmnDiagram(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "BPMN diagram not found" });
+      }
+
+      const project = await storage.getDoubleDiamondProject(existing.projectId, userId);
+      if (!project) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const success = await storage.deleteBpmnDiagram(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "BPMN diagram not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting BPMN diagram:", error);
+      res.status(500).json({ error: "Failed to delete BPMN diagram" });
     }
   });
 

@@ -1307,6 +1307,16 @@ export const doubleDiamondProjects = pgTable("double_diamond_projects", {
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
 
+export const bpmnDiagrams = pgTable("bpmn_diagrams", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").references(() => doubleDiamondProjects.id, { onDelete: 'cascade' }).notNull(),
+  title: text("title").notNull(),
+  type: text("type").default("to-be"),
+  bpmnXml: text("bpmn_xml").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 export const insertDoubleDiamondProjectSchema = createInsertSchema(doubleDiamondProjects).omit({
   id: true,
   userId: true,
@@ -1314,5 +1324,13 @@ export const insertDoubleDiamondProjectSchema = createInsertSchema(doubleDiamond
   updatedAt: true,
 });
 
+export const insertBpmnDiagramSchema = createInsertSchema(bpmnDiagrams).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type DoubleDiamondProject = typeof doubleDiamondProjects.$inferSelect;
 export type InsertDoubleDiamondProject = z.infer<typeof insertDoubleDiamondProjectSchema>;
+export type BpmnDiagram = typeof bpmnDiagrams.$inferSelect;
+export type InsertBpmnDiagram = z.infer<typeof insertBpmnDiagramSchema>;

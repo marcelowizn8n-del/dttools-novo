@@ -41,6 +41,7 @@ import {
   type ProjectComment, type InsertProjectComment,
   type DoubleDiamondProject, type InsertDoubleDiamondProject,
   type DoubleDiamondExport, type InsertDoubleDiamondExport,
+  type BpmnDiagram, type InsertBpmnDiagram,
   projects, empathyMaps, personas, interviews, observations,
   povStatements, hmwQuestions, journeys, journeyStages, journeyTouchpoints,
   ideas, prototypes, testPlans, testResults,
@@ -50,7 +51,7 @@ import {
   dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, guidingCriteria,
   projectBackups, helpArticles, industrySectors, successCases, aiGeneratedAssets,
   analyticsEvents, projectMembers, projectInvites, projectComments, 
-  doubleDiamondProjects, doubleDiamondExports
+  doubleDiamondProjects, doubleDiamondExports, bpmnDiagrams
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
@@ -341,6 +342,11 @@ export interface IStorage {
   createDoubleDiamondProject(project: InsertDoubleDiamondProject): Promise<DoubleDiamondProject>;
   updateDoubleDiamondProject(id: string, userId: string, updates: Partial<InsertDoubleDiamondProject>): Promise<DoubleDiamondProject | undefined>;
   deleteDoubleDiamondProject(id: string, userId: string): Promise<boolean>;
+  getBpmnDiagramsByProject(projectId: string): Promise<BpmnDiagram[]>;
+  getBpmnDiagram(id: string): Promise<BpmnDiagram | undefined>;
+  createBpmnDiagram(diagram: InsertBpmnDiagram): Promise<BpmnDiagram>;
+  updateBpmnDiagram(id: string, diagram: Partial<InsertBpmnDiagram>): Promise<BpmnDiagram | undefined>;
+  deleteBpmnDiagram(id: string): Promise<boolean>;
   
   // Industry Sectors & Success Cases (for Double Diamond)
   listIndustrySectors(): Promise<IndustrySector[]>;
@@ -2163,6 +2169,39 @@ export class DatabaseStorage implements IStorage {
       ));
     return (result.rowCount || 0) > 0;
   }
+
+  async getBpmnDiagramsByProject(projectId: string): Promise<BpmnDiagram[]> {
+    return await db.select().from(bpmnDiagrams)
+      .where(eq(bpmnDiagrams.projectId, projectId));
+  }
+
+  async getBpmnDiagram(id: string): Promise<BpmnDiagram | undefined> {
+    const [diagram] = await db.select().from(bpmnDiagrams)
+      .where(eq(bpmnDiagrams.id, id));
+    return diagram;
+  }
+
+  async createBpmnDiagram(diagram: InsertBpmnDiagram): Promise<BpmnDiagram> {
+    const [newDiagram] = await db.insert(bpmnDiagrams)
+      .values(diagram)
+      .returning();
+    return newDiagram;
+  }
+
+  async updateBpmnDiagram(id: string, diagram: Partial<InsertBpmnDiagram>): Promise<BpmnDiagram | undefined> {
+    const [updated] = await db.update(bpmnDiagrams)
+      .set({ ...diagram, updatedAt: new Date() })
+      .where(eq(bpmnDiagrams.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBpmnDiagram(id: string): Promise<boolean> {
+    const result = await db.delete(bpmnDiagrams)
+      .where(eq(bpmnDiagrams.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
   // Industry Sectors & Success Cases
   async listIndustrySectors(): Promise<IndustrySector[]> {
     return await db.select().from(industrySectors).orderBy(industrySectors.name);
