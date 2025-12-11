@@ -192,6 +192,27 @@ function requireProjectAccess(requiredRole: 'owner' | 'editor' | 'viewer' = 'vie
   };
 }
 
+// Middleware to require Double Diamond Pro add-on for BPMN-related features
+function requireDoubleDiamondProAddon(req: Request, res: Response, next: NextFunction) {
+  // Admins always have access
+  if (req.user?.role === "admin") {
+    return next();
+  }
+
+  const hasAddon = req.subscription?.addons?.doubleDiamondPro;
+
+  if (!hasAddon) {
+    return res.status(403).json({
+      error: "BPMN features are available only with the Double Diamond Pro add-on.",
+      code: "BPMN_ADDON_REQUIRED",
+      upgrade_required: true,
+      upgradeUrl: "/addons",
+    });
+  }
+
+  next();
+}
+
 // Configuração do multer para upload de arquivos
 const storage_config = multer.memoryStorage();
 const upload = multer({
@@ -293,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
         }
       } catch (err: any) {
-        console.log("Webhook signature verification failed. - routes.ts:425", err.message);
+        console.log("Webhook signature verification failed. - routes.ts:317", err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
       }
 
@@ -485,12 +506,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           default:
-            console.log(`Unhandled event type ${event.type} - routes.ts:617`);
+            console.log(`Unhandled event type ${event.type} - routes.ts:509`);
         }
 
         res.json({ received: true });
       } catch (error) {
-        console.error("Error processing webhook: - routes.ts:622", error);
+        console.error("Error processing webhook: - routes.ts:514", error);
         res.status(500).json({ error: "Webhook processing failed" });
       }
     }
@@ -617,23 +638,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectAnalytics
       });
     } catch (error) {
-      console.error("Failed to fetch full project data: - routes.ts:749", error);
+      console.error("Failed to fetch full project data: - routes.ts:641", error);
       res.status(500).json({ error: "Failed to fetch project data" });
     }
   });
 
   app.post("/api/projects", requireAuth, checkProjectLimit, async (req, res) => {
     try {
-      console.log("Creating project  Request body: - routes.ts:756", req.body);
-      console.log("User session: - routes.ts:757", req.session?.userId ? "authenticated" : "not authenticated");
+      console.log("Creating project  Request body: - routes.ts:648", req.body);
+      console.log("User session: - routes.ts:649", req.session?.userId ? "authenticated" : "not authenticated");
       
       const validatedData = insertProjectSchema.parse(req.body);
-      console.log("Data validated successfully: - routes.ts:760", validatedData);
+      console.log("Data validated successfully: - routes.ts:652", validatedData);
       
       // Check for duplicate creation attempts (per user)
       const userId = req.session!.userId!;
       if (isDuplicateProjectCreation(userId, validatedData.name)) {
-        console.log(`Duplicate project creation attempt blocked for user ${userId}: - routes.ts:765`, validatedData.name);
+        console.log(`Duplicate project creation attempt blocked for user ${userId}: - routes.ts:657`, validatedData.name);
         return res.status(409).json({ 
           error: "Projeto duplicado detectado",
           message: "Você já criou um projeto com este nome recentemente. Por favor, aguarde alguns segundos antes de tentar novamente."
@@ -644,11 +665,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       recordProjectCreation(userId, validatedData.name);
       
       const project = await storage.createProject({ ...validatedData, userId });
-      console.log("Project created successfully: - routes.ts:776", project.id);
+      console.log("Project created successfully: - routes.ts:668", project.id);
       
       res.status(201).json(project);
     } catch (error) {
-      console.error("Error creating project: - routes.ts:780", error);
+      console.error("Error creating project: - routes.ts:672", error);
       
       // Handle validation errors specifically
       if (error && typeof error === 'object' && 'issues' in error) {
@@ -687,7 +708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createProjectBackup(req.params.id, userId, 'auto', 'Backup automático após atualização');
         }
       } catch (backupError) {
-        console.error('Error creating automatic backup: - routes.ts:819', backupError);
+        console.error('Error creating automatic backup: - routes.ts:711', backupError);
       }
       
       res.json(project);
@@ -701,7 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session!.userId!;
       const isAdmin = req.session.user?.role === "admin";
       
-      console.log("[DELETE PROJECT] Request: - routes.ts:833", {
+      console.log("[DELETE PROJECT] Request: - routes.ts:725", {
         projectId: req.params.id,
         userId,
         isAdmin,
@@ -711,44 +732,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admin can delete any project, users can only delete their own
       let success;
       if (isAdmin) {
-        console.log("[DELETE PROJECT] Admin delete  fetching all projects - routes.ts:843");
+        console.log("[DELETE PROJECT] Admin delete  fetching all projects - routes.ts:735");
         // Admin: Delete without userId restriction by finding the project first
         const allProjects = await storage.getAllProjects();
         const project = allProjects.find(p => p.id === req.params.id);
         
-        console.log("[DELETE PROJECT] Project found: - routes.ts:848", { 
+        console.log("[DELETE PROJECT] Project found: - routes.ts:740", { 
           found: !!project, 
           projectUserId: project?.userId 
         });
         
         if (!project) {
-          console.log("[DELETE PROJECT] Project not found - routes.ts:854");
+          console.log("[DELETE PROJECT] Project not found - routes.ts:746");
           return res.status(404).json({ error: "Project not found" });
         }
         
         // Delete using the project's actual userId
-        console.log("[DELETE PROJECT] Calling deleteProject with: - routes.ts:859", {
+        console.log("[DELETE PROJECT] Calling deleteProject with: - routes.ts:751", {
           projectId: req.params.id,
           projectUserId: project.userId
         });
         success = await storage.deleteProject(req.params.id, project.userId);
-        console.log("[DELETE PROJECT] Delete result: - routes.ts:864", success);
+        console.log("[DELETE PROJECT] Delete result: - routes.ts:756", success);
       } else {
         // Regular user: Delete only their own projects
-        console.log("[DELETE PROJECT] Regular user delete - routes.ts:867");
+        console.log("[DELETE PROJECT] Regular user delete - routes.ts:759");
         success = await storage.deleteProject(req.params.id, userId);
-        console.log("[DELETE PROJECT] Delete result: - routes.ts:869", success);
+        console.log("[DELETE PROJECT] Delete result: - routes.ts:761", success);
       }
       
       if (!success) {
-        console.log("[DELETE PROJECT] Delete failed  returning 404 - routes.ts:873");
+        console.log("[DELETE PROJECT] Delete failed  returning 404 - routes.ts:765");
         return res.status(404).json({ error: "Project not found" });
       }
       
-      console.log("[DELETE PROJECT] Delete successful - routes.ts:877");
+      console.log("[DELETE PROJECT] Delete successful - routes.ts:769");
       res.json({ success: true });
     } catch (error) {
-      console.error("[DELETE PROJECT] Error: - routes.ts:880", error);
+      console.error("[DELETE PROJECT] Error: - routes.ts:772", error);
       res.status(500).json({ error: "Failed to delete project" });
     }
   });
@@ -1035,7 +1056,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ url: dataUrl });
 
     } catch (error: any) {
-      console.error("Erro no upload: - routes.ts:1167", error);
+      console.error("Erro no upload: - routes.ts:1059", error);
       res.status(500).json({ error: "Erro ao processar upload" });
     }
   });
@@ -1100,7 +1121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/projects/:projectId/interviews", requireAuth, async (req, res) => {
     try {
-      console.log('Interview creation request: - routes.ts:1232', {
+      console.log('Interview creation request: - routes.ts:1124', {
         projectId: req.params.projectId,
         body: req.body
       });
@@ -1109,7 +1130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const questions = Array.isArray(req.body.questions) ? req.body.questions : [];
       const responses = Array.isArray(req.body.responses) ? req.body.responses : [];
       
-      console.log('Questions/Responses: - routes.ts:1241', { questions, responses });
+      console.log('Questions/Responses: - routes.ts:1133', { questions, responses });
       
       // Filtrar e alinhar pares pergunta/resposta
       const validPairs = questions
@@ -1119,7 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }))
         .filter((pair: { question: string; response: string }) => pair.question !== '');
       
-      console.log('Valid pairs: - routes.ts:1251', validPairs);
+      console.log('Valid pairs: - routes.ts:1143', validPairs);
       
       const dataToValidate = {
         ...req.body,
@@ -1129,17 +1150,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         responses: validPairs.map((p: { question: string; response: string }) => p.response),
       };
       
-      console.log('Data to validate: - routes.ts:1261', dataToValidate);
+      console.log('Data to validate: - routes.ts:1153', dataToValidate);
       
       const validatedData = insertInterviewSchema.parse(dataToValidate);
-      console.log('Data validated successfully - routes.ts:1264');
+      console.log('Data validated successfully - routes.ts:1156');
       
       const interview = await storage.createInterview(validatedData);
-      console.log('Interview created: - routes.ts:1267', interview.id);
+      console.log('Interview created: - routes.ts:1159', interview.id);
       
       res.status(201).json(interview);
     } catch (error) {
-      console.error('Interview creation error: - routes.ts:1271', error);
+      console.error('Interview creation error: - routes.ts:1163', error);
       res.status(400).json({ 
         error: "Invalid interview data",
         details: error instanceof Error ? error.message : String(error)
@@ -1184,8 +1205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/projects/:projectId/observations", requireAuth, async (req, res) => {
     try {
-      console.log("Creating observation  Request body: - routes.ts:1316", JSON.stringify(req.body, null, 2));
-      console.log("Project ID: - routes.ts:1317", req.params.projectId);
+      console.log("Creating observation  Request body: - routes.ts:1208", JSON.stringify(req.body, null, 2));
+      console.log("Project ID: - routes.ts:1209", req.params.projectId);
       
       const dataToValidate = {
         ...req.body,
@@ -1193,17 +1214,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Converter string de data para Date object se necessário
         date: req.body.date ? new Date(req.body.date) : new Date(),
       };
-      console.log("Data to validate: - routes.ts:1325", JSON.stringify(dataToValidate, null, 2));
+      console.log("Data to validate: - routes.ts:1217", JSON.stringify(dataToValidate, null, 2));
       
       const validatedData = insertObservationSchema.parse(dataToValidate);
-      console.log("Data validated successfully: - routes.ts:1328", JSON.stringify(validatedData, null, 2));
+      console.log("Data validated successfully: - routes.ts:1220", JSON.stringify(validatedData, null, 2));
       
       const observation = await storage.createObservation(validatedData);
       res.status(201).json(observation);
     } catch (error) {
-      console.error("Observation validation error: - routes.ts:1333", error);
+      console.error("Observation validation error: - routes.ts:1225", error);
       if (error instanceof Error) {
-        console.error("Error message: - routes.ts:1335", error.message);
+        console.error("Error message: - routes.ts:1227", error.message);
         res.status(400).json({ error: "Invalid observation data", details: error.message });
       } else {
         res.status(400).json({ error: "Invalid observation data" });
@@ -1481,7 +1502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(suggestion);
     } catch (error) {
-      console.error("[AI Journey] Failed to generate journey - routes.ts:1613", error);
+      console.error("[AI Journey] Failed to generate journey - routes.ts:1505", error);
       res.status(500).json({ error: "Failed to generate journey with AI" });
     }
   });
@@ -1873,7 +1894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             contentFr: validatedData.contentFr || translations.contentFr,
           };
         } catch (translationError) {
-          console.error("Autotranslation error (continuing without translation): - routes.ts:2005", translationError);
+          console.error("Autotranslation error (continuing without translation): - routes.ts:1897", translationError);
           // Continue without translation if it fails
         }
       }
@@ -1881,7 +1902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const article = await storage.createArticle(validatedData);
       res.status(201).json(article);
     } catch (error) {
-      console.error("Error creating article: - routes.ts:2013", error);
+      console.error("Error creating article: - routes.ts:1905", error);
       res.status(400).json({ error: "Invalid article data" });
     }
   });
@@ -1921,7 +1942,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 contentFr: validatedData.contentFr || existingArticle.contentFr || translations.contentFr,
               };
             } catch (translationError) {
-              console.error("Autotranslation error (continuing without translation): - routes.ts:2053", translationError);
+              console.error("Autotranslation error (continuing without translation): - routes.ts:1945", translationError);
               // Continue without translation if it fails
             }
           }
@@ -1934,7 +1955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(article);
     } catch (error) {
-      console.error("Error updating article: - routes.ts:2066", error);
+      console.error("Error updating article: - routes.ts:1958", error);
       res.status(400).json({ error: "Invalid article data" });
     }
   });
@@ -1963,7 +1984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const translations = await translateArticle({ title, description, content });
       res.json(translations);
     } catch (error) {
-      console.error("Translation error: - routes.ts:2095", error);
+      console.error("Translation error: - routes.ts:1987", error);
       res.status(500).json({ error: "Failed to translate article" });
     }
   });
@@ -1979,7 +2000,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const translations = await translateVideo({ title, description });
       res.json(translations);
     } catch (error) {
-      console.error("Translation error: - routes.ts:2111", error);
+      console.error("Translation error: - routes.ts:2003", error);
       res.status(500).json({ error: "Failed to translate video" });
     }
   });
@@ -1995,7 +2016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const translations = await translateTestimonial({ testimonialPt });
       res.json(translations);
     } catch (error) {
-      console.error("Translation error: - routes.ts:2127", error);
+      console.error("Translation error: - routes.ts:2019", error);
       res.status(500).json({ error: "Failed to translate testimonial" });
     }
   });
@@ -2072,7 +2093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const videos = await storage.getVideoTutorials();
       res.json(videos);
     } catch (error) {
-      console.error("[ERROR] /api/videotutorials failed: - routes.ts:2204", error);
+      console.error("[ERROR] /api/videotutorials failed: - routes.ts:2096", error);
       res.status(500).json({ error: "Failed to fetch video tutorials" });
     }
   });
@@ -2114,7 +2135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const video = await storage.createVideoTutorial(validatedData);
       res.status(201).json(video);
     } catch (error) {
-      console.error("Error creating video tutorial: - routes.ts:2246", error);
+      console.error("Error creating video tutorial: - routes.ts:2138", error);
       res.status(400).json({ error: "Invalid video tutorial data" });
     }
   });
@@ -2128,7 +2149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(video);
     } catch (error) {
-      console.error("Error updating video tutorial: - routes.ts:2260", error);
+      console.error("Error updating video tutorial: - routes.ts:2152", error);
       res.status(400).json({ error: "Invalid video tutorial data" });
     }
   });
@@ -2370,13 +2391,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Save AI-generated assets
-      console.log(`📦 About to save AIgenerated assets for project ${project.id} - routes.ts:2502`);
+      console.log(`📦 About to save AIgenerated assets for project ${project.id} - routes.ts:2394`);
       try {
         await aiGenerationService.saveGeneratedAssets(project.id, generatedMVP);
-        console.log(`✅ AIgenerated assets saved successfully for project ${project.id} - routes.ts:2505`);
+        console.log(`✅ AIgenerated assets saved successfully for project ${project.id} - routes.ts:2397`);
       } catch (assetError) {
-        console.error(`❌ CRITICAL: Failed to save AIgenerated assets for project ${project.id}: - routes.ts:2507`, assetError);
-        console.error(`❌ Asset Error Stack: - routes.ts:2508`, assetError instanceof Error ? assetError.stack : 'No stack');
+        console.error(`❌ CRITICAL: Failed to save AIgenerated assets for project ${project.id}: - routes.ts:2399`, assetError);
+        console.error(`❌ Asset Error Stack: - routes.ts:2400`, assetError instanceof Error ? assetError.stack : 'No stack');
         // Don't throw - let the MVP creation continue even if assets fail
       }
       
@@ -2400,9 +2421,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      console.error("❌ [AI Generation Error] Full error: - routes.ts:2532", error);
-      console.error("❌ [AI Generation Error] Stack: - routes.ts:2533", error instanceof Error ? error.stack : 'No stack trace');
-      console.error("❌ [AI Generation Error] Message: - routes.ts:2534", error instanceof Error ? error.message : error);
+      console.error("❌ [AI Generation Error] Full error: - routes.ts:2424", error);
+      console.error("❌ [AI Generation Error] Stack: - routes.ts:2425", error instanceof Error ? error.stack : 'No stack trace');
+      console.error("❌ [AI Generation Error] Message: - routes.ts:2426", error instanceof Error ? error.message : error);
       
       res.status(500).json({ 
         error: "Failed to generate project",
@@ -2513,7 +2534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ user: userWithoutPassword });
     } catch (error) {
-      console.error("Login error: - routes.ts:2645", error);
+      console.error("Login error: - routes.ts:2537", error);
       res.status(500).json({ error: "Login failed" });
     }
   });
@@ -2550,8 +2571,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const freePlan = allPlans.find(p => p.name.toLowerCase() === "free");
       
       if (!freePlan) {
-        console.error("❌ Free plan not found in database! - routes.ts:2682");
-        console.error("Available plans: - routes.ts:2683", allPlans.map(p => p.name).join(", "));
+        console.error("❌ Free plan not found in database! - routes.ts:2574");
+        console.error("Available plans: - routes.ts:2575", allPlans.map(p => p.name).join(", "));
         return res.status(500).json({ error: "Erro de configuração do sistema. Contate o suporte." });
       }
 
@@ -2567,7 +2588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const user = await storage.createUser(userData);
-      console.log(`✅ User created successfully with Free plan: ${user.email} - routes.ts:2699`);
+      console.log(`✅ User created successfully with Free plan: ${user.email} - routes.ts:2591`);
       
       // Create session after signup (auto-login)
       req.session.userId = user.id;
@@ -2582,7 +2603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await new Promise<void>((resolve, reject) => {
         req.session.save((err) => {
           if (err) {
-            console.error("Session save error after signup: - routes.ts:2714", err);
+            console.error("Session save error after signup: - routes.ts:2606", err);
             reject(err);
           } else {
             resolve();
@@ -2594,7 +2615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...userWithoutPassword } = user;
       res.status(201).json({ user: userWithoutPassword, message: "Conta criada com sucesso!" });
     } catch (error) {
-      console.error("Signup error: - routes.ts:2726", error);
+      console.error("Signup error: - routes.ts:2618", error);
       res.status(500).json({ error: "Erro ao criar conta. Tente novamente." });
     }
   });
@@ -2641,7 +2662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Save session and redirect
         req.session.save((err) => {
           if (err) {
-            console.error("Session save error: - routes.ts:2773", err);
+            console.error("Session save error: - routes.ts:2665", err);
             return res.redirect("/login?error=session_failed");
           }
           // Redirect to dashboard after successful login
@@ -2680,7 +2701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...userWithoutPassword } = freshUser;
       res.json({ user: userWithoutPassword });
     } catch (error) {
-      console.error("Auth check error: - routes.ts:2812", error);
+      console.error("Auth check error: - routes.ts:2704", error);
       res.status(500).json({ error: "Failed to check authentication" });
     }
   });
@@ -2711,16 +2732,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "User not authenticated" });
       }
 
-      console.log("[Profile Update] User ID: - routes.ts:2843", req.user.id);
-      console.log("[Profile Update] Received fields: - routes.ts:2844", Object.keys(req.body));
-      console.log("[Profile Update] Has profile_picture: - routes.ts:2845", !!req.body.profile_picture);
+      console.log("[Profile Update] User ID: - routes.ts:2735", req.user.id);
+      console.log("[Profile Update] Received fields: - routes.ts:2736", Object.keys(req.body));
+      console.log("[Profile Update] Has profile_picture: - routes.ts:2737", !!req.body.profile_picture);
       if (req.body.profile_picture) {
-        console.log("[Profile Update] profile_picture size: - routes.ts:2847", req.body.profile_picture.length, "chars");
+        console.log("[Profile Update] profile_picture size: - routes.ts:2739", req.body.profile_picture.length, "chars");
       }
 
       const validatedData = updateProfileSchema.parse(req.body);
-      console.log("[Profile Update] Validated fields: - routes.ts:2851", Object.keys(validatedData));
-      console.log("[Profile Update] Has profilePicture after validation: - routes.ts:2852", !!validatedData.profilePicture);
+      console.log("[Profile Update] Validated fields: - routes.ts:2743", Object.keys(validatedData));
+      console.log("[Profile Update] Has profilePicture after validation: - routes.ts:2744", !!validatedData.profilePicture);
       
       const user = await storage.updateUser(req.user.id, validatedData);
       
@@ -2728,9 +2749,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      console.log("[Profile Update] User updated. Has profilePicture: - routes.ts:2860", !!user.profilePicture);
+      console.log("[Profile Update] User updated. Has profilePicture: - routes.ts:2752", !!user.profilePicture);
       if (user.profilePicture) {
-        console.log("[Profile Update] Saved profilePicture size: - routes.ts:2862", user.profilePicture.length, "chars");
+        console.log("[Profile Update] Saved profilePicture size: - routes.ts:2754", user.profilePicture.length, "chars");
       }
 
       // Update session user data  
@@ -2745,7 +2766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...userProfile } = user;
       res.json(userProfile);
     } catch (error) {
-      console.error("[Profile Update] Error: - routes.ts:2877", error);
+      console.error("[Profile Update] Error: - routes.ts:2769", error);
       if (error instanceof Error) {
         res.status(400).json({ error: error.message });
       } else {
@@ -2768,9 +2789,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", requireAdmin, async (req, res) => {
     try {
-      console.log("[Create User] Request body: - routes.ts:2900", req.body);
+      console.log("[Create User] Request body: - routes.ts:2792", req.body);
       const validatedData = insertUserSchema.parse(req.body);
-      console.log("[Create User] Validated data: - routes.ts:2902", validatedData);
+      console.log("[Create User] Validated data: - routes.ts:2794", validatedData);
       
       // Ensure password exists
       if (!validatedData.password) {
@@ -2789,7 +2810,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {
-      console.error("[Create User] Error: - routes.ts:2921", error);
+      console.error("[Create User] Error: - routes.ts:2813", error);
       if (error instanceof Error) {
         res.status(400).json({ error: error.message });
       } else {
@@ -2826,26 +2847,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Limites atualizados com sucesso" });
     } catch (error) {
-      console.error("Error updating user limits: - routes.ts:2958", error);
+      console.error("Error updating user limits: - routes.ts:2850", error);
       res.status(500).json({ error: "Failed to update limits" });
     }
   });
 
   app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
-      console.log(`[API DELETE USER] Starting deletion of user ${req.params.id} - routes.ts:2965`);
+      console.log(`[API DELETE USER] Starting deletion of user ${req.params.id} - routes.ts:2857`);
       const success = await storage.deleteUser(req.params.id);
       if (!success) {
-        console.log(`[API DELETE USER] User not found: ${req.params.id} - routes.ts:2968`);
+        console.log(`[API DELETE USER] User not found: ${req.params.id} - routes.ts:2860`);
         return res.status(404).json({ error: "User not found" });
       }
-      console.log(`[API DELETE USER] ✅ Successfully deleted user ${req.params.id} - routes.ts:2971`);
+      console.log(`[API DELETE USER] ✅ Successfully deleted user ${req.params.id} - routes.ts:2863`);
       res.json({ success: true });
     } catch (error: any) {
-      console.error(`[API DELETE USER] ❌ EXCEPTION: - routes.ts:2974`, error);
-      console.error(`[API DELETE USER] Error code: ${error?.code} - routes.ts:2975`);
-      console.error(`[API DELETE USER] Error message: ${error?.message} - routes.ts:2976`);
-      console.error(`[API DELETE USER] Error stack: - routes.ts:2977`, error?.stack);
+      console.error(`[API DELETE USER] ❌ EXCEPTION: - routes.ts:2866`, error);
+      console.error(`[API DELETE USER] Error code: ${error?.code} - routes.ts:2867`);
+      console.error(`[API DELETE USER] Error message: ${error?.message} - routes.ts:2868`);
+      console.error(`[API DELETE USER] Error stack: - routes.ts:2869`, error?.stack);
       
       // Return detailed error to help debug
       res.status(500).json({ 
@@ -2881,7 +2902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         raw: activeAddons,
       });
     } catch (error) {
-      console.error("Error fetching user addons: - routes.ts:3013", error);
+      console.error("Error fetching user addons: - routes.ts:2905", error);
       res.status(500).json({ error: "Failed to fetch user addons" });
     }
   });
@@ -2952,7 +2973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         raw: activeAddons,
       });
     } catch (error) {
-      console.error("Error updating user addons: - routes.ts:3084", error);
+      console.error("Error updating user addons: - routes.ts:2976", error);
       res.status(500).json({ error: "Failed to update user addons" });
     }
   });
@@ -3021,7 +3042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching admin stats: - routes.ts:3153", error);
+      console.error("Error fetching admin stats: - routes.ts:3045", error);
       res.status(500).json({ error: "Failed to fetch admin stats" });
     }
   });
@@ -3208,7 +3229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const raw = err?.raw;
         // Caso típico: customer criado em live e agora estamos usando chave de teste (ou vice-versa)
         if (raw?.code === "resource_missing" && raw?.param === "customer") {
-          console.warn("[Stripe] Customer not found for current API key, recreating customer and retrying checkout... - routes.ts:3340");
+          console.warn("[Stripe] Customer not found for current API key, recreating customer and retrying checkout... - routes.ts:3232");
           const customer = await stripe.customers.create({
             email: user.username,
             metadata: {
@@ -3226,7 +3247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ url: session.url });
     } catch (error) {
-      console.error("Error creating addon checkout session: - routes.ts:3358", error);
+      console.error("Error creating addon checkout session: - routes.ts:3250", error);
       res.status(500).json({ error: "Failed to create add-on checkout session" });
     }
   });
@@ -3301,7 +3322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "Add-on cancelado com sucesso. Ele permanecerá ativo até o fim do período atual de cobrança.",
       });
     } catch (error) {
-      console.error("Error canceling addon subscription: - routes.ts:3433", error);
+      console.error("Error canceling addon subscription: - routes.ts:3325", error);
       res.status(500).json({ error: "Failed to cancel add-on subscription" });
     }
   });
@@ -3338,7 +3359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, message: "Subscription will be canceled at the end of the billing period" });
     } catch (error) {
-      console.error("Error canceling subscription: - routes.ts:3470", error);
+      console.error("Error canceling subscription: - routes.ts:3362", error);
       res.status(500).json({ error: "Failed to cancel subscription" });
     }
   });
@@ -3361,7 +3382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await designThinkingGeminiAI.chat(lastMessage.content, context);
       res.json({ message: response });
     } catch (error) {
-      console.error("Error in AI chat: - routes.ts:3493", error);
+      console.error("Error in AI chat: - routes.ts:3385", error);
       // Always return 200 with helpful message, since chat() method now handles fallbacks gracefully
       res.json({ message: "Desculpe, houve um problema temporário. Tente novamente ou continue usando as ferramentas de Design Thinking disponíveis na plataforma." });
     }
@@ -3383,7 +3404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const suggestions = await designThinkingGeminiAI.generateSuggestions(context);
       res.json({ suggestions });
     } catch (error) {
-      console.error("Error generating suggestions: - routes.ts:3515", error);
+      console.error("Error generating suggestions: - routes.ts:3407", error);
       res.status(500).json({ error: "Failed to generate suggestions" });
     }
   });
@@ -3427,7 +3448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = await designThinkingAI.analyzeProjectPhase(projectData, currentPhase || project.currentPhase);
       res.json(analysis);
     } catch (error) {
-      console.error("Error analyzing project: - routes.ts:3559", error);
+      console.error("Error analyzing project: - routes.ts:3451", error);
       res.status(500).json({ error: "Failed to analyze project" });
     }
   });
@@ -3483,7 +3504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = await designThinkingAI.analyzeCompleteProject(analysisData);
       res.json(analysis);
     } catch (error) {
-      console.error("Error generating AI analysis: - routes.ts:3615", error);
+      console.error("Error generating AI analysis: - routes.ts:3507", error);
       if (error instanceof Error && error.message.includes('OpenAI')) {
         res.status(503).json({ error: "AI service temporarily unavailable. Please check API configuration." });
       } else {
@@ -3500,7 +3521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const drawings = await storage.getCanvasDrawings(projectId);
       res.json(drawings);
     } catch (error) {
-      console.error("Error fetching canvas drawings: - routes.ts:3632", error);
+      console.error("Error fetching canvas drawings: - routes.ts:3524", error);
       res.status(500).json({ error: "Failed to fetch canvas drawings" });
     }
   });
@@ -3512,7 +3533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const drawing = await storage.createCanvasDrawing(parsed);
       res.status(201).json(drawing);
     } catch (error) {
-      console.error("Error creating canvas drawing: - routes.ts:3644", error);
+      console.error("Error creating canvas drawing: - routes.ts:3536", error);
       res.status(500).json({ error: "Failed to create canvas drawing" });
     }
   });
@@ -3530,7 +3551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(drawing);
     } catch (error) {
-      console.error("Error updating canvas drawing: - routes.ts:3662", error);
+      console.error("Error updating canvas drawing: - routes.ts:3554", error);
       res.status(500).json({ error: "Failed to update canvas drawing" });
     }
   });
@@ -3547,7 +3568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting canvas drawing: - routes.ts:3679", error);
+      console.error("Error deleting canvas drawing: - routes.ts:3571", error);
       res.status(500).json({ error: "Failed to delete canvas drawing" });
     }
   });
@@ -3560,7 +3581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cards = await storage.getPhaseCards(projectId);
       res.json(cards);
     } catch (error) {
-      console.error("Error fetching phase cards: - routes.ts:3692", error);
+      console.error("Error fetching phase cards: - routes.ts:3584", error);
       res.status(500).json({ error: "Failed to fetch phase cards" });
     }
   });
@@ -3572,7 +3593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const card = await storage.createPhaseCard(parsed);
       res.status(201).json(card);
     } catch (error) {
-      console.error("Error creating phase card: - routes.ts:3704", error);
+      console.error("Error creating phase card: - routes.ts:3596", error);
       res.status(500).json({ error: "Failed to create phase card" });
     }
   });
@@ -3590,7 +3611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(card);
     } catch (error) {
-      console.error("Error updating phase card: - routes.ts:3722", error);
+      console.error("Error updating phase card: - routes.ts:3614", error);
       res.status(500).json({ error: "Failed to update phase card" });
     }
   });
@@ -3607,7 +3628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting phase card: - routes.ts:3739", error);
+      console.error("Error deleting phase card: - routes.ts:3631", error);
       res.status(500).json({ error: "Failed to delete phase card" });
     }
   });
@@ -3622,7 +3643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const backup = await storage.createProjectBackup(projectId, 'manual', description);
       res.status(201).json(backup);
     } catch (error) {
-      console.error("Error creating backup: - routes.ts:3754", error);
+      console.error("Error creating backup: - routes.ts:3646", error);
       res.status(500).json({ error: "Failed to create backup" });
     }
   });
@@ -3634,7 +3655,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const backups = await storage.getProjectBackups(projectId);
       res.json(backups);
     } catch (error) {
-      console.error("Error fetching backups: - routes.ts:3766", error);
+      console.error("Error fetching backups: - routes.ts:3658", error);
       res.status(500).json({ error: "Failed to fetch backups" });
     }
   });
@@ -3651,7 +3672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(backup);
     } catch (error) {
-      console.error("Error fetching backup: - routes.ts:3783", error);
+      console.error("Error fetching backup: - routes.ts:3675", error);
       res.status(500).json({ error: "Failed to fetch backup" });
     }
   });
@@ -3668,7 +3689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true, message: "Project restored successfully" });
     } catch (error) {
-      console.error("Error restoring backup: - routes.ts:3800", error);
+      console.error("Error restoring backup: - routes.ts:3692", error);
       res.status(500).json({ error: "Failed to restore backup" });
     }
   });
@@ -3685,7 +3706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting backup: - routes.ts:3817", error);
+      console.error("Error deleting backup: - routes.ts:3709", error);
       res.status(500).json({ error: "Failed to delete backup" });
     }
   });
@@ -3698,7 +3719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const benchmarks = await storage.getBenchmarks(projectId);
       res.json(benchmarks);
     } catch (error) {
-      console.error("Error fetching benchmarks: - routes.ts:3830", error);
+      console.error("Error fetching benchmarks: - routes.ts:3722", error);
       res.status(500).json({ error: "Failed to fetch benchmarks" });
     }
   });
@@ -3715,7 +3736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(benchmark);
     } catch (error) {
-      console.error("Error fetching benchmark: - routes.ts:3847", error);
+      console.error("Error fetching benchmark: - routes.ts:3739", error);
       res.status(500).json({ error: "Failed to fetch benchmark" });
     }
   });
@@ -3727,7 +3748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const benchmark = await storage.createBenchmark(parsed);
       res.status(201).json(benchmark);
     } catch (error) {
-      console.error("Error creating benchmark: - routes.ts:3859", error);
+      console.error("Error creating benchmark: - routes.ts:3751", error);
       res.status(500).json({ error: "Failed to create benchmark" });
     }
   });
@@ -3745,7 +3766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(benchmark);
     } catch (error) {
-      console.error("Error updating benchmark: - routes.ts:3877", error);
+      console.error("Error updating benchmark: - routes.ts:3769", error);
       res.status(500).json({ error: "Failed to update benchmark" });
     }
   });
@@ -3762,7 +3783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting benchmark: - routes.ts:3894", error);
+      console.error("Error deleting benchmark: - routes.ts:3786", error);
       res.status(500).json({ error: "Failed to delete benchmark" });
     }
   });
@@ -3775,7 +3796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assessments = await storage.getBenchmarkAssessments(benchmarkId);
       res.json(assessments);
     } catch (error) {
-      console.error("Error fetching benchmark assessments: - routes.ts:3907", error);
+      console.error("Error fetching benchmark assessments: - routes.ts:3799", error);
       res.status(500).json({ error: "Failed to fetch benchmark assessments" });
     }
   });
@@ -3787,7 +3808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assessment = await storage.createBenchmarkAssessment(parsed);
       res.status(201).json(assessment);
     } catch (error) {
-      console.error("Error creating benchmark assessment: - routes.ts:3919", error);
+      console.error("Error creating benchmark assessment: - routes.ts:3811", error);
       res.status(500).json({ error: "Failed to create benchmark assessment" });
     }
   });
@@ -3805,7 +3826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(assessment);
     } catch (error) {
-      console.error("Error updating benchmark assessment: - routes.ts:3937", error);
+      console.error("Error updating benchmark assessment: - routes.ts:3829", error);
       res.status(500).json({ error: "Failed to update benchmark assessment" });
     }
   });
@@ -3822,7 +3843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting benchmark assessment: - routes.ts:3954", error);
+      console.error("Error deleting benchmark assessment: - routes.ts:3846", error);
       res.status(500).json({ error: "Failed to delete benchmark assessment" });
     }
   });
@@ -3835,7 +3856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assessments = await storage.getDvfAssessments(projectId);
       res.json(assessments);
     } catch (error) {
-      console.error("Error fetching DVF assessments: - routes.ts:3967", error);
+      console.error("Error fetching DVF assessments: - routes.ts:3859", error);
       res.status(500).json({ error: "Failed to fetch DVF assessments" });
     }
   });
@@ -3847,7 +3868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assessment = await storage.createDvfAssessment(parsed);
       res.status(201).json(assessment);
     } catch (error) {
-      console.error("Error creating DVF assessment: - routes.ts:3979", error);
+      console.error("Error creating DVF assessment: - routes.ts:3871", error);
       res.status(500).json({ error: "Failed to create DVF assessment" });
     }
   });
@@ -3865,7 +3886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(assessment);
     } catch (error) {
-      console.error("Error updating DVF assessment: - routes.ts:3997", error);
+      console.error("Error updating DVF assessment: - routes.ts:3889", error);
       res.status(500).json({ error: "Failed to update DVF assessment" });
     }
   });
@@ -3882,7 +3903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting DVF assessment: - routes.ts:4014", error);
+      console.error("Error deleting DVF assessment: - routes.ts:3906", error);
       res.status(500).json({ error: "Failed to delete DVF assessment" });
     }
   });
@@ -3895,7 +3916,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const metrics = await storage.getLovabilityMetrics(projectId);
       res.json(metrics);
     } catch (error) {
-      console.error("Error fetching lovability metrics: - routes.ts:4027", error);
+      console.error("Error fetching lovability metrics: - routes.ts:3919", error);
       res.status(500).json({ error: "Failed to fetch lovability metrics" });
     }
   });
@@ -3907,7 +3928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const metric = await storage.createLovabilityMetric(parsed);
       res.status(201).json(metric);
     } catch (error) {
-      console.error("Error creating lovability metric: - routes.ts:4039", error);
+      console.error("Error creating lovability metric: - routes.ts:3931", error);
       res.status(500).json({ error: "Failed to create lovability metric" });
     }
   });
@@ -3925,7 +3946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(metric);
     } catch (error) {
-      console.error("Error updating lovability metric: - routes.ts:4057", error);
+      console.error("Error updating lovability metric: - routes.ts:3949", error);
       res.status(500).json({ error: "Failed to update lovability metric" });
     }
   });
@@ -3942,7 +3963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting lovability metric: - routes.ts:4074", error);
+      console.error("Error deleting lovability metric: - routes.ts:3966", error);
       res.status(500).json({ error: "Failed to delete lovability metric" });
     }
   });
@@ -3954,7 +3975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analytics = await storage.createProjectAnalytics(parsed);
       res.status(201).json(analytics);
     } catch (error) {
-      console.error("Error creating project analytics: - routes.ts:4086", error);
+      console.error("Error creating project analytics: - routes.ts:3978", error);
       res.status(500).json({ error: "Failed to create project analytics" });
     }
   });
@@ -3972,7 +3993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(analytics);
     } catch (error) {
-      console.error("Error updating project analytics: - routes.ts:4104", error);
+      console.error("Error updating project analytics: - routes.ts:3996", error);
       res.status(500).json({ error: "Failed to update project analytics" });
     }
   });
@@ -3985,7 +4006,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analyses = await storage.getCompetitiveAnalyses(projectId);
       res.json(analyses);
     } catch (error) {
-      console.error("Error fetching competitive analyses: - routes.ts:4117", error);
+      console.error("Error fetching competitive analyses: - routes.ts:4009", error);
       res.status(500).json({ error: "Failed to fetch competitive analyses" });
     }
   });
@@ -3997,7 +4018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = await storage.createCompetitiveAnalysis(parsed);
       res.status(201).json(analysis);
     } catch (error) {
-      console.error("Error creating competitive analysis: - routes.ts:4129", error);
+      console.error("Error creating competitive analysis: - routes.ts:4021", error);
       res.status(500).json({ error: "Failed to create competitive analysis" });
     }
   });
@@ -4015,7 +4036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(analysis);
     } catch (error) {
-      console.error("Error updating competitive analysis: - routes.ts:4147", error);
+      console.error("Error updating competitive analysis: - routes.ts:4039", error);
       res.status(500).json({ error: "Failed to update competitive analysis" });
     }
   });
@@ -4032,7 +4053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting competitive analysis: - routes.ts:4164", error);
+      console.error("Error deleting competitive analysis: - routes.ts:4056", error);
       res.status(500).json({ error: "Failed to delete competitive analysis" });
     }
   });
@@ -4135,7 +4156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      console.error("Error generating AI benchmarking recommendations: - routes.ts:4267", error);
+      console.error("Error generating AI benchmarking recommendations: - routes.ts:4159", error);
       res.status(500).json({ 
         error: "Failed to generate AI recommendations",
         details: error instanceof Error ? error.message : "Unknown error"
@@ -4151,22 +4172,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const userId = req.session!.userId!;
       
-      console.log(`[PPTX Export] Starting export for project ${id}, user ${userId} - routes.ts:4283`);
+      console.log(`[PPTX Export] Starting export for project ${id}, user ${userId} - routes.ts:4175`);
       
       // Verify project ownership
       const project = await storage.getProject(id, userId);
       if (!project) {
-        console.log(`[PPTX Export] Project not found: ${id} - routes.ts:4288`);
+        console.log(`[PPTX Export] Project not found: ${id} - routes.ts:4180`);
         return res.status(404).json({ error: "Project not found" });
       }
 
-      console.log(`[PPTX Export] Generating PPTX for project: ${project.name} - routes.ts:4292`);
+      console.log(`[PPTX Export] Generating PPTX for project: ${project.name} - routes.ts:4184`);
       
       // Generate PPTX with new brand template
       const pptxService = new PPTXService();
       const pptxBuffer = await pptxService.generateProjectPPTX(id, userId);
       
-      console.log(`[PPTX Export] PPTX generated successfully, size: ${pptxBuffer.length} bytes - routes.ts:4298`);
+      console.log(`[PPTX Export] PPTX generated successfully, size: ${pptxBuffer.length} bytes - routes.ts:4190`);
       
       // Set response headers for file download
       const filename = `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_DTTools.pptx`;
@@ -4178,7 +4199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.end(pptxBuffer);
       
     } catch (error) {
-      console.error("[PPTX Export] Error generating PPTX: - routes.ts:4310", error);
+      console.error("[PPTX Export] Error generating PPTX: - routes.ts:4202", error);
       // Return JSON error, not HTML
       if (!res.headersSent) {
         res.status(500).json({ error: "Failed to generate PPTX presentation" });
@@ -4192,22 +4213,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const userId = req.session!.userId!;
       
-      console.log(`[PDF Export] Starting export for project ${id}, user ${userId} - routes.ts:4324`);
+      console.log(`[PDF Export] Starting export for project ${id}, user ${userId} - routes.ts:4216`);
       
       // Verify project ownership
       const project = await storage.getProject(id, userId);
       if (!project) {
-        console.log(`[PDF Export] Project not found: ${id} - routes.ts:4329`);
+        console.log(`[PDF Export] Project not found: ${id} - routes.ts:4221`);
         return res.status(404).json({ error: "Project not found" });
       }
 
-      console.log(`[PDF Export] Generating PDF for project: ${project.name} - routes.ts:4333`);
+      console.log(`[PDF Export] Generating PDF for project: ${project.name} - routes.ts:4225`);
       
       // Generate PDF using PPTX service
       const pptxService = new PPTXService();
       const pdfBuffer = await pptxService.generateProjectPDF(id, userId);
       
-      console.log(`[PDF Export] PDF generated successfully, size: ${pdfBuffer.length} bytes - routes.ts:4339`);
+      console.log(`[PDF Export] PDF generated successfully, size: ${pdfBuffer.length} bytes - routes.ts:4231`);
       
       // Set response headers for file download
       const filename = `${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_DTTools.pdf`;
@@ -4219,7 +4240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.end(pdfBuffer);
       
     } catch (error) {
-      console.error("[PDF Export] Error generating PDF: - routes.ts:4351", error);
+      console.error("[PDF Export] Error generating PDF: - routes.ts:4243", error);
       // Return JSON error, not HTML
       if (!res.headersSent) {
         res.status(500).json({ error: "Failed to generate PDF document" });
@@ -4253,7 +4274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(markdown);
       
     } catch (error) {
-      console.error("Error generating Markdown: - routes.ts:4385", error);
+      console.error("Error generating Markdown: - routes.ts:4277", error);
       res.status(500).json({ error: "Failed to generate Markdown document" });
     }
   });
@@ -4287,7 +4308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(articles);
     } catch (error) {
-      console.error("Error fetching help articles: - routes.ts:4419", error);
+      console.error("Error fetching help articles: - routes.ts:4311", error);
       res.status(500).json({ error: "Failed to fetch help articles" });
     }
   });
@@ -4306,7 +4327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(articles);
     } catch (error) {
-      console.error("Error searching help articles: - routes.ts:4438", error);
+      console.error("Error searching help articles: - routes.ts:4330", error);
       res.status(500).json({ error: "Failed to search help articles" });
     }
   });
@@ -4326,7 +4347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedArticle || article);
     } catch (error) {
-      console.error("Error fetching help article: - routes.ts:4458", error);
+      console.error("Error fetching help article: - routes.ts:4350", error);
       res.status(500).json({ error: "Failed to fetch help article" });
     }
   });
@@ -4343,7 +4364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(article);
     } catch (error) {
-      console.error("Error marking article helpful: - routes.ts:4475", error);
+      console.error("Error marking article helpful: - routes.ts:4367", error);
       res.status(500).json({ error: "Failed to mark article as helpful" });
     }
   });
@@ -4358,7 +4379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(categories);
     } catch (error) {
-      console.error("Error fetching help categories: - routes.ts:4490", error);
+      console.error("Error fetching help categories: - routes.ts:4382", error);
       res.status(500).json({ error: "Failed to fetch help categories" });
     }
   });
@@ -4370,7 +4391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newArticle = await storage.createHelpArticle(articleData);
       res.json(newArticle);
     } catch (error) {
-      console.error("Error creating help article: - routes.ts:4502", error);
+      console.error("Error creating help article: - routes.ts:4394", error);
       res.status(500).json({ error: "Failed to create help article" });
     }
   });
@@ -4388,7 +4409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedArticle);
     } catch (error) {
-      console.error("Error updating help article: - routes.ts:4520", error);
+      console.error("Error updating help article: - routes.ts:4412", error);
       res.status(500).json({ error: "Failed to update help article" });
     }
   });
@@ -4405,7 +4426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true, message: "Article deleted successfully" });
     } catch (error) {
-      console.error("Error deleting help article: - routes.ts:4537", error);
+      console.error("Error deleting help article: - routes.ts:4429", error);
       res.status(500).json({ error: "Failed to delete help article" });
     }
   });
@@ -4451,7 +4472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Colunas de usuários adicionais criadas com sucesso!'
       });
     } catch (error) {
-      console.error("Error migrating subscription columns: - routes.ts:4583", error);
+      console.error("Error migrating subscription columns: - routes.ts:4475", error);
       res.status(500).json({ 
         success: false,
         error: "Failed to migrate subscription columns",
@@ -4483,7 +4504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Colunas já existem!'
       });
     } catch (error) {
-      console.error("Error checking subscription columns: - routes.ts:4615", error);
+      console.error("Error checking subscription columns: - routes.ts:4507", error);
       res.status(500).json({ error: "Failed to check subscription columns" });
     }
   });
@@ -4522,7 +4543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error("Error updating subscription prices: - routes.ts:4654", error);
+      console.error("Error updating subscription prices: - routes.ts:4546", error);
       res.status(500).json({ error: "Failed to update subscription prices" });
     }
   });
@@ -4722,7 +4743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId: project.id
       });
     } catch (error) {
-      console.error("Error creating prenatal project: - routes.ts:4854", error);
+      console.error("Error creating prenatal project: - routes.ts:4746", error);
       res.status(500).json({ error: "Failed to create prenatal project" });
     }
   });
@@ -4736,7 +4757,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projects = await storage.getDoubleDiamondProjects(userId);
       res.json(projects);
     } catch (error) {
-      console.error("Error fetching Double Diamond projects: - routes.ts:4868", error);
+      console.error("Error fetching Double Diamond projects: - routes.ts:4760", error);
       res.status(500).json({ error: "Failed to fetch Double Diamond projects" });
     }
   });
@@ -4764,7 +4785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(project);
     } catch (error) {
-      console.error("Error fetching Double Diamond project: - routes.ts:4896", error);
+      console.error("Error fetching Double Diamond project: - routes.ts:4788", error);
       res.status(500).json({ error: "Failed to fetch Double Diamond project" });
     }
   });
@@ -4788,7 +4809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const project = await storage.createDoubleDiamondProject(cleanedData);
       res.status(201).json(project);
     } catch (error) {
-      console.error("Error creating Double Diamond project: - routes.ts:4920", error);
+      console.error("Error creating Double Diamond project: - routes.ts:4812", error);
       res.status(500).json({ error: "Failed to create Double Diamond project" });
     }
   });
@@ -4837,7 +4858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error updating Double Diamond project: - routes.ts:4969", error);
+      console.error("Error updating Double Diamond project: - routes.ts:4861", error);
       res.status(500).json({ error: "Failed to update Double Diamond project" });
     }
   });
@@ -4852,50 +4873,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting Double Diamond project: - routes.ts:4984", error);
+      console.error("Error deleting Double Diamond project: - routes.ts:4876", error);
       res.status(500).json({ error: "Failed to delete Double Diamond project" });
     }
   });
 
-  // BPMN diagrams for Double Diamond projects
-  app.get("/api/double-diamond/:id/bpmn-diagrams", requireAuth, async (req, res) => {
-    try {
-      const userId = req.session.userId!;
-      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
-      if (!project) {
-        return res.status(404).json({ error: "Double Diamond project not found" });
+  // GET /api/double-diamond/:id/bpmn-diagrams - Lista diagramas BPMN do projeto
+  app.get(
+    "/api/double-diamond/:id/bpmn-diagrams",
+    requireAuth,
+    loadUserSubscription,
+    requireDoubleDiamondProAddon,
+    async (req, res) => {
+      try {
+        const userId = req.session.userId!;
+        const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+        if (!project) {
+          return res.status(404).json({ error: "Double Diamond project not found" });
+        }
+
+        const diagrams = await storage.getBpmnDiagramsByProject(project.id);
+        res.json(diagrams);
+      } catch (error) {
+        console.error("Error fetching BPMN diagrams: - routes.ts:4898", error);
+        res.status(500).json({ error: "Failed to fetch BPMN diagrams" });
       }
-
-      const diagrams = await storage.getBpmnDiagramsByProject(project.id);
-      res.json(diagrams);
-    } catch (error) {
-      console.error("Error fetching BPMN diagrams: - routes.ts:5001", error);
-      res.status(500).json({ error: "Failed to fetch BPMN diagrams" });
     }
-  });
+  );
 
-  app.post("/api/double-diamond/:id/bpmn-diagrams", requireAuth, async (req, res) => {
-    try {
-      const userId = req.session.userId!;
-      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
-      if (!project) {
-        return res.status(404).json({ error: "Double Diamond project not found" });
-      }
-
-      const validatedData = insertBpmnDiagramSchema.parse({
-        ...req.body,
-        projectId: project.id,
-      });
-
-      const diagram = await storage.createBpmnDiagram(validatedData);
-      res.status(201).json(diagram);
-    } catch (error: any) {
-      console.error("Error creating BPMN diagram: - routes.ts:5022", error);
-      res.status(500).json({ error: "Failed to create BPMN diagram" });
-    }
-  });
-
-  app.put("/api/bpmn-diagrams/:id", requireAuth, async (req, res) => {
+app.put(
+  "/api/bpmn-diagrams/:id",
+  requireAuth,
+  loadUserSubscription,
+  requireDoubleDiamondProAddon,
+  async (req, res) => {
     try {
       const userId = req.session.userId!;
       const existing = await storage.getBpmnDiagram(req.params.id);
@@ -4916,12 +4927,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error updating BPMN diagram: - routes.ts:5048", error);
+      console.error("Error updating BPMN diagram: - routes.ts:4930", error);
       res.status(500).json({ error: "Failed to update BPMN diagram" });
     }
-  });
+  }
+);
 
-  app.delete("/api/bpmn-diagrams/:id", requireAuth, async (req, res) => {
+app.delete(
+  "/api/bpmn-diagrams/:id",
+  requireAuth,
+  loadUserSubscription,
+  requireDoubleDiamondProAddon,
+  async (req, res) => {
     try {
       const userId = req.session.userId!;
       const existing = await storage.getBpmnDiagram(req.params.id);
@@ -4941,13 +4958,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting BPMN diagram: - routes.ts:5073", error);
+      console.error("Error deleting BPMN diagram: - routes.ts:4961", error);
       res.status(500).json({ error: "Failed to delete BPMN diagram" });
     }
-  });
+  }
+);
 
-  // POST /api/bpmn-diagrams/:id/analyze - Analisa diagrama BPMN com IA
-  app.post("/api/bpmn-diagrams/:id/analyze", requireAuth, async (req, res) => {
+// POST /api/bpmn-diagrams/:id/analyze - Analisa diagrama BPMN com IA
+app.post(
+  "/api/bpmn-diagrams/:id/analyze",
+  requireAuth,
+  loadUserSubscription,
+  requireDoubleDiamondProAddon,
+  async (req, res) => {
     try {
       const userId = req.session.userId!;
       const diagram = await storage.getBpmnDiagram(req.params.id);
@@ -4968,80 +4991,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const analysis = await analyzeBpmnProcess({
         bpmnXml: diagram.bpmnXml,
-        language
+        language,
       });
 
       // Persist analysis on the BPMN diagram so it can be reused later
       try {
         await storage.updateBpmnDiagram(diagram.id, { analysis });
       } catch (persistError) {
-        console.error("Error saving BPMN AI analysis to diagram: - routes.ts:5107", persistError);
+        console.error("Error saving BPMN AI analysis to diagram: - routes.ts:5001", persistError);
         // Do not fail the request if persistence fails; still return the analysis
       }
 
       res.json(analysis);
     } catch (error) {
-      console.error("Error analyzing BPMN diagram with AI: - routes.ts:5113", error);
+      console.error("Error analyzing BPMN diagram with AI: - routes.ts:5007", error);
       res.status(500).json({ error: "Failed to analyze BPMN diagram" });
     }
-  });
+  }
+);
 
-  // POST /api/double-diamond/:id/generate/discover - Gera Fase 1: Discover com IA
-  app.post("/api/double-diamond/:id/generate/discover", requireAuth, async (req, res) => {
-    try {
-      const userId = req.session.userId!;
-      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
-      if (!project) {
-        return res.status(404).json({ error: "Double Diamond project not found" });
-      }
-
-      // Buscar setor e case se necessário
-      let sectorName = req.body.sector || "General";
-      let caseName = req.body.successCase;
-
-      if (project.sectorId && !req.body.sector) {
-        const sector = await storage.getIndustrySector(project.sectorId);
-        if (sector) sectorName = sector.name;
-      }
-
-      if (project.successCaseId && !req.body.successCase) {
-        const successCase = await storage.getSuccessCase(project.successCaseId);
-        if (successCase) caseName = successCase.name;
-      }
-
-      // Get language from request body or default to pt-BR
-      const language = req.body.language || "pt-BR";
-
-      // Gerar fase Discover com IA
-      const result = await generateDiscoverPhase({
-        sector: sectorName,
-        successCase: caseName,
-        targetAudience: project.targetAudience || "",
-        problemStatement: project.problemStatement || "",
-        language
-      });
-
-      // Atualizar projeto com dados gerados
-      const updated = await storage.updateDoubleDiamondProject(project.id, userId, {
-        discoverPainPoints: result.painPoints as any,
-        discoverInsights: result.insights as any,
-        discoverUserNeeds: result.userNeeds as any,
-        discoverEmpathyMap: result.empathyMap as any,
-        discoverStatus: "completed",
-        currentPhase: "define",
-        completionPercentage: 25,
-        generationCount: (project.generationCount || 0) + 1
-      });
-
-      res.json(updated);
-    } catch (error) {
-      console.error("Error generating Discover phase: - routes.ts:5167", error);
-      res.status(500).json({ error: "Failed to generate Discover phase" });
-    }
-  });
-
-  // POST /api/double-diamond/:id/generate/hmw-from-bpmn - Generate Define-phase HMW from BPMN analysis
-  app.post("/api/double-diamond/:id/generate/hmw-from-bpmn", requireAuth, async (req, res) => {
+// POST /api/double-diamond/:id/generate/hmw-from-bpmn - Generate Define-phase HMW from BPMN analysis
+app.post(
+  "/api/double-diamond/:id/generate/hmw-from-bpmn",
+  requireAuth,
+  loadUserSubscription,
+  requireDoubleDiamondProAddon,
+  async (req, res) => {
     try {
       const userId = req.session.userId!;
       const project = await storage.getDoubleDiamondProject(req.params.id, userId);
@@ -5076,7 +5051,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.updateBpmnDiagram(diagram.id, { analysis });
         } catch (persistError) {
-          console.error("Error saving BPMN AI analysis before HMW generation: - routes.ts:5208", persistError);
+          console.error("Error saving BPMN AI analysis before HMW generation: - routes.ts:5054", persistError);
         }
       }
 
@@ -5139,12 +5114,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error generating HMW from BPMN analysis: - routes.ts:5271", error);
+      console.error("Error generating HMW from BPMN analysis: - routes.ts:5117", error);
       res.status(500).json({ error: "Failed to generate HMW from BPMN analysis" });
     }
-  });
-  
-  // POST /api/double-diamond/:id/generate/define - Gera Fase 2: Define com IA
+  }
+);
   app.post("/api/double-diamond/:id/generate/define", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
@@ -5182,7 +5156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error generating Define phase: - routes.ts:5314", error);
+      console.error("Error generating Define phase: - routes.ts:5159", error);
       res.status(500).json({ error: "Failed to generate Define phase" });
     }
   });
@@ -5232,7 +5206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error generating Develop phase: - routes.ts:5364", error);
+      console.error("Error generating Develop phase: - routes.ts:5209", error);
       res.status(500).json({ error: "Failed to generate Develop phase" });
     }
   });
@@ -5248,7 +5222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // AUTO-FIX: Se o projeto não tem ideias selecionadas mas tem ideias geradas, auto-seleciona as 3 melhores
       if ((!project.developSelectedIdeas || (project.developSelectedIdeas as any).length === 0) && project.developIdeas && (project.developIdeas as any).length > 0) {
-        console.log(`[AUTOFIX] Autoselecting top 3 ideas for project ${project.id} - routes.ts:5380`);
+        console.log(`[AUTOFIX] Autoselecting top 3 ideas for project ${project.id} - routes.ts:5225`);
         const topIdeas = (project.developIdeas as any).slice(0, 3);
         project = await storage.updateDoubleDiamondProject(project.id, userId, {
           developSelectedIdeas: topIdeas as any
@@ -5292,7 +5266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error generating Deliver phase: - routes.ts:5424", error);
+      console.error("Error generating Deliver phase: - routes.ts:5269", error);
       res.status(500).json({ error: "Failed to generate Deliver phase" });
     }
   });
@@ -5347,7 +5321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error generating DFV analysis: - routes.ts:5479", error);
+      console.error("Error generating DFV analysis: - routes.ts:5324", error);
       res.status(500).json({ error: "Failed to generate DFV analysis" });
     }
   });
@@ -5360,7 +5334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projects = await storage.getAllDoubleDiamondProjects();
       res.json(projects);
     } catch (error) {
-      console.error("Error fetching all Double Diamond projects: - routes.ts:5492", error);
+      console.error("Error fetching all Double Diamond projects: - routes.ts:5337", error);
       res.status(500).json({ error: "Failed to fetch Double Diamond projects" });
     }
   });
@@ -5383,7 +5357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting Double Diamond project: - routes.ts:5515", error);
+      console.error("Error deleting Double Diamond project: - routes.ts:5360", error);
       res.status(500).json({ error: "Failed to delete Double Diamond project" });
     }
   });
@@ -5441,7 +5415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error updating Double Diamond project: - routes.ts:5573", error);
+      console.error("Error updating Double Diamond project: - routes.ts:5418", error);
       res.status(500).json({ error: "Failed to update Double Diamond project" });
     }
   });
@@ -5452,7 +5426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sectors = await storage.listIndustrySectors();
       res.json(sectors);
     } catch (error) {
-      console.error("Error fetching industry sectors: - routes.ts:5584", error);
+      console.error("Error fetching industry sectors: - routes.ts:5429", error);
       res.status(500).json({ error: "Failed to fetch industry sectors" });
     }
   });
@@ -5463,7 +5437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const successCases = await storage.listSuccessCases();
       res.json(successCases);
     } catch (error) {
-      console.error("Error fetching success cases: - routes.ts:5595", error);
+      console.error("Error fetching success cases: - routes.ts:5440", error);
       res.status(500).json({ error: "Failed to fetch success cases" });
     }
   });
@@ -5622,7 +5596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } catch (phaseError) {
-        console.error("Erro ao mapear dados do Double Diamond para projeto principal: - routes.ts:5754", phaseError);
+        console.error("Erro ao mapear dados do Double Diamond para projeto principal: - routes.ts:5599", phaseError);
       }
 
       // 4.2 Criar registro DVF vinculado ao projeto principal (best-effort)
@@ -5677,7 +5651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } as any);
         }
       } catch (dfvError) {
-        console.error("Erro ao criar avaliação DVF para projeto principal: - routes.ts:5809", dfvError);
+        console.error("Erro ao criar avaliação DVF para projeto principal: - routes.ts:5654", dfvError);
       }
 
       // 5. Registrar a exportação
@@ -5696,7 +5670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
     } catch (error) {
-      console.error("Erro ao exportar projeto: - routes.ts:5828", error);
+      console.error("Erro ao exportar projeto: - routes.ts:5673", error);
       return res.status(500).json({ 
         success: false, 
         error: "Erro interno ao exportar projeto" 
@@ -5723,7 +5697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
       res.send(pdfBuffer);
     } catch (error) {
-      console.error("Error generating Double Diamond PDF: - routes.ts:5855", error);
+      console.error("Error generating Double Diamond PDF: - routes.ts:5700", error);
       res.status(500).json({ error: "Failed to generate PDF" });
     }
   });

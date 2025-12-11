@@ -1313,6 +1313,8 @@ export const bpmnDiagrams = pgTable("bpmn_diagrams", {
   title: text("title").notNull(),
   type: text("type").default("to-be"),
   bpmnXml: text("bpmn_xml").notNull(),
+  // Stored AI analysis for this BPMN diagram (BpmnAnalysisResult JSON)
+  analysis: jsonb("analysis"),
   createdAt: timestamp("created_at").default(sql`now()`),
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });

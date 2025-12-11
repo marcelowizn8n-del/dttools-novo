@@ -327,6 +327,11 @@ app.use((req, res, next) => {
         ADD COLUMN IF NOT EXISTS description_fr TEXT;
       `);
 
+      await db.execute(`
+        ALTER TABLE IF EXISTS bpmn_diagrams
+        ADD COLUMN IF NOT EXISTS analysis JSONB;
+      `);
+
       log('✅ [STARTUP] Schema columns verified and ready');
     } catch (schemaError) {
       // Log but don't crash - table might not exist yet

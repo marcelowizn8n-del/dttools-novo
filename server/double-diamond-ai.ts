@@ -39,6 +39,8 @@ export async function generateDiscoverPhase(input: {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
   
   const languageInstruction = isPortuguese 
     ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
@@ -46,6 +48,10 @@ export async function generateDiscoverPhase(input: {
     ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
     : isFrench
     ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : isGerman
+    ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte müssen auf Deutsch sein."
+    : isChinese
+    ? "重要：请只用简体中文回答。所有文本都必须是中文。"
     : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
 
   const prompt = `Você é um especialista em Design Thinking conduzindo a fase DISCOVER do framework Double Diamond.
@@ -130,13 +136,19 @@ export async function generateDefinePhase(input: {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  
-  const languageInstruction = isPortuguese 
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+
+  const languageInstruction = isPortuguese
     ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
     : isSpanish
     ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
     : isFrench
     ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : isGerman
+    ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte müssen auf Deutsch sein."
+    : isChinese
+    ? "重要：请只用简体中文回答。所有文本都必须是中文。"
     : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
 
   const prompt = `Você é um especialista em Design Thinking conduzindo a fase DEFINE do framework Double Diamond.
@@ -224,13 +236,19 @@ export async function generateDevelopPhase(input: {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  
-  const languageInstruction = isPortuguese 
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+
+  const languageInstruction = isPortuguese
     ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
     : isSpanish
     ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
     : isFrench
     ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : isGerman
+    ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte müssen auf Deutsch sein."
+    : isChinese
+    ? "重要：请只用简体中文回答。所有文本都必须是中文。"
     : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
 
   const prompt = `Você é um facilitador criativo de Design Thinking conduzindo a fase DEVELOP (Ideação).
@@ -335,13 +353,19 @@ export async function generateDeliverPhase(input: {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  
-  const languageInstruction = isPortuguese 
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+
+  const languageInstruction = isPortuguese
     ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
     : isSpanish
     ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
     : isFrench
     ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : isGerman
+    ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte müssen auf Deutsch sein."
+    : isChinese
+    ? "重要：请只用简体中文回答。所有文本都必须是中文。"
     : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
 
   const ideaDescriptions = input.selectedIdeas.map(idea => 
@@ -466,13 +490,19 @@ export async function analyzeDFV(input: {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  
-  const languageInstruction = isPortuguese 
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+
+  const languageInstruction = isPortuguese
     ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
     : isSpanish
     ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
     : isFrench
     ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : isGerman
+    ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte müssen auf Deutsch sein."
+    : isChinese
+    ? "重要：请只用简体中文回答。所有文本都必须是中文。"
     : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
 
   const prompt = `Você é um estrategista de negócios analisando um projeto de Design Thinking usando o framework DFV.
@@ -583,6 +613,8 @@ export async function analyzeBpmnProcess(input: {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
 
   const languageInstruction = isPortuguese
     ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
@@ -590,6 +622,10 @@ export async function analyzeBpmnProcess(input: {
     ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
     : isFrench
     ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : isGerman
+    ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte müssen auf Deutsch sein."
+    : isChinese
+    ? "重要：请只用简体中文回答。所有文本都必须是中文。"
     : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
 
   const prompt = `Você é um especialista em melhoria de processos e Design Thinking.
@@ -673,6 +709,8 @@ export async function generateHmwFromBpmnAnalysis(input: {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
 
   const languageInstruction = isPortuguese
     ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
@@ -680,6 +718,10 @@ export async function generateHmwFromBpmnAnalysis(input: {
     ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
     : isFrench
     ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : isGerman
+    ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte müssen auf Deutsch sein."
+    : isChinese
+    ? "重要：请只用简体中文回答。所有文本都必须是中文。"
     : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
 
   const { analysis } = input;

@@ -1923,11 +1923,11 @@ const translations = {
     "dashboard.welcome.dismiss": "Compris, ne plus afficher",
 
     // Phases
-    "phases.empathize": "Empathize",
-    "phases.define": "Define",
-    "phases.ideate": "Ideate",
-    "phases.prototype": "Prototype",
-    "phases.test": "Test",
+    "phases.empathize": "Empathiser",
+    "phases.define": "Définir",
+    "phases.ideate": "Idéation",
+    "phases.prototype": "Prototyper",
+    "phases.test": "Tester",
     "phases.empathize.desc": "Comprendre en profondeur vos utilisateurs",
     "phases.define.desc": "Synthétiser les informations et identifier les problèmes",
     "phases.ideate.desc": "Générer des solutions créatives et innovantes",

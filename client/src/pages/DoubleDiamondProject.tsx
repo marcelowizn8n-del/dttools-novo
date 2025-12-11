@@ -214,10 +214,30 @@ export default function DoubleDiamondProject() {
     enabled: !!id
   });
 
+  const { data: subscriptionInfo, isLoading: isLoadingSubscription } = useQuery<any | null>({
+    queryKey: ["/api/subscription-info"],
+  });
+
+  const hasDoubleDiamondPro = !!subscriptionInfo?.addons?.doubleDiamondPro;
+
   const { data: bpmnDiagrams = [], isLoading: isLoadingBpmnDiagrams } = useQuery<BpmnDiagram[]>({
     queryKey: ["/api/double-diamond", id, "bpmn-diagrams"],
-    enabled: !!id,
+    enabled: !!id && hasDoubleDiamondPro,
   });
+
+  const handleTabChange = (value: string) => {
+    if (value === "bpmn") {
+      if (isLoadingSubscription) {
+        // Ainda carregando informações de assinatura; evita ação até saber o status
+        return;
+      }
+      if (!hasDoubleDiamondPro) {
+        setLocation("/addons");
+        return;
+      }
+    }
+    setActiveTab(value);
+  };
 
   // Set initial active tab - always start with "discover" unless explicitly navigating
   if (project && activeTab === null) {
@@ -300,6 +320,17 @@ export default function DoubleDiamondProject() {
       });
     },
   });
+
+  const handleGenerateHmwFromBpmnClick = () => {
+    if (isLoadingSubscription) {
+      return;
+    }
+    if (!hasDoubleDiamondPro) {
+      setLocation("/addons");
+      return;
+    }
+    generateHmwFromBpmnMutation.mutate();
+  };
 
   const { data: sectors = [] } = useQuery<{ id: string; name: string }[]>({
     queryKey: ["/api/industry-sectors"],
@@ -996,7 +1027,7 @@ export default function DoubleDiamondProject() {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab || "discover"} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab || "discover"} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="w-full flex overflow-x-auto md:grid md:grid-cols-6 h-auto p-1 gap-1">
           <TabsTrigger value="discover" data-testid="tab-discover">{t("dd.project.tabs.discover")}</TabsTrigger>
           <TabsTrigger value="define" data-testid="tab-define">{t("dd.project.tabs.define")}</TabsTrigger>
@@ -1111,7 +1142,13 @@ export default function DoubleDiamondProject() {
                 </p>
                 <Button
                   size="sm"
-                  onClick={() => setIsCreatingBpmnDiagram(true)}
+                  onClick={() => {
+                    if (!hasDoubleDiamondPro) {
+                      setLocation("/addons");
+                      return;
+                    }
+                    setIsCreatingBpmnDiagram(true);
+                  }}
                   data-testid="button-new-bpmn-diagram"
                 >
                   {t("dd.project.bpmn.button.newDiagram")}
@@ -1428,10 +1465,10 @@ export default function DoubleDiamondProject() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => generateHmwFromBpmnMutation.mutate()}
+                      onClick={handleGenerateHmwFromBpmnClick}
                       disabled={
                         generateHmwFromBpmnMutation.isPending ||
-                        bpmnDiagrams.length === 0
+                        (hasDoubleDiamondPro && bpmnDiagrams.length === 0)
                       }
                     >
                       {t("dd.project.define.bpmnHmw.button")}
@@ -1478,7 +1515,7 @@ export default function DoubleDiamondProject() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => generateHmwFromBpmnMutation.mutate()}
+                            onClick={handleGenerateHmwFromBpmnClick}
                             disabled={generateHmwFromBpmnMutation.isPending}
                           >
                             {t("dd.project.define.bpmnHmw.button")}
@@ -1657,7 +1694,7 @@ export default function DoubleDiamondProject() {
                       <div className="grid gap-4">
                         {(project.deliverLogoSuggestions as any[]).map((logo: any, idx: number) => (
                           <div key={idx} className="p-4 border rounded-lg">
-                            <div className="font-medium mb-2">{t("dd.project.deliver.section.logoSuggestions.optionLabel", { index: idx + 1 })}</div>
+                            <div className="font-medium mb-2">{t("dd.project.deliver.section.logoSuggestions.optionLabel", { index: String(idx + 1) })}</div>
                             {logo.description && <p className="text-sm mb-2">{logo.description}</p>}
                             <div className="flex gap-4 text-sm">
                               {logo.style && <span><span className="font-semibold">{t("dd.project.deliver.section.logoSuggestions.styleLabel")}</span> {logo.style}</span>}
