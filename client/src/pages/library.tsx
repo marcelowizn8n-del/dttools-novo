@@ -43,9 +43,11 @@ const categories = [
   { id: "test", labelKey: "library.category.test", icon: TestTube, descriptionKey: "library.category.test.desc" },
 ];
 
-function ArticleCard({ article }: { article: Article }) {
+function ArticleCard({ article, hasLibraryPremium }: { article: Article; hasLibraryPremium: boolean }) {
   const { language, t } = useLanguage();
   const translated = getTranslatedArticle(article, language);
+
+  const isPremiumArticle = Array.isArray(article.tags) && article.tags.includes("library-premium");
 
   const formatDate = (date: Date | string | null) => {
     if (!date) return '';
@@ -72,8 +74,19 @@ function ArticleCard({ article }: { article: Article }) {
     return colors[category] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
   };
 
+  const targetHref = !isPremiumArticle || hasLibraryPremium
+    ? `/library/article/${article.id}`
+    : "/addons";
+
   return (
-    <Card className="h-full hover:shadow-lg transition-shadow">
+    <Card className="relative h-full hover:shadow-lg transition-shadow">
+      {isPremiumArticle && (
+        <div className="absolute right-0 top-0">
+          <div className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 text-[10px] font-bold text-yellow-950 px-2 py-1 rounded-bl-lg shadow-md uppercase tracking-wide">
+            PREMIUM
+          </div>
+        </div>
+      )}
       <CardHeader>
         <div className="flex justify-between items-start gap-2">
           <Badge className={getCategoryColor(article.category)} data-testid={`badge-category-${article.id}`}>
@@ -117,9 +130,14 @@ function ArticleCard({ article }: { article: Article }) {
             )}
           </div>
         )}
+        {isPremiumArticle && !hasLibraryPremium && (
+          <p className="mt-2 text-[11px] font-medium text-yellow-800 dark:text-yellow-200">
+            Exclusivo para Biblioteca Premium
+          </p>
+        )}
       </CardContent>
       <CardFooter>
-        <Link href={`/library/article/${article.id}`} className="w-full">
+        <Link href={targetHref} className="w-full">
           <Button className="w-full" data-testid={`button-read-${article.id}`}>
             {t("library.read.article")}
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -305,7 +323,7 @@ export default function LibraryPage() {
               ) : filteredArticles.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" data-testid="articles-grid">
                   {filteredArticles.map((article) => (
-                    <ArticleCard key={article.id} article={article} />
+                    <ArticleCard key={article.id} article={article} hasLibraryPremium={hasLibraryPremium} />
                   ))}
                 </div>
               ) : (

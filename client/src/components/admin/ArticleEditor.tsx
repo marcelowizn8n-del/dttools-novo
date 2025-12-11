@@ -32,6 +32,8 @@ const articleFormSchema = insertArticleSchema.extend({
   titleFr: z.string().optional(),
   contentFr: z.string().optional(),
   descriptionFr: z.string().optional(),
+  // Campo derivado apenas para o formulário: indica se o artigo é PREMIUM (Biblioteca Premium)
+  isPremium: z.boolean().optional().default(false),
 });
 
 type ArticleFormData = z.infer<typeof articleFormSchema>;
@@ -65,6 +67,7 @@ export default function ArticleEditor({ article, isOpen, onClose }: ArticleEdito
     titleFr: "",
     contentFr: "",
     descriptionFr: "",
+    isPremium: false,
   };
 
   const form = useForm<ArticleFormData>({
@@ -92,6 +95,9 @@ export default function ArticleEditor({ article, isOpen, onClose }: ArticleEdito
           titleFr: article.titleFr || "",
           contentFr: article.contentFr || "",
           descriptionFr: article.descriptionFr || "",
+          isPremium: Array.isArray(article.tags)
+            ? article.tags.includes("library-premium")
+            : false,
         });
       } else {
         form.reset(defaultFormValues);
@@ -109,9 +115,24 @@ export default function ArticleEditor({ article, isOpen, onClose }: ArticleEdito
 
   const createArticleMutation = useMutation({
     mutationFn: async (data: ArticleFormData) => {
+      const { isPremium, ...rest } = data;
+
+      let tagsArray = rest.tags
+        ? rest.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        : [];
+
+      // Garante que a tag especial "library-premium" representa conteúdo PREMIUM da biblioteca
+      if (isPremium) {
+        if (!tagsArray.includes("library-premium")) {
+          tagsArray.push("library-premium");
+        }
+      } else {
+        tagsArray = tagsArray.filter((tag) => tag !== "library-premium");
+      }
+
       const payload = {
-        ...data,
-        tags: data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [],
+        ...rest,
+        tags: tagsArray,
       };
 
       const response = await apiRequest("POST", "/api/articles", payload);
@@ -140,9 +161,23 @@ export default function ArticleEditor({ article, isOpen, onClose }: ArticleEdito
 
   const updateArticleMutation = useMutation({
     mutationFn: async (data: ArticleFormData) => {
+      const { isPremium, ...rest } = data;
+
+      let tagsArray = rest.tags
+        ? rest.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        : [];
+
+      if (isPremium) {
+        if (!tagsArray.includes("library-premium")) {
+          tagsArray.push("library-premium");
+        }
+      } else {
+        tagsArray = tagsArray.filter((tag) => tag !== "library-premium");
+      }
+
       const payload = {
-        ...data,
-        tags: data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [],
+        ...rest,
+        tags: tagsArray,
       };
 
       const response = await apiRequest("PUT", `/api/articles/${article?.id}`, payload);
@@ -393,6 +428,28 @@ export default function ArticleEditor({ article, isOpen, onClose }: ArticleEdito
                         checked={field.value ?? true}
                         onCheckedChange={field.onChange}
                         data-testid="switch-published"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isPremium"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Conteúdo PREMIUM</FormLabel>
+                      <div className="text-sm text-muted-foreground">
+                        Disponível apenas para quem tem o add-on <strong>Biblioteca Premium</strong>
+                      </div>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value ?? false}
+                        onCheckedChange={field.onChange}
+                        data-testid="switch-premium"
                       />
                     </FormControl>
                   </FormItem>
