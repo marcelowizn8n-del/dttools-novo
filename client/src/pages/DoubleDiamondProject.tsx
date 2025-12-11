@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { BpmnDiagram } from "@shared/schema";
-import { BpmnEditor } from "@/components/bpmn/BpmnEditor";
+import { BpmnEditor, type BpmnAnalysisResult } from "@/components/bpmn/BpmnEditor";
 
 interface DoubleDiamondProject {
   id: string;
@@ -262,6 +262,43 @@ export default function DoubleDiamondProject() {
         variant: "destructive"
       });
     }
+  });
+
+  // Generate HMW questions for Define phase from BPMN AI analysis
+  const generateHmwFromBpmnMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error(t("dd.project.error.notFound.internal"));
+      if (!selectedBpmnDiagramId || bpmnDiagrams.length === 0) {
+        throw new Error(t("dd.project.define.bpmnHmw.error.noDiagram"));
+      }
+
+      const response = await apiRequest(
+        "POST",
+        `/api/double-diamond/${id}/generate/hmw-from-bpmn`,
+        {
+          language,
+          diagramId: selectedBpmnDiagramId,
+        },
+      );
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", id] });
+      toast({
+        title: t("dd.project.define.bpmnHmw.toast.success.title"),
+        description: t("dd.project.define.bpmnHmw.toast.success.description"),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("dd.project.define.bpmnHmw.toast.error.title"),
+        description:
+          error?.message ||
+          t("dd.project.define.bpmnHmw.toast.error.description"),
+        variant: "destructive",
+      });
+    },
   });
 
   const { data: sectors = [] } = useQuery<{ id: string; name: string }[]>({
@@ -1173,6 +1210,10 @@ export default function DoubleDiamondProject() {
                       initialXml={
                         bpmnDiagrams.find((d) => d.id === selectedBpmnDiagramId)?.bpmnXml || null
                       }
+                      initialAnalysis={
+                        (bpmnDiagrams.find((d) => d.id === selectedBpmnDiagramId)?.analysis as BpmnAnalysisResult | null) ||
+                        null
+                      }
                     />
                   ) : (
                     <div className="flex items-center justify-center h-[400px] border rounded-md text-sm text-muted-foreground">
@@ -1383,6 +1424,19 @@ export default function DoubleDiamondProject() {
                       </>
                     )}
                   </Button>
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => generateHmwFromBpmnMutation.mutate()}
+                      disabled={
+                        generateHmwFromBpmnMutation.isPending ||
+                        bpmnDiagrams.length === 0
+                      }
+                    >
+                      {t("dd.project.define.bpmnHmw.button")}
+                    </Button>
+                  </div>
                   {project.discoverStatus !== "completed" && (
                     <p className="text-sm text-muted-foreground mt-4">
                       {t("dd.project.define.empty.blocked")}
@@ -1418,7 +1472,19 @@ export default function DoubleDiamondProject() {
                   {/* HMW Questions */}
                   {project.defineHmwQuestions && (
                     <div>
-                      <h4 className="font-semibold mb-3">{t("dd.project.define.section.hmw.title")}</h4>
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <h4 className="font-semibold">{t("dd.project.define.section.hmw.title")}</h4>
+                        {bpmnDiagrams.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => generateHmwFromBpmnMutation.mutate()}
+                            disabled={generateHmwFromBpmnMutation.isPending}
+                          >
+                            {t("dd.project.define.bpmnHmw.button")}
+                          </Button>
+                        )}
+                      </div>
                       <div className="grid gap-2">
                         {(project.defineHmwQuestions as any[]).map((item: any, idx: number) => (
                           <div key={idx} className="p-3 border rounded-lg bg-purple-50 dark:bg-purple-950/20">

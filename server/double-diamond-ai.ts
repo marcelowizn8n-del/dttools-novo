@@ -100,7 +100,7 @@ Retorne APENAS um objeto JSON (sem markdown):
     
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Discover phase generation error:", error);
+    console.error("Discover phase generation error: - double-diamond-ai.ts:103", error);
     throw error;
   }
 }
@@ -192,7 +192,7 @@ Return ONLY a JSON object (no markdown):
     
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Define phase generation error:", error);
+    console.error("Define phase generation error: - double-diamond-ai.ts:195", error);
     throw error;
   }
 }
@@ -282,7 +282,7 @@ Return ONLY a JSON object (no markdown):
     
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Develop phase generation error:", error);
+    console.error("Develop phase generation error: - double-diamond-ai.ts:285", error);
     throw error;
   }
 }
@@ -422,7 +422,7 @@ Return ONLY a JSON object (no markdown):
     
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Deliver phase generation error:", error);
+    console.error("Deliver phase generation error: - double-diamond-ai.ts:425", error);
     throw error;
   }
 }
@@ -554,7 +554,192 @@ Retorne APENAS um objeto JSON (sem markdown):
     
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("DFV analysis error:", error);
+    console.error("DFV analysis error: - double-diamond-ai.ts:557", error);
+    throw error;
+  }
+}
+
+// ===== BPMN PROCESS ANALYSIS =====
+
+export interface BpmnAnalysisResult {
+  overview: string;
+  bottlenecks: string[];
+  unassignedTasks: string[];
+  unclearEnds: string[];
+  improvementIdeas: string[];
+  doubleDiamondLinks: {
+    discover: string[];
+    define: string[];
+    develop: string[];
+    deliver: string[];
+  };
+}
+
+export async function analyzeBpmnProcess(input: {
+  bpmnXml: string;
+  language?: string;
+}): Promise<BpmnAnalysisResult> {
+  const lang = input.language || "pt-BR";
+  const isPortuguese = lang.startsWith("pt");
+  const isSpanish = lang.startsWith("es");
+  const isFrench = lang.startsWith("fr");
+
+  const languageInstruction = isPortuguese
+    ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
+    : isSpanish
+    ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
+    : isFrench
+    ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
+
+  const prompt = `Você é um especialista em melhoria de processos e Design Thinking.
+
+${languageInstruction}
+
+Você receberá um diagrama BPMN em XML e deve analisá-lo para um gestor de negócios que não é técnico.
+
+BPMN XML (não reescreva, apenas analise):
+${input.bpmnXml}
+
+Analise o processo e produza:
+
+1. VISÃO GERAL (overview)
+   - Explique em poucas frases como o processo começa, principais etapas e como termina.
+
+2. GARGALOS (bottlenecks)
+   - Liste pontos prováveis de fila, espera, retrabalho ou excesso de aprovações.
+
+3. TAREFAS SEM DONO CLARO (unassignedTasks)
+   - Destaque etapas em que não está claro quem é o responsável (ex: cliente, SDR, CS, marketing).
+
+4. FINS POUCO CLAROS (unclearEnds)
+   - Aponte caminhos que não levam a um fim claro ou que terminam de forma confusa/incompleta.
+
+5. IDEIAS DE MELHORIA (improvementIdeas)
+   - Sugestões práticas para simplificar, automatizar ou melhorar a experiência do cliente.
+
+6. CONEXÃO COM DOUBLE DIAMOND (doubleDiamondLinks)
+   - Descubra: que observações sobre dores/jornada dos usuários o processo sugere?
+   - Define: que problemas/"How Might We" aparentes surgem a partir do desenho do processo?
+   - Develop: que tipos de ideias ou experimentos o time poderia testar?
+   - Deliver: que hipóteses de MVP ou ajustes de entrega aparecem a partir do processo?
+
+Retorne APENAS um objeto JSON (sem markdown):
+{
+  "overview": "...",
+  "bottlenecks": ["..."],
+  "unassignedTasks": ["..."],
+  "unclearEnds": ["..."],
+  "improvementIdeas": ["..."],
+  "doubleDiamondLinks": {
+    "discover": ["..."],
+    "define": ["..."],
+    "develop": ["..."],
+    "deliver": ["..."]
+  }
+}`;
+
+  try {
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: prompt
+    });
+
+    const text = result.text;
+    if (!text) throw new Error("Empty AI response");
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Invalid AI response format");
+
+    return JSON.parse(jsonMatch[0]);
+  } catch (error) {
+    console.error("BPMN process analysis error: - double-diamond-ai.ts:655", error);
+    throw error;
+  }
+}
+
+export interface BpmnHmwFromAnalysisResult {
+  hmwQuestions: Array<{
+    question: string;
+    source: "bottleneck" | "unclearEnd";
+    relatedItem: string;
+  }>;
+}
+
+export async function generateHmwFromBpmnAnalysis(input: {
+  analysis: BpmnAnalysisResult;
+  language?: string;
+}): Promise<BpmnHmwFromAnalysisResult> {
+  const lang = input.language || "pt-BR";
+  const isPortuguese = lang.startsWith("pt");
+  const isSpanish = lang.startsWith("es");
+  const isFrench = lang.startsWith("fr");
+
+  const languageInstruction = isPortuguese
+    ? "IMPORTANTE: Responda APENAS em PORTUGUÊS DO BRASIL. Todos os textos devem estar em português."
+    : isSpanish
+    ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol."
+    : isFrench
+    ? "IMPORTANTE: Responda APENAS em FRANCÊS. Todos os textos devem estar em francês."
+    : "IMPORTANTE: Responda APENAS em INGLÊS. Todos os textos devem estar em inglês.";
+
+  const { analysis } = input;
+
+  const prompt = `Você é um facilitador experiente de Design Thinking ajudando um time na fase DEFINE.
+
+${languageInstruction}
+
+Você receberá um resumo de análise de um processo em BPMN com:
+- lista de GARGALOS (bottlenecks)
+- lista de FINS POUCO CLAROS (unclearEnds)
+
+Sua tarefa é transformar esses problemas em perguntas "How Might We" (Como poderíamos...) claras e acionáveis.
+
+Siga estas regras:
+- Crie entre 6 e 12 perguntas HMW no total.
+- Use linguagem simples, focada em resultado para o usuário.
+- Cada pergunta deve estar relacionada diretamente a um gargalo OU a um fim pouco claro.
+- Não proponha soluções prontas na pergunta, apenas a oportunidade.
+
+ANÁLISE DO PROCESSO (resumo de texto gerado anteriormente pela IA):
+
+VISÃO GERAL:
+${analysis.overview}
+
+GARGALOS (bottlenecks):
+${(analysis.bottlenecks || [])
+  .map((b, i) => `- [B${i + 1}] ${b}`)
+  .join("\n")}
+
+FINS POUCO CLAROS (unclearEnds):
+${(analysis.unclearEnds || [])
+  .map((u, i) => `- [U${i + 1}] ${u}`)
+  .join("\n")}
+
+Retorne APENAS um objeto JSON (sem markdown) com o formato:
+{
+  "hmwQuestions": [
+    {
+      "question": "Como poderíamos...",
+      "source": "bottleneck" | "unclearEnd",
+      "relatedItem": "Texto completo do gargalo ou fim pouco claro que originou esta pergunta"
+    }
+  ]
+}`;
+
+  try {
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: prompt,
+    });
+
+    const text = result.text;
+    if (!text) throw new Error("Empty AI response");
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Invalid AI response format");
+
+    return JSON.parse(jsonMatch[0]);
+  } catch (error) {
+    console.error("BPMN HMW generation error: - double-diamond-ai.ts:742", error);
     throw error;
   }
 }
