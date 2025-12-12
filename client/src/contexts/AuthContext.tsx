@@ -15,6 +15,9 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isAdmin: boolean;
+  experienceLevel: User["dtExperienceLevel"] | null;
+  isBeginnerExperience: boolean;
+  isAdvancedExperience: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -167,6 +170,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const isAdmin = state.user?.role === "admin";
+  const experienceLevel = state.user?.dtExperienceLevel ?? null;
+  const isBeginnerExperience = experienceLevel === "beginner";
+  const isAdvancedExperience = experienceLevel === "advanced";
 
   const contextValue: AuthContextType = {
     ...state,
@@ -174,6 +180,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     refreshUser,
     isAdmin,
+    experienceLevel,
+    isBeginnerExperience,
+    isAdvancedExperience,
   };
 
   return (
