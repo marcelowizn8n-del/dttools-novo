@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -53,6 +54,7 @@ const profileFormSchema = z.object({
   phone: z.string().default(""),
   interests: z.array(z.string()).default([]),
   profilePicture: z.string().default(""),
+  dtExperienceLevel: z.string().default(""),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
@@ -94,6 +96,7 @@ export default function ProfilePage() {
       phone: "",
       interests: [],
       profilePicture: "",
+      dtExperienceLevel: "",
     },
   });
 
@@ -118,6 +121,7 @@ export default function ProfilePage() {
         phone: profile.phone || "",
         interests: (profile.interests as string[]) || [],
         profilePicture: profilePic,
+        dtExperienceLevel: profile.dtExperienceLevel || (profile as any).dt_experience_level || "",
       });
       setProfilePicture(profilePic);
     }
@@ -565,6 +569,48 @@ export default function ProfilePage() {
                         <FormLabel>Experiência</FormLabel>
                         <FormControl>
                           <Input placeholder="Júnior, Pleno, Sênior, etc." {...field} data-testid="input-experience" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Design Thinking Experience Level */}
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    Nível de experiência em Design Thinking
+                  </CardTitle>
+                  <CardDescription>
+                    Nos ajude a adaptar a linguagem, exemplos e passos do DTTOOLS para o seu nível atual.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="dtExperienceLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nível atual</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                          >
+                            <SelectTrigger data-testid="select-dt-experience-level">
+                              <SelectValue placeholder="Selecione seu nível" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="beginner">
+                                Estou começando em Design Thinking
+                              </SelectItem>
+                              <SelectItem value="advanced">
+                                Já trabalho com Design Thinking no dia a dia
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
