@@ -4,6 +4,7 @@ import {
   type Persona, type InsertPersona,
   type Interview, type InsertInterview,
   type Observation, type InsertObservation,
+  type ProjectInsight, type InsertProjectInsight,
   type PovStatement, type InsertPovStatement,
   type HmwQuestion, type InsertHmwQuestion,
   type Journey, type InsertJourney,
@@ -43,6 +44,7 @@ import {
   type DoubleDiamondExport, type InsertDoubleDiamondExport,
   type BpmnDiagram, type InsertBpmnDiagram,
   projects, empathyMaps, personas, interviews, observations,
+  projectInsights,
   povStatements, hmwQuestions, journeys, journeyStages, journeyTouchpoints,
   ideas, prototypes, testPlans, testResults,
   userProgress, users, articles, testimonials, videoTutorials, subscriptionPlans, userSubscriptions,
@@ -87,6 +89,12 @@ export interface IStorage {
   createObservation(observation: InsertObservation): Promise<Observation>;
   updateObservation(id: string, observation: Partial<InsertObservation>): Promise<Observation | undefined>;
   deleteObservation(id: string): Promise<boolean>;
+
+  getProjectInsights(projectId: string): Promise<ProjectInsight[]>;
+  getProjectInsight(id: string): Promise<ProjectInsight | undefined>;
+  createProjectInsight(insight: InsertProjectInsight): Promise<ProjectInsight>;
+  updateProjectInsight(id: string, insight: Partial<InsertProjectInsight>): Promise<ProjectInsight | undefined>;
+  deleteProjectInsight(id: string): Promise<boolean>;
 
   // Phase 2: Define
   getPovStatements(projectId: string): Promise<PovStatement[]>;
@@ -416,6 +424,8 @@ export class DatabaseStorage implements IStorage {
     
     // Delete interviews
     await deleteTable('interviews', () => db.delete(interviews).where(eq(interviews.projectId, id)));
+
+    await deleteTable('projectInsights', () => db.delete(projectInsights).where(eq(projectInsights.projectId, id)));
     
     // Delete observations
     await deleteTable('observations', () => db.delete(observations).where(eq(observations.projectId, id)));
@@ -822,6 +832,37 @@ export class DatabaseStorage implements IStorage {
 
   async deleteObservation(id: string): Promise<boolean> {
     const result = await db.delete(observations).where(eq(observations.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getProjectInsights(projectId: string): Promise<ProjectInsight[]> {
+    return await db.select().from(projectInsights)
+      .where(eq(projectInsights.projectId, projectId))
+      .orderBy(desc(projectInsights.createdAt));
+  }
+
+  async getProjectInsight(id: string): Promise<ProjectInsight | undefined> {
+    const [insight] = await db.select().from(projectInsights).where(eq(projectInsights.id, id));
+    return insight;
+  }
+
+  async createProjectInsight(insight: InsertProjectInsight): Promise<ProjectInsight> {
+    const [newInsight] = await db.insert(projectInsights)
+      .values(insight)
+      .returning();
+    return newInsight;
+  }
+
+  async updateProjectInsight(id: string, insight: Partial<InsertProjectInsight>): Promise<ProjectInsight | undefined> {
+    const [updatedInsight] = await db.update(projectInsights)
+      .set({ ...insight, updatedAt: new Date() })
+      .where(eq(projectInsights.id, id))
+      .returning();
+    return updatedInsight;
+  }
+
+  async deleteProjectInsight(id: string): Promise<boolean> {
+    const result = await db.delete(projectInsights).where(eq(projectInsights.id, id));
     return (result.rowCount || 0) > 0;
   }
 

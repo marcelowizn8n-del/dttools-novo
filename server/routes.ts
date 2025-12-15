@@ -12,6 +12,7 @@ import {
   insertPersonaSchema,
   insertInterviewSchema,
   insertObservationSchema,
+  insertProjectInsightSchema,
   insertPovStatementSchema,
   insertHmwQuestionSchema,
   insertJourneySchema,
@@ -1061,6 +1062,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/upload/insight-image", requireAuth, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado" });
+      }
+
+      if (!req.file.mimetype?.startsWith("image/")) {
+        return res.status(400).json({ error: "Apenas arquivos de imagem são permitidos" });
+      }
+
+      const maxSize = 5 * 1024 * 1024;
+      if (req.file.size && req.file.size > maxSize) {
+        return res.status(400).json({ error: "O arquivo é muito grande. O tamanho máximo é 5MB." });
+      }
+
+      const optimizedBuffer = await sharp(req.file.buffer)
+        .rotate()
+        .resize({ width: 1600, withoutEnlargement: true })
+        .jpeg({ quality: 80, progressive: true })
+        .toBuffer();
+
+      const base64Image = optimizedBuffer.toString('base64');
+      const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+
+      res.json({
+        url: dataUrl,
+        mimeType: "image/jpeg",
+        name: req.file.originalname,
+        size: optimizedBuffer.length,
+      });
+    } catch (error: any) {
+      console.error("Erro no upload: - routes.ts:1059", error);
+      res.status(500).json({ error: "Erro ao processar upload" });
+    }
+  });
+
   // Phase 1: Empathize - Personas
   app.get("/api/projects/:projectId/personas", requireAuth, async (req, res) => {
     try {
@@ -1254,6 +1291,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete observation" });
+    }
+  });
+
+  app.get(
+    "/api/projects/:projectId/insights",
+    requireAuth,
+    requireProjectAccess('viewer'),
+    async (req, res) => {
+      try {
+        const insights = await storage.getProjectInsights(req.params.projectId);
+        res.json(insights);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch project insights" });
+      }
+    }
+  );
+
+  app.post(
+    "/api/projects/:projectId/insights",
+    requireAuth,
+    requireProjectAccess('editor'),
+    async (req, res) => {
+      try {
+        const validatedData = insertProjectInsightSchema.parse({
+          ...req.body,
+          projectId: req.params.projectId,
+        });
+        const insight = await storage.createProjectInsight(validatedData);
+        res.status(201).json(insight);
+      } catch (error) {
+        res.status(400).json({ error: "Invalid project insight data" });
+      }
+    }
+  );
+
+  app.put("/api/insights/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const existing = await storage.getProjectInsight(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+
+      const ownerProject = await storage.getProject(existing.projectId, userId);
+      if (!ownerProject) {
+        const member = await storage.getProjectMember(existing.projectId, userId);
+        if (!member) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        const roleHierarchy = { viewer: 1, editor: 2, owner: 3 };
+        const userLevel = roleHierarchy[member.role as keyof typeof roleHierarchy] || 0;
+        if (userLevel < roleHierarchy.editor) {
+          return res.status(403).json({ error: "Insufficient permissions" });
+        }
+      }
+
+      const validatedData = insertProjectInsightSchema.omit({ projectId: true }).partial().parse(req.body);
+      const updated = await storage.updateProjectInsight(req.params.id, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid project insight data" });
+    }
+  });
+
+  app.delete("/api/insights/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const existing = await storage.getProjectInsight(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+
+      const ownerProject = await storage.getProject(existing.projectId, userId);
+      if (!ownerProject) {
+        const member = await storage.getProjectMember(existing.projectId, userId);
+        if (!member) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        const roleHierarchy = { viewer: 1, editor: 2, owner: 3 };
+        const userLevel = roleHierarchy[member.role as keyof typeof roleHierarchy] || 0;
+        if (userLevel < roleHierarchy.editor) {
+          return res.status(403).json({ error: "Insufficient permissions" });
+        }
+      }
+
+      const success = await storage.deleteProjectInsight(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete project insight" });
     }
   });
 
@@ -2516,6 +2650,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Email ou senha inválidos" });
       }
 
+      if (!user.password) {
+        return res.status(401).json({
+          error:
+            "Esta conta não possui senha. Faça login com Google ou crie uma senha para sua conta.",
+        });
+      }
+
       const isValidPassword = await bcrypt.compare(password, user.password);
       
       if (!isValidPassword) {
@@ -2534,7 +2675,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ user: userWithoutPassword });
     } catch (error) {
-      console.error("Login error: - routes.ts:2537", error);
+      const errAny = error as any;
+      const message = error instanceof Error ? error.message : String(error);
+      const details =
+        message ||
+        (typeof errAny?.code === "string" ? errAny.code : "") ||
+        (typeof errAny?.name === "string" ? errAny.name : "") ||
+        (typeof errAny === "string" ? errAny : "") ||
+        (() => {
+          try {
+            return JSON.stringify(errAny);
+          } catch {
+            return "";
+          }
+        })() ||
+        "Unknown error";
+
+      console.error("Login error: - routes.ts:/api/auth/login", {
+        name: errAny?.name,
+        message: errAny?.message,
+        code: errAny?.code,
+        stack: errAny?.stack,
+      });
+      if (process.env.NODE_ENV !== "production") {
+        return res.status(500).json({ error: "Login failed", details });
+      }
       res.status(500).json({ error: "Login failed" });
     }
   });
@@ -2636,43 +2801,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google OAuth routes
-  app.get("/api/auth/google", passport.authenticate("google", { 
-    scope: ["profile", "email"] 
-  }));
+  const hasGoogleCredentials =
+    !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
 
-  app.get("/api/auth/google/callback", 
-    passport.authenticate("google", { 
-      failureRedirect: "/login?error=oauth_failed",
-      failureMessage: true 
-    }),
-    (req, res) => {
-      // Successful authentication
-      if (req.user) {
-        const user = req.user as any;
-        
-        // Create session
-        req.session.userId = user.id;
-        req.session.user = {
-          id: user.id,
-          username: user.username,
-          role: user.role || "user",
-          createdAt: user.createdAt || new Date()
-        };
-        
-        // Save session and redirect
-        req.session.save((err) => {
-          if (err) {
-            console.error("Session save error: - routes.ts:2665", err);
-            return res.redirect("/login?error=session_failed");
-          }
-          // Redirect to dashboard after successful login
-          res.redirect("/dashboard");
-        });
-      } else {
-        res.redirect("/login?error=no_user");
-      }
-    }
-  );
+  if (!hasGoogleCredentials) {
+    app.get("/api/auth/google", (req, res) => {
+      res.redirect("/login?error=google_not_configured");
+    });
+
+    app.get("/api/auth/google/callback", (req, res) => {
+      res.redirect("/login?error=google_not_configured");
+    });
+  } else {
+    app.get(
+      "/api/auth/google",
+      passport.authenticate("google", {
+        scope: ["profile", "email"],
+      }),
+    );
+
+    app.get(
+      "/api/auth/google/callback",
+      passport.authenticate("google", {
+        failureRedirect: "/login?error=oauth_failed",
+        failureMessage: true,
+      }),
+      (req, res) => {
+        // Successful authentication
+        if (req.user) {
+          const user = req.user as any;
+
+          // Create session
+          req.session.userId = user.id;
+          req.session.user = {
+            id: user.id,
+            username: user.username,
+            role: user.role || "user",
+            createdAt: user.createdAt || new Date(),
+          };
+
+          // Save session and redirect
+          req.session.save((err) => {
+            if (err) {
+              console.error("Session save error: - routes.ts:2665", err);
+              return res.redirect("/login?error=session_failed");
+            }
+            // Redirect to dashboard after successful login
+            res.redirect("/dashboard");
+          });
+        } else {
+          res.redirect("/login?error=no_user");
+        }
+      },
+    );
+  }
 
   // Check current session/user
   app.get("/api/auth/me", async (req, res) => {

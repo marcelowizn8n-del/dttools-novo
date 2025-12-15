@@ -1,7 +1,7 @@
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Users, Target, Lightbulb, Wrench, TestTube, Calendar, BarChart3, Brain, Columns3, Edit2, FileText, Loader2, Filter, Map } from "lucide-react";
+import { ArrowLeft, Users, Target, Lightbulb, Wrench, TestTube, Calendar, BarChart3, Brain, Columns3, Edit2, FileText, Loader2, Filter, Map, Link2, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import type { Project, DvfAssessment, GuidingCriterion } from "@shared/schema";
+import type { Project, DvfAssessment, GuidingCriterion, ProjectInsight } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import TeamManagement from "@/components/TeamManagement";
 import Phase1Tools from "@/components/phase1/Phase1Tools";
@@ -196,7 +196,315 @@ function EditProjectDialog({ project, projectId }: { project: Project; projectId
   );
 }
 
+function ProjectInsightsSection({ projectId }: { projectId: string }) {
+  const { toast } = useToast();
+  const [content, setContent] = useState("");
+  const [linkInput, setLinkInput] = useState("");
+  const [links, setLinks] = useState<string[]>([]);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageMeta, setImageMeta] = useState<{ name?: string; mimeType?: string; size?: number } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const { data: insights = [], isLoading } = useQuery<ProjectInsight[]>({
+    queryKey: ["/api/projects", projectId, "insights"],
+    enabled: !!projectId,
+  });
+
+  const createInsightMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/projects/${projectId}/insights`, {
+        content: content.trim(),
+        links,
+        imageUrl,
+        imageMeta,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "insights"] });
+      setContent("");
+      setLinkInput("");
+      setLinks([]);
+      setImageUrl(null);
+      setImageMeta(null);
+      toast({
+        title: "Insight criado!",
+        description: "Seu insight foi salvo no repositório.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível salvar o insight.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteInsightMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/insights/${id}`);
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "insights"] });
+      toast({
+        title: "Insight removido",
+        description: "O insight foi removido com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível remover o insight.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addLink = () => {
+    const value = linkInput.trim();
+    if (!value) return;
+    setLinks((prev) => Array.from(new Set([...prev, value])));
+    setLinkInput("");
+  };
+
+  const removeLink = (value: string) => {
+    setLinks((prev) => prev.filter((l) => l !== value));
+  };
+
+  const handleUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Arquivo inválido",
+        description: "Selecione uma imagem (PNG/JPG/GIF).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "Arquivo grande demais",
+        description: "O tamanho máximo é 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/upload/insight-image", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Erro no upload");
+      }
+
+      const data = await response.json();
+      setImageUrl(data.url);
+      setImageMeta({ name: data.name, mimeType: data.mimeType, size: data.size });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error?.message || "Erro ao fazer upload da imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Insights
+        </CardTitle>
+        <CardDescription>
+          Organize evidências, prints e links importantes do seu projeto.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Escreva aqui o insight (o que você aprendeu / evidência)..."
+            rows={4}
+          />
+
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={linkInput}
+                onChange={(e) => setLinkInput(e.target.value)}
+                placeholder="Cole um link (Typeform, Hotjar, Drive, etc.)"
+              />
+              <Button type="button" variant="outline" onClick={addLink}>
+                <Link2 className="h-4 w-4 mr-2" />
+                Adicionar
+              </Button>
+            </div>
+            {links.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {links.map((l) => (
+                  <span
+                    key={l}
+                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+                  >
+                    <a
+                      href={l}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline"
+                    >
+                      {l}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => removeLink(l)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {imageUrl ? (
+              <div className="relative">
+                <img
+                  src={imageUrl}
+                  alt="Insight"
+                  className="w-full max-w-3xl rounded-md border object-contain"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => {
+                    setImageUrl(null);
+                    setImageMeta(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpload(file);
+                    e.currentTarget.value = "";
+                  }}
+                  disabled={isUploading}
+                />
+                <Button type="button" variant="outline" disabled={isUploading}>
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  {isUploading ? "Enviando..." : "Adicionar imagem/print"}
+                </Button>
+                <span className="text-xs text-muted-foreground">PNG/JPG/GIF até 5MB</span>
+              </label>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={() => createInsightMutation.mutate()}
+              disabled={
+                createInsightMutation.isPending ||
+                isUploading ||
+                content.trim().length === 0
+              }
+            >
+              {createInsightMutation.isPending ? "Salvando..." : "Salvar insight"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            </div>
+          ) : insights.length === 0 ? (
+            <div className="text-sm text-muted-foreground">
+              Nenhum insight ainda. Adicione seu primeiro insight acima.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {insights.map((insight) => (
+                <Card key={insight.id} className="border-muted">
+                  <CardContent className="pt-6 space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="whitespace-pre-wrap text-sm">
+                        {insight.content}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteInsightMutation.mutate(insight.id)}
+                        disabled={deleteInsightMutation.isPending}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+
+                    {insight.imageUrl && (
+                      <img
+                        src={insight.imageUrl}
+                        alt="Insight"
+                        className="w-full max-w-3xl rounded-md border object-contain"
+                      />
+                    )}
+
+                    {Array.isArray(insight.links) && insight.links.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {(insight.links as any[]).map((l: any) => (
+                          <a
+                            key={String(l)}
+                            href={String(l)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs underline"
+                          >
+                            {String(l)}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function GuidingCriteriaSummaryCard({ projectId }: { projectId: string }) {
+  const { t } = useLanguage();
   const { data: criteria, isLoading, isError } = useQuery<GuidingCriterion[]>({
     queryKey: ["/api/projects", projectId, "guiding-criteria"],
     enabled: !!projectId,
@@ -800,6 +1108,8 @@ export default function ProjectDetailPage() {
               {effectivePhase === 4 && <Phase4Tools projectId={project.id} />}
               {effectivePhase === 5 && <Phase5Tools projectId={project.id} />}
             </div>
+
+            <ProjectInsightsSection projectId={project.id} />
 
             {/* DFV Assessment Section */}
             <div className="space-y-4">

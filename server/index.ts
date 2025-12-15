@@ -332,6 +332,19 @@ app.use((req, res, next) => {
         ADD COLUMN IF NOT EXISTS analysis JSONB;
       `);
 
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS project_insights (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          project_id VARCHAR NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          content TEXT NOT NULL,
+          links JSONB DEFAULT '[]'::jsonb,
+          image_url TEXT,
+          image_meta JSONB,
+          created_at TIMESTAMP DEFAULT now(),
+          updated_at TIMESTAMP DEFAULT now()
+        );
+      `);
+
       log('✅ [STARTUP] Schema columns verified and ready');
     } catch (schemaError) {
       // Log but don't crash - table might not exist yet

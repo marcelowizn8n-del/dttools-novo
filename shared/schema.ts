@@ -126,6 +126,17 @@ export const observations = pgTable("observations", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const projectInsights = pgTable("project_insights", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+  content: text("content").notNull(),
+  links: jsonb("links").default([]),
+  imageUrl: text("image_url"),
+  imageMeta: jsonb("image_meta"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 // Phase 2: Define - POV Statements
 export const povStatements = pgTable("pov_statements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -467,6 +478,14 @@ export const insertObservationSchema = createInsertSchema(observations).omit({
   createdAt: true,
 });
 
+export const insertProjectInsightSchema = createInsertSchema(projectInsights, {
+  links: z.array(z.string()).optional(),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertPovStatementSchema = createInsertSchema(povStatements).omit({
   id: true,
   createdAt: true,
@@ -579,6 +598,9 @@ export type InsertInterview = z.infer<typeof insertInterviewSchema>;
 
 export type Observation = typeof observations.$inferSelect;
 export type InsertObservation = z.infer<typeof insertObservationSchema>;
+
+export type ProjectInsight = typeof projectInsights.$inferSelect;
+export type InsertProjectInsight = z.infer<typeof insertProjectInsightSchema>;
 
 export type PovStatement = typeof povStatements.$inferSelect;
 export type InsertPovStatement = z.infer<typeof insertPovStatementSchema>;

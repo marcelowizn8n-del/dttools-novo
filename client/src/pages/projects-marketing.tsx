@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import dttoolsIcon from "../assets/dttools-icon.png";
 
 const phases = [
@@ -282,15 +283,27 @@ const testimonials = [
 export default function ProjectsMarketingPage() {
   const { t, language } = useLanguage();
   const [hoveredPhase, setHoveredPhase] = useState<number | null>(null);
+  const { theme } = useTheme();
+  const isDarkTheme =
+    theme === "dark" ||
+    (typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark"));
   const isChinese = language === 'zh';
   const isFrench = language === 'fr';
   const isSpanish = language === 'es';
   const isEnglish = language === 'en' || language === 'de';
 
   return (
-    <div className="bg-white">
+    <div className="bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+      <section
+        className={
+          "relative bg-gradient-to-br overflow-hidden " +
+          (isDarkTheme
+            ? "from-slate-950 via-slate-900 to-slate-950"
+            : "from-blue-50 via-indigo-50 to-purple-50")
+        }
+      >
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="relative container mx-auto px-6 py-20 lg:py-32">
           <div className="text-center max-w-5xl mx-auto">
@@ -304,7 +317,15 @@ export default function ProjectsMarketingPage() {
               />
             </div>
 
-            <Badge className="mb-4 bg-blue-100 text-blue-800 hover:bg-blue-200" data-testid="badge-projects-hero">
+            <Badge
+              className={
+                "mb-4 " +
+                (isDarkTheme
+                  ? "bg-secondary text-secondary-foreground"
+                  : "bg-blue-100 text-blue-800 hover:bg-blue-200")
+              }
+              data-testid="badge-projects-hero"
+            >
               <Sparkles className="w-4 h-4 mr-1" />
               {isChinese
                 ? "设计思维项目"
@@ -317,7 +338,7 @@ export default function ProjectsMarketingPage() {
                       : "Projetos de Design Thinking"}
             </Badge>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
               {isChinese
                 ? "将复杂问题转化为颠覆性解决方案"
                 : isFrench
@@ -329,7 +350,7 @@ export default function ProjectsMarketingPage() {
                       : "Transforme Problemas Complexos em Soluções Revolucionárias"}
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
               {isChinese
                 ? "最完整的设计思维项目平台，提供引导式工具、实时协作，以及带有 DTTools 品牌标识的专业 PDF 导出。"
                 : isFrench
@@ -357,7 +378,17 @@ export default function ProjectsMarketingPage() {
                 </Button>
               </Link>
               <Link href="/pricing">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-blue-600 text-blue-700 hover:bg-blue-50" data-testid="button-view-plans-projects">
+                <Button
+                  variant={isDarkTheme ? "outline" : "outline"}
+                  size="lg"
+                  className={
+                    "text-lg px-8 py-6 " +
+                    (isDarkTheme
+                      ? "border border-white/30 text-white/90 hover:bg-white/10"
+                      : "border-blue-600 text-blue-700 hover:bg-blue-50")
+                  }
+                  data-testid="button-view-plans-projects"
+                >
                   {isChinese
                     ? "查看方案"
                     : isFrench
@@ -371,7 +402,7 @@ export default function ProjectsMarketingPage() {
               </Link>
             </div>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {isChinese
                 ? "✨ 无需信用卡 • 7 天免费试用"
                 : isFrench
@@ -387,10 +418,10 @@ export default function ProjectsMarketingPage() {
       </section>
 
       {/* How It Works - 5 Phases */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-background">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               {isChinese
                 ? "设计思维项目如何运作"
                 : isFrench
@@ -401,7 +432,7 @@ export default function ProjectsMarketingPage() {
                       ? "Cómo Funcionan los Proyectos de Design Thinking"
                       : "Como Funcionam os Projetos de Design Thinking"}
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               {isChinese 
                 ? "遵循全球顶尖创新企业采用的 5 个阶段方法论。每个阶段都配有专门工具和引导式流程，确保结果一致且可复用。"
                 : isFrench
@@ -422,10 +453,13 @@ export default function ProjectsMarketingPage() {
               return (
                 <Card 
                   key={phase.id}
-                  className="relative transition-all duration-300 cursor-pointer border-2 hover:shadow-xl hover:scale-105"
+                  className={
+                    "relative transition-all duration-300 cursor-pointer border-2 hover:shadow-xl hover:scale-105 " +
+                    (isDarkTheme ? "bg-card border-border" : "")
+                  }
                   style={{
-                    backgroundColor: phase.bgColor,
-                    borderColor: isHovered ? phase.borderColor : '#e5e7eb'
+                    backgroundColor: isDarkTheme ? undefined : phase.bgColor,
+                    borderColor: isHovered ? phase.borderColor : (isDarkTheme ? undefined : '#e5e7eb')
                   }}
                   onMouseEnter={() => setHoveredPhase(phase.id)}
                   onMouseLeave={() => setHoveredPhase(null)}
@@ -435,7 +469,9 @@ export default function ProjectsMarketingPage() {
                     <div 
                       className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-3 transition-all duration-300"
                       style={{
-                        backgroundColor: isHovered ? phase.borderColor : 'white',
+                        backgroundColor: isHovered
+                          ? phase.borderColor
+                          : (isDarkTheme ? 'hsl(var(--muted))' : 'white'),
                         color: isHovered ? 'white' : phase.iconColor,
                         transform: isHovered ? 'scale(1.1)' : 'scale(1)'
                       }}
@@ -447,11 +483,11 @@ export default function ProjectsMarketingPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-sm text-gray-700 leading-relaxed mb-3">
+                    <CardDescription className="text-sm text-foreground/80 leading-relaxed mb-3">
                       {isChinese ? phase.descriptionZh : isFrench ? phase.descriptionFr : isEnglish ? phase.descriptionEn : isSpanish ? phase.descriptionEs : phase.description}
                     </CardDescription>
                     <div className="space-y-1">
-                      <p className="text-xs font-medium text-gray-500 mb-1">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">
                         {isChinese
                           ? "工具："
                           : isFrench
@@ -463,12 +499,12 @@ export default function ProjectsMarketingPage() {
                                 : "Ferramentas:"}
                       </p>
                       {phase.tools.slice(0, 2).map((tool, i) => (
-                        <div key={i} className="text-xs text-gray-600 flex items-center">
+                        <div key={i} className="text-xs text-muted-foreground flex items-center">
                           <CheckCircle className="w-3 h-3 mr-1 text-green-500" />
                           {tool}
                         </div>
                       ))}
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {isChinese
                           ? `+${phase.tools.length - 2} 个更多`
                           : isFrench
@@ -484,7 +520,7 @@ export default function ProjectsMarketingPage() {
                   
                   {index < phases.length - 1 && (
                     <div className="hidden lg:block absolute -right-3 top-1/2 transform -translate-y-1/2 z-10">
-                      <ArrowRight className="w-6 h-6 text-gray-400" />
+                      <ArrowRight className="w-6 h-6 text-muted-foreground" />
                     </div>
                   )}
                 </Card>
@@ -525,10 +561,10 @@ export default function ProjectsMarketingPage() {
       </section>
 
       {/* Competitive Advantages */}
-      <section className="py-20 bg-gray-50">
+      <section className={"py-20 " + (isDarkTheme ? "bg-background" : "bg-gray-50")}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               {isChinese
                 ? "为什么选择 DTTools"
                 : isFrench
@@ -539,7 +575,7 @@ export default function ProjectsMarketingPage() {
                       ? "Por qué DTTools es Diferente"
                       : "Por que DTTools é Diferente"}
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               {isChinese 
                 ? "一系列高级功能，让你远远领先于传统设计思维工具和常规协作平台。"
                 : isFrench
@@ -560,7 +596,9 @@ export default function ProjectsMarketingPage() {
                 <Card 
                   key={index} 
                   className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${
-                    advantage.highlight ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:scale-105'
+                    advantage.highlight
+                      ? (isDarkTheme ? 'ring-2 ring-blue-500 bg-blue-950/30' : 'ring-2 ring-blue-500 bg-blue-50')
+                      : 'hover:scale-105'
                   }`}
                 >
                   <CardHeader>
@@ -592,7 +630,7 @@ export default function ProjectsMarketingPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-gray-600 leading-relaxed">
+                    <CardDescription className="text-muted-foreground leading-relaxed">
                       {isChinese ? advantage.descriptionZh : isFrench ? advantage.descriptionFr : isEnglish ? advantage.descriptionEn : isSpanish ? advantage.descriptionEs : advantage.description}
                     </CardDescription>
                   </CardContent>
@@ -604,10 +642,10 @@ export default function ProjectsMarketingPage() {
       </section>
 
       {/* Benefits Comparison */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-background">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               {isChinese
                 ? "结构化平台 vs 传统方法"
                 : isFrench
@@ -618,7 +656,7 @@ export default function ProjectsMarketingPage() {
                       ? "Plataforma Estructurada vs Métodos Tradicionales"
                       : "Plataforma Estruturada vs Métodos Tradicionais"}
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               {isChinese 
                 ? "使用专业的设计思维平台，你可以清晰量化每一次迭代带来的真实影响。"
                 : isFrench
@@ -638,7 +676,7 @@ export default function ProjectsMarketingPage() {
               return (
                 <Card key={index} className="text-center border-0 shadow-lg">
                   <CardHeader>
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <div className="w-16 h-16 bg-green-100 dark:bg-green-950/40 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Icon className="w-8 h-8 text-green-600" />
                     </div>
                     <CardTitle className="text-xl font-semibold">
@@ -646,7 +684,7 @@ export default function ProjectsMarketingPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-gray-600 leading-relaxed">
+                    <CardDescription className="text-muted-foreground leading-relaxed">
                       {isChinese ? benefit.descriptionZh : isFrench ? benefit.descriptionFr : isEnglish ? benefit.descriptionEn : isSpanish ? benefit.descriptionEs : benefit.description}
                     </CardDescription>
                   </CardContent>
@@ -692,14 +730,20 @@ export default function ProjectsMarketingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
+              <Card
+                key={index}
+                className={
+                  "border-0 shadow-xl backdrop-blur-sm " +
+                  (isDarkTheme ? "bg-card/90" : "bg-white/95")
+                }
+              >
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-1 mb-4">
                     {[1,2,3,4,5].map(i => (
                       <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-gray-700 italic mb-4 leading-relaxed">
+                  <p className="text-foreground/80 italic mb-4 leading-relaxed">
                     "{isChinese
                       ? testimonial.contentZh
                       : isFrench
@@ -717,8 +761,8 @@ export default function ProjectsMarketingPage() {
                       </span>
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                      <div className="text-sm text-gray-600">{testimonial.role}</div>
+                      <div className="font-semibold text-foreground">{testimonial.name}</div>
+                      <div className="text-sm text-muted-foreground">{testimonial.role}</div>
                       <div className="text-sm text-blue-600 font-medium">{testimonial.company}</div>
                     </div>
                   </div>
@@ -730,9 +774,9 @@ export default function ProjectsMarketingPage() {
       </section>
 
       {/* Pricing CTA */}
-      <section className="py-20 bg-gray-50">
+      <section className={"py-20 " + (isDarkTheme ? "bg-background" : "bg-gray-50")}>
         <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             {isChinese
               ? "从今天起开启你的设计思维之旅"
               : isFrench
@@ -743,7 +787,7 @@ export default function ProjectsMarketingPage() {
                     ? "Comienza hoy tu Viaje de Design Thinking"
                     : "Comece sua Jornada de Design Thinking Hoje"}
           </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             {isChinese 
               ? "加入来自全球的创新者行列，借助 DTTools 结构化的设计思维项目，持续创造突破性解决方案。"
               : isFrench
@@ -771,7 +815,17 @@ export default function ProjectsMarketingPage() {
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-blue-600 text-blue-700 hover:bg-blue-50" data-testid="button-see-plans-cta">
+              <Button
+                variant={isDarkTheme ? "outline" : "outline"}
+                size="lg"
+                className={
+                  "text-lg px-8 py-6 " +
+                  (isDarkTheme
+                    ? "border border-white/30 text-foreground hover:bg-white/10"
+                    : "border-blue-600 text-blue-700 hover:bg-blue-50")
+                }
+                data-testid="button-see-plans-cta"
+              >
                 {isChinese
                   ? "查看所有方案与价格"
                   : isFrench
@@ -786,7 +840,7 @@ export default function ProjectsMarketingPage() {
           </div>
 
           <div className="text-center space-y-2">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {isChinese
                 ? "✨ 无需信用卡 • 随时可以取消"
                 : isFrench
