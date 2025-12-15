@@ -67,18 +67,18 @@ const phases = [
 ];
 
 // Helper to get translated testimonial text
-function getTranslatedTestimonial(testimonial: Testimonial, language: Language) {
-  const langMap: Record<Language, string | null> = {
+function getTranslatedTestimonial(testimonial: Testimonial, language: Language): string | null {
+  const langMap: Record<Language, string | null | undefined> = {
     "pt-BR": testimonial.testimonialPt,
     "en": testimonial.testimonialEn,
     "es": testimonial.testimonialEs,
     "fr": testimonial.testimonialFr,
-    // Fallbacks: use English testimonial when a specific translation is not available
-    "de": testimonial.testimonialEn,
-    "zh": testimonial.testimonialEn,
+    // No DB fields for German/Chinese yet; don't fall back to English.
+    "de": null,
+    "zh": null,
   };
 
-  return langMap[language] || testimonial.testimonialPt;
+  return langMap[language] || null;
 }
 
 export default function LandingPage() {
@@ -671,8 +671,10 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.length > 0 ? (
-              testimonials.slice(0, 3).map((testimonial) => {
-                const testimonialText = getTranslatedTestimonial(testimonial, language);
+              testimonials.slice(0, 3).map((testimonial, idx) => {
+                const testimonialText =
+                  getTranslatedTestimonial(testimonial, language) ||
+                  t(`landing.testimonial.${idx + 1}`);
                 
                 return (
                   <Card key={testimonial.id} className="border-0 shadow-lg bg-card">
