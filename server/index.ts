@@ -262,6 +262,11 @@ app.use((req, res, next) => {
         ADD COLUMN IF NOT EXISTS custom_ai_chat_limit INTEGER;
       `);
 
+      await db.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_limits_trial_end_date TIMESTAMP;
+      `);
+
       // Add Double Diamond columns to subscription_plans
       await db.execute(`
         ALTER TABLE IF EXISTS subscription_plans 

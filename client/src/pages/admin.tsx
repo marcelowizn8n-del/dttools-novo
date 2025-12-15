@@ -800,6 +800,8 @@ function UserLimitsDialog({
   const { toast } = useToast();
   const { t } = useLanguage();
 
+  const [trialDays, setTrialDays] = useState<number | null>(14);
+
   const [localLimits, setLocalLimits] = useState<{
     customMaxProjects: number | null;
     customMaxDoubleDiamondProjects: number | null;
@@ -812,6 +814,7 @@ function UserLimitsDialog({
     customMaxDoubleDiamondProjects: number | null;
     customMaxDoubleDiamondExports: number | null;
     customAiChatLimit: number | null;
+    customLimitsTrialEndDate?: string | Date | null;
   } | null>({
     queryKey: ["admin-user-limits", user.id],
     queryFn: async () => {
@@ -827,15 +830,24 @@ function UserLimitsDialog({
     }
     if (!isOpen) {
       setLocalLimits(null);
+      setTrialDays(14);
     }
   }, [isOpen, data]);
 
   const updateLimitsMutation = useMutation({
     mutationFn: async (limits: NonNullable<typeof localLimits>) => {
+      const body: any = {
+        ...limits,
+        trialDays:
+          typeof trialDays === "number" && Number.isFinite(trialDays) && trialDays > 0
+            ? trialDays
+            : null,
+      };
+
       const response = await apiRequest(
         "PUT",
         `/api/admin/users/${user.id}/limits`,
-        limits
+        body
       );
       return response.json();
     },
@@ -879,6 +891,23 @@ function UserLimitsDialog({
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">
+                {t("admin.users.limits.trialDays.label")}
+              </label>
+              <Input
+                type="number"
+                value={trialDays ?? ""}
+                onChange={(e) =>
+                  setTrialDays(e.target.value ? parseInt(e.target.value) : null)
+                }
+                placeholder={t("admin.users.limits.trialDays.placeholder")}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("admin.users.limits.trialDays.help")}
+              </p>
+            </div>
+
             <div className="grid gap-2">
               <label className="text-sm font-medium">
                 {t("admin.users.limits.maxProjects")}
@@ -987,6 +1016,7 @@ function UserAddonsDialog({
   const { toast } = useToast();
   const { t } = useLanguage();
   const [localAddons, setLocalAddons] = useState<UserAddonState | null>(null);
+  const [trialDays, setTrialDays] = useState<number | null>(14);
 
   const { data, isLoading } = useQuery<{ addons: UserAddonState } | null>({
     queryKey: ["admin-user-addons", user.id],
@@ -1003,21 +1033,29 @@ function UserAddonsDialog({
     }
     if (!isOpen) {
       setLocalAddons(null);
+      setTrialDays(14);
     }
   }, [isOpen, data]);
 
   const updateAddonsMutation = useMutation({
-    mutationFn: async (addons: UserAddonState) => {
+    mutationFn: async (payload: { addons: UserAddonState; trialDays: number | null }) => {
+      const body: any = {
+        doubleDiamondPro: payload.addons.doubleDiamondPro,
+        exportPro: payload.addons.exportPro,
+        aiTurbo: payload.addons.aiTurbo,
+        collabAdvanced: payload.addons.collabAdvanced,
+        libraryPremium: payload.addons.libraryPremium,
+      };
+
+      body.trialDays =
+        typeof payload.trialDays === "number" && Number.isFinite(payload.trialDays) && payload.trialDays > 0
+          ? payload.trialDays
+          : null;
+
       const response = await apiRequest(
         "PUT",
         `/api/admin/users/${user.id}/addons`,
-        {
-          doubleDiamondPro: addons.doubleDiamondPro,
-          exportPro: addons.exportPro,
-          aiTurbo: addons.aiTurbo,
-          collabAdvanced: addons.collabAdvanced,
-          libraryPremium: addons.libraryPremium,
-        }
+        body
       );
       return response.json();
     },
@@ -1046,7 +1084,7 @@ function UserAddonsDialog({
 
   const handleSave = () => {
     if (!localAddons) return;
-    updateAddonsMutation.mutate(localAddons);
+    updateAddonsMutation.mutate({ addons: localAddons, trialDays });
   };
 
   return (
@@ -1065,6 +1103,23 @@ function UserAddonsDialog({
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">
+                {t("admin.addons.trialDays.label")}
+              </label>
+              <Input
+                type="number"
+                value={trialDays ?? ""}
+                onChange={(e) =>
+                  setTrialDays(e.target.value ? parseInt(e.target.value) : null)
+                }
+                placeholder={t("admin.addons.trialDays.placeholder")}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("admin.addons.trialDays.help")}
+              </p>
+            </div>
+
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-medium">{t("admin.addons.item.doubleDiamondPro.title")}</p>

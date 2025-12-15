@@ -304,6 +304,7 @@ export const users = pgTable("users", {
   customMaxDoubleDiamondProjects: integer("custom_max_double_diamond_projects"), // null = use plan limit
   customMaxDoubleDiamondExports: integer("custom_max_double_diamond_exports"), // null = use plan limit
   customAiChatLimit: integer("custom_ai_chat_limit"), // null = use plan limit
+  customLimitsTrialEndDate: timestamp("custom_limits_trial_end_date"),
   dtExperienceLevel: text("dt_experience_level"), // beginner or advanced Design Thinking experience
   createdAt: timestamp("created_at").default(sql`now()`),
 });

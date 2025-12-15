@@ -43,7 +43,9 @@ declare module 'express-serve-static-core' {
 
 // Middleware to load user subscription and enforce limits
 export async function loadUserSubscription(req: Request, res: Response, next: NextFunction) {
-  if (!req.user?.id) {
+  const userId = req.session?.userId;
+
+  if (!userId) {
     // User not authenticated - apply free plan limits
     const freePlan = await storage.getSubscriptionPlanByName("free");
     if (freePlan) {
@@ -89,7 +91,7 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
 
   try {
     // Get user's active subscription
-    const userSubscription = await storage.getUserActiveSubscription(req.user.id);
+    const userSubscription = await storage.getUserActiveSubscription(userId);
     let plan;
 
     if (userSubscription) {
@@ -100,7 +102,11 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
     }
 
     if (plan) {
-      const user = await storage.getUser(req.user.id);
+      const user = await storage.getUser(userId);
+
+      const now = new Date();
+      const isCustomLimitsActive =
+        !user?.customLimitsTrialEndDate || user.customLimitsTrialEndDate > now;
 
       const planMaxProjects = normalizeLimit(plan.maxProjects);
       const planMaxPersonas = normalizeLimit(plan.maxPersonasPerProject);
@@ -110,12 +116,20 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
       const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
       const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
 
-      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
-      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
-      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
-      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
+      const userMaxProjects = isCustomLimitsActive
+        ? normalizeLimit(user?.customMaxProjects ?? null)
+        : null;
+      const userAiChatLimit = isCustomLimitsActive
+        ? normalizeLimit(user?.customAiChatLimit ?? null)
+        : null;
+      const userMaxDoubleDiamondProjects = isCustomLimitsActive
+        ? normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null)
+        : null;
+      const userMaxDoubleDiamondExports = isCustomLimitsActive
+        ? normalizeLimit(user?.customMaxDoubleDiamondExports ?? null)
+        : null;
 
-      const activeAddons = await storage.getActiveUserAddons(req.user.id);
+      const activeAddons = await storage.getActiveUserAddons(userId);
       const addonKeys = new Set(activeAddons.map((a) => a.addonKey));
 
       const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
@@ -201,7 +215,8 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
 
 // Middleware to check project creation limits
 export async function checkProjectLimit(req: Request, res: Response, next: NextFunction) {
-  if (!req.user?.id || !req.subscription?.limits) {
+  const userId = req.session?.userId;
+  if (!userId || !req.subscription?.limits) {
     return next();
   }
 
@@ -212,7 +227,7 @@ export async function checkProjectLimit(req: Request, res: Response, next: NextF
   }
 
   try {
-    const userProjects = await storage.getProjects(req.user.id);
+    const userProjects = await storage.getProjects(userId);
 
     if (userProjects.length >= maxProjects) {
       return res.status(403).json({
@@ -231,7 +246,8 @@ export async function checkProjectLimit(req: Request, res: Response, next: NextF
 
 // Middleware to check persona creation limits
 export async function checkPersonaLimit(req: Request, res: Response, next: NextFunction) {
-  if (!req.user?.id || !req.subscription?.limits) {
+  const userId = req.session?.userId;
+  if (!userId || !req.subscription?.limits) {
     return next();
   }
 
@@ -266,7 +282,8 @@ export async function checkPersonaLimit(req: Request, res: Response, next: NextF
 
 // Middleware to check AI chat limits
 export async function checkAIChatLimit(req: Request, res: Response, next: NextFunction) {
-  if (!req.user?.id || !req.subscription?.limits) {
+  const userId = req.session?.userId;
+  if (!userId || !req.subscription?.limits) {
     return next();
   }
 
@@ -338,7 +355,9 @@ export async function checkCollaborationAccess(req: Request, res: Response, next
 
 // Get current subscription info for frontend
 export async function getSubscriptionInfo(req: Request, res: Response) {
-  if (!req.user?.id) {
+  const userId = req.session?.userId;
+
+  if (!userId) {
     const freePlan = await storage.getSubscriptionPlanByName("free");
     return res.json({
       plan: freePlan,
@@ -374,7 +393,7 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
   }
 
   try {
-    const userSubscription = await storage.getUserActiveSubscription(req.user.id);
+    const userSubscription = await storage.getUserActiveSubscription(userId);
     let plan;
 
     if (userSubscription) {
@@ -384,9 +403,9 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
     }
 
     // Calculate current usage
-    const userProjects = await storage.getProjects(req.user.id);
-    const user = await storage.getUser(req.user.id);
-    const activeAddons = plan ? await storage.getActiveUserAddons(req.user.id) : [];
+    const userProjects = await storage.getProjects(userId);
+    const user = await storage.getUser(userId);
+    const activeAddons = plan ? await storage.getActiveUserAddons(userId) : [];
 
     let limits: any = null;
     let addonsInfo: any = null;
@@ -400,10 +419,22 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
       const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
       const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
 
-      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
-      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
-      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
-      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
+      const now = new Date();
+      const isCustomLimitsActive =
+        !user?.customLimitsTrialEndDate || user.customLimitsTrialEndDate > now;
+
+      const userMaxProjects = isCustomLimitsActive
+        ? normalizeLimit(user?.customMaxProjects ?? null)
+        : null;
+      const userAiChatLimit = isCustomLimitsActive
+        ? normalizeLimit(user?.customAiChatLimit ?? null)
+        : null;
+      const userMaxDoubleDiamondProjects = isCustomLimitsActive
+        ? normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null)
+        : null;
+      const userMaxDoubleDiamondExports = isCustomLimitsActive
+        ? normalizeLimit(user?.customMaxDoubleDiamondExports ?? null)
+        : null;
 
       const addonKeys = new Set(activeAddons.map((a: any) => a.addonKey));
 

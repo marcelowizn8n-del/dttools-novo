@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 
@@ -10,38 +11,46 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Header from "@/components/Header";
-import LandingPage from "@/pages/landing";
-import ProjectsPage from "@/pages/projects";
-import ProjectsMarketingPage from "@/pages/projects-marketing";
-import ProjectDetailPage from "@/pages/project-detail";
-import ProjectJourneyPage from "@/pages/project-journey";
-import LibraryPage from "@/pages/library";
-import ArticleDetailPage from "@/pages/article-detail";
-import AdminPage from "@/pages/admin";
-import AnalyticsPage from "@/pages/Analytics";
-import LoginPage from "@/pages/login";
-import SignupPage from "@/pages/signup";
-import CompleteProfilePage from "@/pages/complete-profile";
-import PricingPage from "@/pages/pricing";
-import ChatPage from "@/pages/chat";
-import ProfilePage from "@/pages/profile";
-import BenchmarkingPage from "@/pages/benchmarking";
-import HelpCenter from "@/pages/HelpCenter";
-import PrivacyPolicy from "@/pages/privacy-policy";
-import Terms from "@/pages/terms";
-import Support from "@/pages/support";
-import ScreenshotCapture from "@/components/ScreenshotCapture";
-import NotFound from "@/pages/not-found";
+const LandingPage = lazy(() => import("@/pages/landing"));
+const ProjectsPage = lazy(() => import("@/pages/projects"));
+const ProjectsMarketingPage = lazy(() => import("@/pages/projects-marketing"));
+const ProjectDetailPage = lazy(() => import("@/pages/project-detail"));
+const ProjectJourneyPage = lazy(() => import("@/pages/project-journey"));
+const LibraryPage = lazy(() => import("@/pages/library"));
+const ArticleDetailPage = lazy(() => import("@/pages/article-detail"));
+const AdminPage = lazy(() => import("@/pages/admin"));
+const AnalyticsPage = lazy(() => import("@/pages/Analytics"));
+const LoginPage = lazy(() => import("@/pages/login"));
+const SignupPage = lazy(() => import("@/pages/signup"));
+const CompleteProfilePage = lazy(() => import("@/pages/complete-profile"));
+const PricingPage = lazy(() => import("@/pages/pricing"));
+const ChatPage = lazy(() => import("@/pages/chat"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
+const BenchmarkingPage = lazy(() => import("@/pages/benchmarking"));
+const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
+const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
+const Terms = lazy(() => import("@/pages/terms"));
+const Support = lazy(() => import("@/pages/support"));
+const ScreenshotCapture = lazy(() => import("@/components/ScreenshotCapture"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 import { useAuth, ProtectedRoute } from "@/contexts/AuthContext";
-import DashboardPage from "@/pages/dashboard";
-import OnboardingAI from "@/pages/OnboardingAI";
-import DashboardAI from "@/pages/DashboardAI";
-import AdminSectors from "@/pages/AdminSectors";
-import AdminCases from "@/pages/AdminCases";
-import VideoTutorials from "@/pages/VideoTutorials";
-import DoubleDiamond from "@/pages/DoubleDiamond";
-import DoubleDiamondProject from "@/pages/DoubleDiamondProject";
-import AddonsPage from "@/pages/addons";
+const DashboardPage = lazy(() => import("@/pages/dashboard"));
+const OnboardingAI = lazy(() => import("@/pages/OnboardingAI"));
+const DashboardAI = lazy(() => import("@/pages/DashboardAI"));
+const AdminSectors = lazy(() => import("@/pages/AdminSectors"));
+const AdminCases = lazy(() => import("@/pages/AdminCases"));
+const VideoTutorials = lazy(() => import("@/pages/VideoTutorials"));
+const DoubleDiamond = lazy(() => import("@/pages/DoubleDiamond"));
+const DoubleDiamondProject = lazy(() => import("@/pages/DoubleDiamondProject"));
+const AddonsPage = lazy(() => import("@/pages/addons"));
+
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+    </div>
+  );
+}
 
 function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -54,7 +63,11 @@ function HomePage() {
     );
   }
   
-  return isAuthenticated ? <DashboardPage /> : <LandingPage />;
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      {isAuthenticated ? <DashboardPage /> : <LandingPage />}
+    </Suspense>
+  );
 }
 
 function ProjectsRoute() {
@@ -68,7 +81,11 @@ function ProjectsRoute() {
     );
   }
   
-  return isAuthenticated ? <ProjectsPage /> : <ProjectsMarketingPage />;
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      {isAuthenticated ? <ProjectsPage /> : <ProjectsMarketingPage />}
+    </Suspense>
+  );
 }
 
 function ProtectedProjectDetail() {
@@ -88,7 +105,11 @@ function ProtectedProjectDetail() {
     return null;
   }
   
-  return <ProjectDetailPage />;
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <ProjectDetailPage />
+    </Suspense>
+  );
 }
 
 
@@ -100,102 +121,194 @@ function Router() {
       <Route path="/projects/:id" component={ProtectedProjectDetail} />
       <Route path="/projects/:id/journey">
         <ProtectedRoute>
-          <ProjectJourneyPage />
+          <Suspense fallback={<RouteFallback />}>
+            <ProjectJourneyPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/library">
         <ProtectedRoute>
-          <LibraryPage />
+          <Suspense fallback={<RouteFallback />}>
+            <LibraryPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/biblioteca">
         <ProtectedRoute>
-          <LibraryPage />
+          <Suspense fallback={<RouteFallback />}>
+            <LibraryPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
-      <Route path="/library/article/:id" component={ArticleDetailPage} />
-      <Route path="/biblioteca/artigo/:id" component={ArticleDetailPage} />
-      <Route path="/video-tutorials" component={VideoTutorials} />
-      <Route path="/tutoriais" component={VideoTutorials} />
-      <Route path="/pricing" component={PricingPage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/signup" component={SignupPage} />
-      <Route path="/complete-profile" component={CompleteProfilePage} />
+      <Route path="/library/article/:id">
+        <Suspense fallback={<RouteFallback />}>
+          <ArticleDetailPage />
+        </Suspense>
+      </Route>
+      <Route path="/biblioteca/artigo/:id">
+        <Suspense fallback={<RouteFallback />}>
+          <ArticleDetailPage />
+        </Suspense>
+      </Route>
+      <Route path="/video-tutorials">
+        <Suspense fallback={<RouteFallback />}>
+          <VideoTutorials />
+        </Suspense>
+      </Route>
+      <Route path="/tutoriais">
+        <Suspense fallback={<RouteFallback />}>
+          <VideoTutorials />
+        </Suspense>
+      </Route>
+      <Route path="/pricing">
+        <Suspense fallback={<RouteFallback />}>
+          <PricingPage />
+        </Suspense>
+      </Route>
+      <Route path="/login">
+        <Suspense fallback={<RouteFallback />}>
+          <LoginPage />
+        </Suspense>
+      </Route>
+      <Route path="/signup">
+        <Suspense fallback={<RouteFallback />}>
+          <SignupPage />
+        </Suspense>
+      </Route>
+      <Route path="/complete-profile">
+        <Suspense fallback={<RouteFallback />}>
+          <CompleteProfilePage />
+        </Suspense>
+      </Route>
       
       {/* Protected Routes */}
       <Route path="/dashboard">
         <ProtectedRoute>
-          <DashboardPage />
+          <Suspense fallback={<RouteFallback />}>
+            <DashboardPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/chat">
         <ProtectedRoute>
-          <ChatPage />
+          <Suspense fallback={<RouteFallback />}>
+            <ChatPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/profile">
         <ProtectedRoute>
-          <ProfilePage />
+          <Suspense fallback={<RouteFallback />}>
+            <ProfilePage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/admin">
         <ProtectedRoute adminOnly={true}>
-          <AdminPage />
+          <Suspense fallback={<RouteFallback />}>
+            <AdminPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/admin/sectors">
         <ProtectedRoute adminOnly={true}>
-          <AdminSectors />
+          <Suspense fallback={<RouteFallback />}>
+            <AdminSectors />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/admin/cases">
         <ProtectedRoute adminOnly={true}>
-          <AdminCases />
+          <Suspense fallback={<RouteFallback />}>
+            <AdminCases />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/admin/analytics">
         <ProtectedRoute adminOnly={true}>
-          <AnalyticsPage />
+          <Suspense fallback={<RouteFallback />}>
+            <AnalyticsPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/benchmarking">
         <ProtectedRoute>
-          <BenchmarkingPage />
+          <Suspense fallback={<RouteFallback />}>
+            <BenchmarkingPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/double-diamond">
         <ProtectedRoute>
-          <DoubleDiamond />
+          <Suspense fallback={<RouteFallback />}>
+            <DoubleDiamond />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/double-diamond/:id">
         <ProtectedRoute>
-          <DoubleDiamondProject />
+          <Suspense fallback={<RouteFallback />}>
+            <DoubleDiamondProject />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/addons">
         <ProtectedRoute>
-          <AddonsPage />
+          <Suspense fallback={<RouteFallback />}>
+            <AddonsPage />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/onboarding-ai">
         <ProtectedRoute>
-          <OnboardingAI />
+          <Suspense fallback={<RouteFallback />}>
+            <OnboardingAI />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/dashboard-ai/:projectId">
         <ProtectedRoute>
-          <DashboardAI />
+          <Suspense fallback={<RouteFallback />}>
+            <DashboardAI />
+          </Suspense>
         </ProtectedRoute>
       </Route>
-      <Route path="/help" component={HelpCenter} />
-      <Route path="/ajuda" component={HelpCenter} />
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/terms" component={Terms} />
-      <Route path="/support" component={Support} />
-      <Route path="/screenshots" component={ScreenshotCapture} />
+      <Route path="/help">
+        <Suspense fallback={<RouteFallback />}>
+          <HelpCenter />
+        </Suspense>
+      </Route>
+      <Route path="/ajuda">
+        <Suspense fallback={<RouteFallback />}>
+          <HelpCenter />
+        </Suspense>
+      </Route>
+      <Route path="/privacy-policy">
+        <Suspense fallback={<RouteFallback />}>
+          <PrivacyPolicy />
+        </Suspense>
+      </Route>
+      <Route path="/terms">
+        <Suspense fallback={<RouteFallback />}>
+          <Terms />
+        </Suspense>
+      </Route>
+      <Route path="/support">
+        <Suspense fallback={<RouteFallback />}>
+          <Support />
+        </Suspense>
+      </Route>
+      <Route path="/screenshots">
+        <Suspense fallback={<RouteFallback />}>
+          <ScreenshotCapture />
+        </Suspense>
+      </Route>
       
-      <Route component={NotFound} />
+      <Route>
+        <Suspense fallback={<RouteFallback />}>
+          <NotFound />
+        </Suspense>
+      </Route>
     </Switch>
   );
 }

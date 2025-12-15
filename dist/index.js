@@ -16,6 +16,7 @@ __export(schema_exports, {
   articles: () => articles,
   benchmarkAssessments: () => benchmarkAssessments,
   benchmarks: () => benchmarks,
+  bpmnDiagrams: () => bpmnDiagrams,
   canvasDrawings: () => canvasDrawings,
   competitiveAnalysis: () => competitiveAnalysis,
   doubleDiamondExports: () => doubleDiamondExports,
@@ -32,6 +33,7 @@ __export(schema_exports, {
   insertArticleSchema: () => insertArticleSchema,
   insertBenchmarkAssessmentSchema: () => insertBenchmarkAssessmentSchema,
   insertBenchmarkSchema: () => insertBenchmarkSchema,
+  insertBpmnDiagramSchema: () => insertBpmnDiagramSchema,
   insertCanvasDrawingSchema: () => insertCanvasDrawingSchema,
   insertCompetitiveAnalysisSchema: () => insertCompetitiveAnalysisSchema,
   insertDoubleDiamondExportSchema: () => insertDoubleDiamondExportSchema,
@@ -44,6 +46,9 @@ __export(schema_exports, {
   insertIdeaSchema: () => insertIdeaSchema,
   insertIndustrySectorSchema: () => insertIndustrySectorSchema,
   insertInterviewSchema: () => insertInterviewSchema,
+  insertJourneySchema: () => insertJourneySchema,
+  insertJourneyStageSchema: () => insertJourneyStageSchema,
+  insertJourneyTouchpointSchema: () => insertJourneyTouchpointSchema,
   insertLovabilityMetricSchema: () => insertLovabilityMetricSchema,
   insertObservationSchema: () => insertObservationSchema,
   insertPersonaSchema: () => insertPersonaSchema,
@@ -52,6 +57,7 @@ __export(schema_exports, {
   insertProjectAnalyticsSchema: () => insertProjectAnalyticsSchema,
   insertProjectBackupSchema: () => insertProjectBackupSchema,
   insertProjectCommentSchema: () => insertProjectCommentSchema,
+  insertProjectInsightSchema: () => insertProjectInsightSchema,
   insertProjectInviteSchema: () => insertProjectInviteSchema,
   insertProjectMemberSchema: () => insertProjectMemberSchema,
   insertProjectSchema: () => insertProjectSchema,
@@ -67,6 +73,9 @@ __export(schema_exports, {
   insertUserSubscriptionSchema: () => insertUserSubscriptionSchema,
   insertVideoTutorialSchema: () => insertVideoTutorialSchema,
   interviews: () => interviews,
+  journeyStages: () => journeyStages,
+  journeyTouchpoints: () => journeyTouchpoints,
+  journeys: () => journeys,
   lovabilityMetrics: () => lovabilityMetrics,
   observations: () => observations,
   personas: () => personas,
@@ -75,6 +84,7 @@ __export(schema_exports, {
   projectAnalytics: () => projectAnalytics,
   projectBackups: () => projectBackups,
   projectComments: () => projectComments,
+  projectInsights: () => projectInsights,
   projectInvites: () => projectInvites,
   projectMembers: () => projectMembers,
   projects: () => projects,
@@ -95,7 +105,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, real, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, userAddons, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertUserAddonSchema, insertCanvasDrawingSchema, updateProfileSchema, guidingCriteria, insertGuidingCriterionSchema, phaseCards, benchmarks, benchmarkAssessments, doubleDiamondExports, insertDoubleDiamondExportSchema, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, insertDoubleDiamondProjectSchema;
+var industrySectors, successCases, aiGeneratedAssets, projects, empathyMaps, personas, interviews, observations, projectInsights, povStatements, hmwQuestions, ideas, prototypes, canvasDrawings, testPlans, testResults, userProgress, users, subscriptionPlans, userSubscriptions, userAddons, articles, testimonials, videoTutorials, insertProjectSchema, insertEmpathyMapSchema, insertPersonaSchema, insertInterviewSchema, insertObservationSchema, insertProjectInsightSchema, insertPovStatementSchema, insertHmwQuestionSchema, insertIdeaSchema, insertPrototypeSchema, insertTestPlanSchema, insertTestResultSchema, insertUserProgressSchema, insertUserSchema, insertArticleSchema, insertTestimonialSchema, insertVideoTutorialSchema, insertSubscriptionPlanSchema, insertUserSubscriptionSchema, insertUserAddonSchema, insertCanvasDrawingSchema, updateProfileSchema, guidingCriteria, insertGuidingCriterionSchema, journeys, journeyStages, journeyTouchpoints, insertJourneySchema, insertJourneyStageSchema, insertJourneyTouchpointSchema, phaseCards, benchmarks, benchmarkAssessments, doubleDiamondExports, insertDoubleDiamondExportSchema, insertBenchmarkSchema, insertBenchmarkAssessmentSchema, insertPhaseCardSchema, dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, projectBackups, helpArticles, insertDvfAssessmentSchema, insertLovabilityMetricSchema, insertProjectAnalyticsSchema, insertCompetitiveAnalysisSchema, insertProjectBackupSchema, insertHelpArticleSchema, insertIndustrySectorSchema, insertSuccessCaseSchema, insertAiGeneratedAssetSchema, analyticsEvents, insertAnalyticsEventSchema, projectMembers, insertProjectMemberSchema, projectInvites, insertProjectInviteSchema, projectComments, insertProjectCommentSchema, doubleDiamondProjects, bpmnDiagrams, insertDoubleDiamondProjectSchema, insertBpmnDiagramSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -228,6 +238,16 @@ var init_schema = __esm({
       insights: text("insights"),
       date: timestamp("date").notNull(),
       createdAt: timestamp("created_at").default(sql`now()`)
+    });
+    projectInsights = pgTable("project_insights", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      projectId: varchar("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+      content: text("content").notNull(),
+      links: jsonb("links").default([]),
+      imageUrl: text("image_url"),
+      imageMeta: jsonb("image_meta"),
+      createdAt: timestamp("created_at").default(sql`now()`),
+      updatedAt: timestamp("updated_at").default(sql`now()`)
     });
     povStatements = pgTable("pov_statements", {
       id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -423,6 +443,9 @@ var init_schema = __esm({
       // null = use plan limit
       customAiChatLimit: integer("custom_ai_chat_limit"),
       // null = use plan limit
+      customLimitsTrialEndDate: timestamp("custom_limits_trial_end_date"),
+      dtExperienceLevel: text("dt_experience_level"),
+      // beginner or advanced Design Thinking experience
       createdAt: timestamp("created_at").default(sql`now()`)
     });
     subscriptionPlans = pgTable("subscription_plans", {
@@ -559,10 +582,12 @@ var init_schema = __esm({
       titleEn: text("title_en"),
       titleEs: text("title_es"),
       titleFr: text("title_fr"),
+      titleZh: text("title_zh"),
       description: text("description"),
       descriptionEn: text("description_en"),
       descriptionEs: text("description_es"),
       descriptionFr: text("description_fr"),
+      descriptionZh: text("description_zh"),
       phase: text("phase").notNull(),
       // 'overview', 'empathize', 'define', 'ideate', 'prototype', 'test'
       duration: text("duration"),
@@ -608,6 +633,13 @@ var init_schema = __esm({
     insertObservationSchema = createInsertSchema(observations).omit({
       id: true,
       createdAt: true
+    });
+    insertProjectInsightSchema = createInsertSchema(projectInsights, {
+      links: z.array(z.string()).optional()
+    }).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
     });
     insertPovStatementSchema = createInsertSchema(povStatements).omit({
       id: true,
@@ -702,6 +734,55 @@ var init_schema = __esm({
       updatedAt: timestamp("updated_at").default(sql`now()`)
     });
     insertGuidingCriterionSchema = createInsertSchema(guidingCriteria).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    journeys = pgTable("journeys", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      projectId: varchar("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+      name: text("name").notNull(),
+      description: text("description"),
+      persona: text("persona"),
+      primaryGoal: text("primary_goal"),
+      status: text("status").default("active"),
+      createdAt: timestamp("created_at").default(sql`now()`),
+      updatedAt: timestamp("updated_at").default(sql`now()`)
+    });
+    journeyStages = pgTable("journey_stages", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      journeyId: varchar("journey_id").references(() => journeys.id, { onDelete: "cascade" }).notNull(),
+      title: text("title").notNull(),
+      description: text("description"),
+      order: integer("order").default(0),
+      createdAt: timestamp("created_at").default(sql`now()`),
+      updatedAt: timestamp("updated_at").default(sql`now()`)
+    });
+    journeyTouchpoints = pgTable("journey_touchpoints", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      stageId: varchar("stage_id").references(() => journeyStages.id, { onDelete: "cascade" }).notNull(),
+      title: text("title").notNull(),
+      userGoal: text("user_goal"),
+      userAction: text("user_action"),
+      channel: text("channel"),
+      emotionScore: integer("emotion_score").default(3),
+      painPoints: text("pain_points"),
+      opportunities: text("opportunities"),
+      order: integer("order").default(0),
+      createdAt: timestamp("created_at").default(sql`now()`),
+      updatedAt: timestamp("updated_at").default(sql`now()`)
+    });
+    insertJourneySchema = createInsertSchema(journeys).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertJourneyStageSchema = createInsertSchema(journeyStages).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertJourneyTouchpointSchema = createInsertSchema(journeyTouchpoints).omit({
       id: true,
       createdAt: true,
       updatedAt: true
@@ -1246,9 +1327,25 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").default(sql`now()`),
       updatedAt: timestamp("updated_at").default(sql`now()`)
     });
+    bpmnDiagrams = pgTable("bpmn_diagrams", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      projectId: varchar("project_id").references(() => doubleDiamondProjects.id, { onDelete: "cascade" }).notNull(),
+      title: text("title").notNull(),
+      type: text("type").default("to-be"),
+      bpmnXml: text("bpmn_xml").notNull(),
+      // Stored AI analysis for this BPMN diagram (BpmnAnalysisResult JSON)
+      analysis: jsonb("analysis"),
+      createdAt: timestamp("created_at").default(sql`now()`),
+      updatedAt: timestamp("updated_at").default(sql`now()`)
+    });
     insertDoubleDiamondProjectSchema = createInsertSchema(doubleDiamondProjects).omit({
       id: true,
       userId: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertBpmnDiagramSchema = createInsertSchema(bpmnDiagrams).omit({
+      id: true,
       createdAt: true,
       updatedAt: true
     });
@@ -1553,6 +1650,7 @@ var init_storage = __esm({
         await deleteTable("empathyMaps", () => db.delete(empathyMaps).where(eq2(empathyMaps.projectId, id)));
         await deleteTable("personas", () => db.delete(personas).where(eq2(personas.projectId, id)));
         await deleteTable("interviews", () => db.delete(interviews).where(eq2(interviews.projectId, id)));
+        await deleteTable("projectInsights", () => db.delete(projectInsights).where(eq2(projectInsights.projectId, id)));
         await deleteTable("observations", () => db.delete(observations).where(eq2(observations.projectId, id)));
         await deleteTable("povStatements", () => db.delete(povStatements).where(eq2(povStatements.projectId, id)));
         await deleteTable("hmwQuestions", () => db.delete(hmwQuestions).where(eq2(hmwQuestions.projectId, id)));
@@ -1897,6 +1995,25 @@ var init_storage = __esm({
         const result = await db.delete(observations).where(eq2(observations.id, id));
         return (result.rowCount || 0) > 0;
       }
+      async getProjectInsights(projectId) {
+        return await db.select().from(projectInsights).where(eq2(projectInsights.projectId, projectId)).orderBy(desc(projectInsights.createdAt));
+      }
+      async getProjectInsight(id) {
+        const [insight] = await db.select().from(projectInsights).where(eq2(projectInsights.id, id));
+        return insight;
+      }
+      async createProjectInsight(insight) {
+        const [newInsight] = await db.insert(projectInsights).values(insight).returning();
+        return newInsight;
+      }
+      async updateProjectInsight(id, insight) {
+        const [updatedInsight] = await db.update(projectInsights).set({ ...insight, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(projectInsights.id, id)).returning();
+        return updatedInsight;
+      }
+      async deleteProjectInsight(id) {
+        const result = await db.delete(projectInsights).where(eq2(projectInsights.id, id));
+        return (result.rowCount || 0) > 0;
+      }
       // Phase 2: Define
       async getPovStatements(projectId) {
         return await db.select().from(povStatements).where(eq2(povStatements.projectId, projectId)).orderBy(desc(povStatements.createdAt));
@@ -1953,6 +2070,66 @@ var init_storage = __esm({
       }
       async deleteGuidingCriterion(id) {
         const result = await db.delete(guidingCriteria).where(eq2(guidingCriteria.id, id));
+        return (result.rowCount || 0) > 0;
+      }
+      // User Journeys (Journey Maps)
+      async getJourneys(projectId) {
+        return await db.select().from(journeys).where(eq2(journeys.projectId, projectId)).orderBy(desc(journeys.createdAt));
+      }
+      async getJourney(id) {
+        const [journey] = await db.select().from(journeys).where(eq2(journeys.id, id));
+        return journey;
+      }
+      async createJourney(journey) {
+        const [newJourney] = await db.insert(journeys).values(journey).returning();
+        return newJourney;
+      }
+      async updateJourney(id, journey) {
+        const [updatedJourney] = await db.update(journeys).set({ ...journey, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(journeys.id, id)).returning();
+        return updatedJourney;
+      }
+      async deleteJourney(id) {
+        const result = await db.delete(journeys).where(eq2(journeys.id, id));
+        return (result.rowCount || 0) > 0;
+      }
+      // Journey Stages
+      async getJourneyStages(journeyId) {
+        return await db.select().from(journeyStages).where(eq2(journeyStages.journeyId, journeyId)).orderBy(journeyStages.order, journeyStages.createdAt);
+      }
+      async getJourneyStage(id) {
+        const [stage] = await db.select().from(journeyStages).where(eq2(journeyStages.id, id));
+        return stage;
+      }
+      async createJourneyStage(stage) {
+        const [newStage] = await db.insert(journeyStages).values(stage).returning();
+        return newStage;
+      }
+      async updateJourneyStage(id, stage) {
+        const [updatedStage] = await db.update(journeyStages).set({ ...stage, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(journeyStages.id, id)).returning();
+        return updatedStage;
+      }
+      async deleteJourneyStage(id) {
+        const result = await db.delete(journeyStages).where(eq2(journeyStages.id, id));
+        return (result.rowCount || 0) > 0;
+      }
+      // Journey Touchpoints
+      async getJourneyTouchpoints(stageId) {
+        return await db.select().from(journeyTouchpoints).where(eq2(journeyTouchpoints.stageId, stageId)).orderBy(journeyTouchpoints.order, journeyTouchpoints.createdAt);
+      }
+      async getJourneyTouchpoint(id) {
+        const [touchpoint] = await db.select().from(journeyTouchpoints).where(eq2(journeyTouchpoints.id, id));
+        return touchpoint;
+      }
+      async createJourneyTouchpoint(touchpoint) {
+        const [newTouchpoint] = await db.insert(journeyTouchpoints).values(touchpoint).returning();
+        return newTouchpoint;
+      }
+      async updateJourneyTouchpoint(id, touchpoint) {
+        const [updatedTouchpoint] = await db.update(journeyTouchpoints).set({ ...touchpoint, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(journeyTouchpoints.id, id)).returning();
+        return updatedTouchpoint;
+      }
+      async deleteJourneyTouchpoint(id) {
+        const result = await db.delete(journeyTouchpoints).where(eq2(journeyTouchpoints.id, id));
         return (result.rowCount || 0) > 0;
       }
       // Phase 3: Ideate
@@ -2125,9 +2302,11 @@ var init_storage = __esm({
         return await db.select().from(userAddons).where(eq2(userAddons.userId, userId)).orderBy(desc(userAddons.createdAt));
       }
       async getActiveUserAddons(userId) {
+        const now = /* @__PURE__ */ new Date();
         return await db.select().from(userAddons).where(and(
           eq2(userAddons.userId, userId),
-          eq2(userAddons.status, "active")
+          eq2(userAddons.status, "active"),
+          sql2`(${userAddons.currentPeriodEnd} IS NULL OR ${userAddons.currentPeriodEnd} > ${now})`
         )).orderBy(desc(userAddons.createdAt));
       }
       async createUserAddon(addon) {
@@ -2737,6 +2916,25 @@ var init_storage = __esm({
         ));
         return (result.rowCount || 0) > 0;
       }
+      async getBpmnDiagramsByProject(projectId) {
+        return await db.select().from(bpmnDiagrams).where(eq2(bpmnDiagrams.projectId, projectId));
+      }
+      async getBpmnDiagram(id) {
+        const [diagram] = await db.select().from(bpmnDiagrams).where(eq2(bpmnDiagrams.id, id));
+        return diagram;
+      }
+      async createBpmnDiagram(diagram) {
+        const [newDiagram] = await db.insert(bpmnDiagrams).values(diagram).returning();
+        return newDiagram;
+      }
+      async updateBpmnDiagram(id, diagram) {
+        const [updated] = await db.update(bpmnDiagrams).set({ ...diagram, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(bpmnDiagrams.id, id)).returning();
+        return updated;
+      }
+      async deleteBpmnDiagram(id) {
+        const result = await db.delete(bpmnDiagrams).where(eq2(bpmnDiagrams.id, id));
+        return (result.rowCount || 0) > 0;
+      }
       // Industry Sectors & Success Cases
       async listIndustrySectors() {
         return await db.select().from(industrySectors).orderBy(industrySectors.name);
@@ -2745,11 +2943,16 @@ var init_storage = __esm({
         return await db.select().from(successCases).orderBy(successCases.company);
       }
       async updateUserLimits(userId, limits) {
-        await db.update(users).set({
+        const updateData = {
           customMaxProjects: limits.customMaxProjects,
           customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
+          customMaxDoubleDiamondExports: limits.customMaxDoubleDiamondExports,
           customAiChatLimit: limits.customAiChatLimit
-        }).where(eq2(users.id, userId));
+        };
+        if (Object.prototype.hasOwnProperty.call(limits, "customLimitsTrialEndDate")) {
+          updateData.customLimitsTrialEndDate = limits.customLimitsTrialEndDate;
+        }
+        await db.update(users).set(updateData).where(eq2(users.id, userId));
       }
     };
     storage = new DatabaseStorage();
@@ -2786,6 +2989,129 @@ Assistant:`;
         } catch (error) {
           console.error("Erro no chat da IA Gemini:", error);
           throw new Error("Erro ao processar sua mensagem. Verifique se a chave da API Gemini est\xE1 configurada corretamente.");
+        }
+      }
+      async generateJourneyMap(input) {
+        try {
+          const lang = input.language || "pt-BR";
+          const personasCount = input.personas?.length || 0;
+          const empathyCount = input.empathyMaps?.length || 0;
+          const hmwCount = input.hmwQuestions?.length || 0;
+          const criteriaCount = input.guidingCriteria?.length || 0;
+          const contextSummary = {
+            projectName: input.projectName,
+            projectDescription: input.projectDescription,
+            personas: (input.personas || []).slice(0, 5),
+            empathyMaps: (input.empathyMaps || []).slice(0, 3),
+            hmwQuestions: (input.hmwQuestions || []).slice(0, 10),
+            guidingCriteria: (input.guidingCriteria || []).slice(0, 10)
+          };
+          const languageInstruction = lang.startsWith("pt") ? "Responda APENAS em portugu\xEAs do Brasil." : lang.startsWith("es") ? "Responda APENAS em espanhol." : lang.startsWith("fr") ? "Responda APENAS em franc\xEAs." : "Responda APENAS em ingl\xEAs.";
+          const prompt = `Voc\xEA \xE9 um especialista em Design Thinking criando um MAPA DE JORNADA DO USU\xC1RIO.
+
+${languageInstruction}
+
+CONTEXTO DO PROJETO:
+- Nome do projeto: ${input.projectName}
+- Descri\xE7\xE3o do projeto: ${input.projectDescription || "Sem descri\xE7\xE3o detalhada"}
+- Quantidade de personas: ${personasCount}
+- Mapas de empatia: ${empathyCount}
+- Perguntas HMW: ${hmwCount}
+- Crit\xE9rios norteadores: ${criteriaCount}
+
+Dados estruturados do projeto (resumidos):
+${JSON.stringify(contextSummary, null, 2)}
+
+TAREFA:
+- Propor UMA jornada principal coerente com o projeto.
+- Definir de 4 a 7 ETAPAS principais da jornada, em ordem l\xF3gica.
+- Cada etapa deve representar um momento claro da experi\xEAncia do usu\xE1rio (descoberta, considera\xE7\xE3o, compra, uso, etc.).
+
+Retorne APENAS um objeto JSON com esta estrutura exata:
+{
+  "journey": {
+    "name": "Nome da jornada",
+    "persona": "Persona foco (se houver)",
+    "primaryGoal": "Objetivo principal da jornada",
+    "description": "Breve descri\xE7\xE3o da jornada"
+  },
+  "stages": [
+    {
+      "title": "Nome da etapa",
+      "description": "Breve descri\xE7\xE3o da etapa"
+    }
+  ]
+}
+
+N\xC3O inclua coment\xE1rios, markdown ou texto fora do JSON.`;
+          const response = await ai.models.generateContent({
+            model: this.model,
+            config: {
+              responseMimeType: "application/json",
+              responseJsonSchema: {
+                type: "object",
+                properties: {
+                  journey: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      persona: { type: "string" },
+                      primaryGoal: { type: "string" },
+                      description: { type: "string" }
+                    },
+                    required: ["name"]
+                  },
+                  stages: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        description: { type: "string" }
+                      },
+                      required: ["title"]
+                    },
+                    minItems: 4,
+                    maxItems: 7
+                  }
+                },
+                required: ["journey", "stages"]
+              }
+            },
+            contents: prompt
+          });
+          const text2 = response.text || "{}";
+          try {
+            const parsed = JSON.parse(text2);
+            return parsed || {};
+          } catch (parseError) {
+            console.error(
+              "Erro ao interpretar JSON da jornada com IA (Gemini):",
+              parseError
+            );
+            const firstBrace = text2.indexOf("{");
+            const lastBrace = text2.lastIndexOf("}");
+            if (firstBrace !== -1 && lastBrace > firstBrace) {
+              const candidate = text2.slice(firstBrace, lastBrace + 1);
+              try {
+                const parsed = JSON.parse(candidate);
+                return parsed || {};
+              } catch (innerError) {
+                console.error(
+                  "Falha ao recuperar JSON da jornada com IA (Gemini):",
+                  innerError
+                );
+              }
+            }
+            console.error(
+              "Resposta bruta da IA (primeiros 500 caracteres):",
+              text2.slice(0, 500)
+            );
+            return {};
+          }
+        } catch (error) {
+          console.error("Erro ao gerar jornada com IA (Gemini):", error);
+          return {};
         }
       }
       async generateSuggestions(context) {
@@ -4145,7 +4471,23 @@ var init_vite_config = __esm({
       root: path2.resolve(import.meta.dirname, "client"),
       build: {
         outDir: path2.resolve(import.meta.dirname, "client/dist"),
-        emptyOutDir: true
+        emptyOutDir: true,
+        chunkSizeWarningLimit: 700,
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              if (!id.includes("node_modules")) return;
+              const normalizedId = id.replace(/\\/g, "/");
+              const isReactCore = /\/node_modules\/(react|react-dom|scheduler)\//.test(normalizedId);
+              if (id.includes("bpmn-js")) return "bpmn";
+              if (id.includes("jspdf")) return "jspdf";
+              if (id.includes("@tanstack")) return "tanstack";
+              if (id.includes("@radix-ui")) return "radix";
+              if (isReactCore) return "react";
+              return;
+            }
+          }
+        }
       },
       server: {
         fs: {
@@ -4372,7 +4714,8 @@ function normalizeLimit(value) {
   return value;
 }
 async function loadUserSubscription(req, res, next) {
-  if (!req.user?.id) {
+  const userId = req.session?.userId;
+  if (!userId) {
     const freePlan = await storage.getSubscriptionPlanByName("free");
     if (freePlan) {
       const planMaxProjects = normalizeLimit(freePlan.maxProjects);
@@ -4414,7 +4757,7 @@ async function loadUserSubscription(req, res, next) {
     return next();
   }
   try {
-    const userSubscription = await storage.getUserActiveSubscription(req.user.id);
+    const userSubscription = await storage.getUserActiveSubscription(userId);
     let plan;
     if (userSubscription) {
       plan = await storage.getSubscriptionPlan(userSubscription.planId);
@@ -4422,7 +4765,9 @@ async function loadUserSubscription(req, res, next) {
       plan = await storage.getSubscriptionPlanByName("free");
     }
     if (plan) {
-      const user = await storage.getUser(req.user.id);
+      const user = await storage.getUser(userId);
+      const now = /* @__PURE__ */ new Date();
+      const isCustomLimitsActive = !user?.customLimitsTrialEndDate || user.customLimitsTrialEndDate > now;
       const planMaxProjects = normalizeLimit(plan.maxProjects);
       const planMaxPersonas = normalizeLimit(plan.maxPersonasPerProject);
       const planMaxUsers = normalizeLimit(plan.maxUsersPerTeam);
@@ -4430,11 +4775,11 @@ async function loadUserSubscription(req, res, next) {
       const planLibraryArticles = normalizeLimit(plan.libraryArticlesCount);
       const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
       const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
-      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
-      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
-      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
-      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
-      const activeAddons = await storage.getActiveUserAddons(req.user.id);
+      const userMaxProjects = isCustomLimitsActive ? normalizeLimit(user?.customMaxProjects ?? null) : null;
+      const userAiChatLimit = isCustomLimitsActive ? normalizeLimit(user?.customAiChatLimit ?? null) : null;
+      const userMaxDoubleDiamondProjects = isCustomLimitsActive ? normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null) : null;
+      const userMaxDoubleDiamondExports = isCustomLimitsActive ? normalizeLimit(user?.customMaxDoubleDiamondExports ?? null) : null;
+      const activeAddons = await storage.getActiveUserAddons(userId);
       const addonKeys = new Set(activeAddons.map((a) => a.addonKey));
       const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
       const hasExportPro = addonKeys.has("export_pro");
@@ -4504,7 +4849,8 @@ async function loadUserSubscription(req, res, next) {
   }
 }
 async function checkProjectLimit(req, res, next) {
-  if (!req.user?.id || !req.subscription?.limits) {
+  const userId = req.session?.userId;
+  if (!userId || !req.subscription?.limits) {
     return next();
   }
   const maxProjects = req.subscription.limits.maxProjects;
@@ -4512,7 +4858,7 @@ async function checkProjectLimit(req, res, next) {
     return next();
   }
   try {
-    const userProjects = await storage.getProjects(req.user.id);
+    const userProjects = await storage.getProjects(userId);
     if (userProjects.length >= maxProjects) {
       return res.status(403).json({
         error: "Project limit reached",
@@ -4527,7 +4873,8 @@ async function checkProjectLimit(req, res, next) {
   }
 }
 async function checkPersonaLimit(req, res, next) {
-  if (!req.user?.id || !req.subscription?.limits) {
+  const userId = req.session?.userId;
+  if (!userId || !req.subscription?.limits) {
     return next();
   }
   const maxPersonas = req.subscription.limits.maxPersonasPerProject;
@@ -4567,7 +4914,8 @@ async function checkCollaborationAccess(req, res, next) {
   next();
 }
 async function getSubscriptionInfo(req, res) {
-  if (!req.user?.id) {
+  const userId = req.session?.userId;
+  if (!userId) {
     const freePlan = await storage.getSubscriptionPlanByName("free");
     return res.json({
       plan: freePlan,
@@ -4602,16 +4950,16 @@ async function getSubscriptionInfo(req, res) {
     });
   }
   try {
-    const userSubscription = await storage.getUserActiveSubscription(req.user.id);
+    const userSubscription = await storage.getUserActiveSubscription(userId);
     let plan;
     if (userSubscription) {
       plan = await storage.getSubscriptionPlan(userSubscription.planId);
     } else {
       plan = await storage.getSubscriptionPlanByName("free");
     }
-    const userProjects = await storage.getProjects(req.user.id);
-    const user = await storage.getUser(req.user.id);
-    const activeAddons = plan ? await storage.getActiveUserAddons(req.user.id) : [];
+    const userProjects = await storage.getProjects(userId);
+    const user = await storage.getUser(userId);
+    const activeAddons = plan ? await storage.getActiveUserAddons(userId) : [];
     let limits = null;
     let addonsInfo = null;
     if (plan) {
@@ -4622,10 +4970,12 @@ async function getSubscriptionInfo(req, res) {
       const planLibraryArticles = normalizeLimit(plan.libraryArticlesCount);
       const planMaxDoubleDiamondProjects = normalizeLimit(plan.maxDoubleDiamondProjects);
       const planMaxDoubleDiamondExports = normalizeLimit(plan.maxDoubleDiamondExports);
-      const userMaxProjects = normalizeLimit(user?.customMaxProjects ?? null);
-      const userAiChatLimit = normalizeLimit(user?.customAiChatLimit ?? null);
-      const userMaxDoubleDiamondProjects = normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null);
-      const userMaxDoubleDiamondExports = normalizeLimit(user?.customMaxDoubleDiamondExports ?? null);
+      const now = /* @__PURE__ */ new Date();
+      const isCustomLimitsActive = !user?.customLimitsTrialEndDate || user.customLimitsTrialEndDate > now;
+      const userMaxProjects = isCustomLimitsActive ? normalizeLimit(user?.customMaxProjects ?? null) : null;
+      const userAiChatLimit = isCustomLimitsActive ? normalizeLimit(user?.customAiChatLimit ?? null) : null;
+      const userMaxDoubleDiamondProjects = isCustomLimitsActive ? normalizeLimit(user?.customMaxDoubleDiamondProjects ?? null) : null;
+      const userMaxDoubleDiamondExports = isCustomLimitsActive ? normalizeLimit(user?.customMaxDoubleDiamondExports ?? null) : null;
       const addonKeys = new Set(activeAddons.map((a) => a.addonKey));
       const hasDoubleDiamondPro = addonKeys.has("double_diamond_pro");
       const hasExportPro = addonKeys.has("export_pro");
@@ -4813,7 +5163,9 @@ async function checkDoubleDiamondLimit(req, res, next) {
       const plan = await db.select().from(subscriptionPlans).where(eq4(subscriptionPlans.id, userData.subscriptionPlanId)).limit(1);
       planData = plan && plan.length > 0 ? plan[0] : null;
     }
-    const userCustomLimitRaw = userData.customMaxDoubleDiamondProjects;
+    const now = /* @__PURE__ */ new Date();
+    const isCustomLimitsActive = !userData.customLimitsTrialEndDate || userData.customLimitsTrialEndDate > now;
+    const userCustomLimitRaw = isCustomLimitsActive ? userData.customMaxDoubleDiamondProjects : null;
     const userCustomLimit = typeof userCustomLimitRaw === "number" && userCustomLimitRaw >= 0 ? userCustomLimitRaw : null;
     let planLimit = null;
     if (!planData) {
@@ -7168,7 +7520,7 @@ var genAI = new GoogleGenAI2({
 });
 async function translateText(portugueseText, context = "content") {
   if (!portugueseText || portugueseText.trim() === "") {
-    return { en: "", es: "", fr: "" };
+    return { en: "", es: "", fr: "", zh: "" };
   }
   const contextInstructions = {
     title: "This is a title/heading. Keep it concise and impactful.",
@@ -7179,7 +7531,7 @@ async function translateText(portugueseText, context = "content") {
 
 ${contextInstructions[context]}
 
-Translate the following Portuguese text to English, Spanish, and French.
+Translate the following Portuguese text to English, Spanish, French, and Simplified Chinese.
 Maintain the exact same tone, style, and formatting.
 For Design Thinking terms, use standard industry terminology.
 
@@ -7190,7 +7542,8 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
 {
   "en": "English translation here",
   "es": "Spanish translation here",
-  "fr": "French translation here"
+  "fr": "French translation here",
+  "zh": "Simplified Chinese translation here"
 }`;
   try {
     const response = await genAI.models.generateContent({
@@ -7209,21 +7562,23 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
     return {
       en: translations.en || "",
       es: translations.es || "",
-      fr: translations.fr || ""
+      fr: translations.fr || "",
+      zh: translations.zh || ""
     };
   } catch (error) {
     console.error("Translation error:", error);
     return {
       en: portugueseText,
       es: portugueseText,
-      fr: portugueseText
+      fr: portugueseText,
+      zh: portugueseText
     };
   }
 }
 async function translateLongContent(portugueseText) {
   const MAX_CHUNK_SIZE = 2500;
   if (!portugueseText || portugueseText.trim() === "") {
-    return { en: "", es: "", fr: "" };
+    return { en: "", es: "", fr: "", zh: "" };
   }
   if (portugueseText.length <= MAX_CHUNK_SIZE) {
     return translateText(portugueseText, "content");
@@ -7249,7 +7604,8 @@ async function translateLongContent(portugueseText) {
   return {
     en: results.map((r) => r.en).join(""),
     es: results.map((r) => r.es).join(""),
-    fr: results.map((r) => r.fr).join("")
+    fr: results.map((r) => r.fr).join(""),
+    zh: results.map((r) => r.zh).join("")
   };
 }
 async function translateArticle(article) {
@@ -7279,9 +7635,11 @@ async function translateVideo(video) {
     titleEn: titleTranslations.en,
     titleEs: titleTranslations.es,
     titleFr: titleTranslations.fr,
+    titleZh: titleTranslations.zh,
     descriptionEn: descTranslations.en,
     descriptionEs: descTranslations.es,
-    descriptionFr: descTranslations.fr
+    descriptionFr: descTranslations.fr,
+    descriptionZh: descTranslations.zh
   };
 }
 async function translateTestimonial(testimonial) {
@@ -7298,70 +7656,14 @@ import { GoogleGenAI as GoogleGenAI3 } from "@google/genai";
 var genAI2 = new GoogleGenAI3({
   apiKey: process.env.GEMINI_API_KEY || ""
 });
-async function generateDiscoverPhase(input) {
-  const lang = input.language || "pt-BR";
-  const isPortuguese = lang.startsWith("pt");
-  const isSpanish = lang.startsWith("es");
-  const isFrench = lang.startsWith("fr");
-  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
-  const prompt = `Voc\xEA \xE9 um especialista em Design Thinking conduzindo a fase DISCOVER do framework Double Diamond.
-
-${languageInstruction}
-
-CONTEXTO:
-- Setor: ${input.sector}
-- Case de Sucesso de Refer\xEAncia: ${input.successCase || "Nenhum"}
-- P\xFAblico-Alvo: ${input.targetAudience}
-- Declara\xE7\xE3o do Problema: ${input.problemStatement}
-
-Gere uma an\xE1lise de descoberta abrangente com:
-
-1. **Pain Points** (8-12 itens): Identifique problemas espec\xEDficos, frustra\xE7\xF5es e desafios que o p\xFAblico-alvo enfrenta
-   - Inclua categoria (operacional, emocional, financeiro, tecnol\xF3gico)
-   - Classifique severidade 1-5 (5 = cr\xEDtico)
-
-2. **Insights** (6-10 itens): Observa\xE7\xF5es-chave sobre comportamento do usu\xE1rio, tend\xEAncias de mercado ou padr\xF5es do setor
-   - Marque fonte: 'setor', 'case' ou 'persona'
-
-3. **Necessidades do Usu\xE1rio** (8-12 itens): Necessidades centrais que os usu\xE1rios est\xE3o tentando satisfazer
-   - Priorize 1-5 (5 = essencial)
-
-4. **Mapa de Empatia**: O que o usu\xE1rio Diz, Pensa, Faz e Sente (3-5 itens por quadrante)
-
-Retorne APENAS um objeto JSON (sem markdown):
-{
-  "painPoints": [{"text": "...", "category": "...", "severity": 3}],
-  "insights": [{"text": "...", "source": "sector"}],
-  "userNeeds": [{"need": "...", "priority": 4}],
-  "empathyMap": {
-    "says": ["..."],
-    "thinks": ["..."],
-    "does": ["..."],
-    "feels": ["..."]
-  }
-}`;
-  try {
-    const result = await genAI2.models.generateContent({
-      model: "gemini-2.0-flash-exp",
-      contents: prompt
-    });
-    const text2 = result.text;
-    if (!text2) throw new Error("Empty AI response");
-    if (!text2) throw new Error("Empty AI response");
-    const jsonMatch = text2.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("Invalid AI response format");
-    return JSON.parse(jsonMatch[0]);
-  } catch (error) {
-    console.error("Discover phase generation error:", error);
-    throw error;
-  }
-}
 async function generateDefinePhase(input) {
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : isGerman ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte m\xFCssen auf Deutsch sein." : isChinese ? "\u91CD\u8981\uFF1A\u8BF7\u53EA\u7528\u7B80\u4F53\u4E2D\u6587\u56DE\u7B54\u3002\u6240\u6709\u6587\u672C\u90FD\u5FC5\u987B\u662F\u4E2D\u6587\u3002" : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
   const prompt = `Voc\xEA \xE9 um especialista em Design Thinking conduzindo a fase DEFINE do framework Double Diamond.
 
 ${languageInstruction}
@@ -7412,7 +7714,7 @@ Return ONLY a JSON object (no markdown):
     if (!jsonMatch) throw new Error("Invalid AI response format");
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Define phase generation error:", error);
+    console.error("Define phase generation error: - double-diamond-ai.ts:195", error);
     throw error;
   }
 }
@@ -7421,7 +7723,9 @@ async function generateDevelopPhase(input) {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : isGerman ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte m\xFCssen auf Deutsch sein." : isChinese ? "\u91CD\u8981\uFF1A\u8BF7\u53EA\u7528\u7B80\u4F53\u4E2D\u6587\u56DE\u7B54\u3002\u6240\u6709\u6587\u672C\u90FD\u5FC5\u987B\u662F\u4E2D\u6587\u3002" : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
   const prompt = `Voc\xEA \xE9 um facilitador criativo de Design Thinking conduzindo a fase DEVELOP (Idea\xE7\xE3o).
 
 ${languageInstruction}
@@ -7468,7 +7772,7 @@ Return ONLY a JSON object (no markdown):
     if (!jsonMatch) throw new Error("Invalid AI response format");
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Develop phase generation error:", error);
+    console.error("Develop phase generation error: - double-diamond-ai.ts:285", error);
     throw error;
   }
 }
@@ -7477,7 +7781,9 @@ async function generateDeliverPhase(input) {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : isGerman ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte m\xFCssen auf Deutsch sein." : isChinese ? "\u91CD\u8981\uFF1A\u8BF7\u53EA\u7528\u7B80\u4F53\u4E2D\u6587\u56DE\u7B54\u3002\u6240\u6709\u6587\u672C\u90FD\u5FC5\u987B\u662F\u4E2D\u6587\u3002" : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
   const ideaDescriptions = input.selectedIdeas.map(
     (idea) => `- ${idea.title}: ${idea.description}`
   ).join("\n");
@@ -7552,7 +7858,7 @@ Return ONLY a JSON object (no markdown):
     if (!jsonMatch) throw new Error("Invalid AI response format");
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Deliver phase generation error:", error);
+    console.error("Deliver phase generation error: - double-diamond-ai.ts:425", error);
     throw error;
   }
 }
@@ -7561,7 +7867,9 @@ async function analyzeDFV(input) {
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
   const isFrench = lang.startsWith("fr");
-  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : isGerman ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte m\xFCssen auf Deutsch sein." : isChinese ? "\u91CD\u8981\uFF1A\u8BF7\u53EA\u7528\u7B80\u4F53\u4E2D\u6587\u56DE\u7B54\u3002\u6240\u6709\u6587\u672C\u90FD\u5FC5\u987B\u662F\u4E2D\u6587\u3002" : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
   const prompt = `Voc\xEA \xE9 um estrategista de neg\xF3cios analisando um projeto de Design Thinking usando o framework DFV.
 
 ${languageInstruction}
@@ -7638,7 +7946,137 @@ Retorne APENAS um objeto JSON (sem markdown):
     if (!jsonMatch) throw new Error("Invalid AI response format");
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("DFV analysis error:", error);
+    console.error("DFV analysis error: - double-diamond-ai.ts:557", error);
+    throw error;
+  }
+}
+async function analyzeBpmnProcess(input) {
+  const lang = input.language || "pt-BR";
+  const isPortuguese = lang.startsWith("pt");
+  const isSpanish = lang.startsWith("es");
+  const isFrench = lang.startsWith("fr");
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : isGerman ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte m\xFCssen auf Deutsch sein." : isChinese ? "\u91CD\u8981\uFF1A\u8BF7\u53EA\u7528\u7B80\u4F53\u4E2D\u6587\u56DE\u7B54\u3002\u6240\u6709\u6587\u672C\u90FD\u5FC5\u987B\u662F\u4E2D\u6587\u3002" : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
+  const prompt = `Voc\xEA \xE9 um especialista em melhoria de processos e Design Thinking.
+
+${languageInstruction}
+
+Voc\xEA receber\xE1 um diagrama BPMN em XML e deve analis\xE1-lo para um gestor de neg\xF3cios que n\xE3o \xE9 t\xE9cnico.
+
+BPMN XML (n\xE3o reescreva, apenas analise):
+${input.bpmnXml}
+
+Analise o processo e produza:
+
+1. VIS\xC3O GERAL (overview)
+   - Explique em poucas frases como o processo come\xE7a, principais etapas e como termina.
+
+2. GARGALOS (bottlenecks)
+   - Liste pontos prov\xE1veis de fila, espera, retrabalho ou excesso de aprova\xE7\xF5es.
+
+3. TAREFAS SEM DONO CLARO (unassignedTasks)
+   - Destaque etapas em que n\xE3o est\xE1 claro quem \xE9 o respons\xE1vel (ex: cliente, SDR, CS, marketing).
+
+4. FINS POUCO CLAROS (unclearEnds)
+   - Aponte caminhos que n\xE3o levam a um fim claro ou que terminam de forma confusa/incompleta.
+
+5. IDEIAS DE MELHORIA (improvementIdeas)
+   - Sugest\xF5es pr\xE1ticas para simplificar, automatizar ou melhorar a experi\xEAncia do cliente.
+
+6. CONEX\xC3O COM DOUBLE DIAMOND (doubleDiamondLinks)
+   - Descubra: que observa\xE7\xF5es sobre dores/jornada dos usu\xE1rios o processo sugere?
+   - Define: que problemas/"How Might We" aparentes surgem a partir do desenho do processo?
+   - Develop: que tipos de ideias ou experimentos o time poderia testar?
+   - Deliver: que hip\xF3teses de MVP ou ajustes de entrega aparecem a partir do processo?
+
+Retorne APENAS um objeto JSON (sem markdown):
+{
+  "overview": "...",
+  "bottlenecks": ["..."],
+  "unassignedTasks": ["..."],
+  "unclearEnds": ["..."],
+  "improvementIdeas": ["..."],
+  "doubleDiamondLinks": {
+    "discover": ["..."],
+    "define": ["..."],
+    "develop": ["..."],
+    "deliver": ["..."]
+  }
+}`;
+  try {
+    const result = await genAI2.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: prompt
+    });
+    const text2 = result.text;
+    if (!text2) throw new Error("Empty AI response");
+    const jsonMatch = text2.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Invalid AI response format");
+    return JSON.parse(jsonMatch[0]);
+  } catch (error) {
+    console.error("BPMN process analysis error: - double-diamond-ai.ts:655", error);
+    throw error;
+  }
+}
+async function generateHmwFromBpmnAnalysis(input) {
+  const lang = input.language || "pt-BR";
+  const isPortuguese = lang.startsWith("pt");
+  const isSpanish = lang.startsWith("es");
+  const isFrench = lang.startsWith("fr");
+  const isGerman = lang.startsWith("de");
+  const isChinese = lang.startsWith("zh");
+  const languageInstruction = isPortuguese ? "IMPORTANTE: Responda APENAS em PORTUGU\xCAS DO BRASIL. Todos os textos devem estar em portugu\xEAs." : isSpanish ? "IMPORTANTE: Responda APENAS em ESPANHOL. Todos os textos devem estar em espanhol." : isFrench ? "IMPORTANTE: Responda APENAS em FRANC\xCAS. Todos os textos devem estar em franc\xEAs." : isGerman ? "WICHTIG: Antworte NUR auf DEUTSCH. Alle Texte m\xFCssen auf Deutsch sein." : isChinese ? "\u91CD\u8981\uFF1A\u8BF7\u53EA\u7528\u7B80\u4F53\u4E2D\u6587\u56DE\u7B54\u3002\u6240\u6709\u6587\u672C\u90FD\u5FC5\u987B\u662F\u4E2D\u6587\u3002" : "IMPORTANTE: Responda APENAS em INGL\xCAS. Todos os textos devem estar em ingl\xEAs.";
+  const { analysis } = input;
+  const prompt = `Voc\xEA \xE9 um facilitador experiente de Design Thinking ajudando um time na fase DEFINE.
+
+${languageInstruction}
+
+Voc\xEA receber\xE1 um resumo de an\xE1lise de um processo em BPMN com:
+- lista de GARGALOS (bottlenecks)
+- lista de FINS POUCO CLAROS (unclearEnds)
+
+Sua tarefa \xE9 transformar esses problemas em perguntas "How Might We" (Como poder\xEDamos...) claras e acion\xE1veis.
+
+Siga estas regras:
+- Crie entre 6 e 12 perguntas HMW no total.
+- Use linguagem simples, focada em resultado para o usu\xE1rio.
+- Cada pergunta deve estar relacionada diretamente a um gargalo OU a um fim pouco claro.
+- N\xE3o proponha solu\xE7\xF5es prontas na pergunta, apenas a oportunidade.
+
+AN\xC1LISE DO PROCESSO (resumo de texto gerado anteriormente pela IA):
+
+VIS\xC3O GERAL:
+${analysis.overview}
+
+GARGALOS (bottlenecks):
+${(analysis.bottlenecks || []).map((b, i) => `- [B${i + 1}] ${b}`).join("\n")}
+
+FINS POUCO CLAROS (unclearEnds):
+${(analysis.unclearEnds || []).map((u, i) => `- [U${i + 1}] ${u}`).join("\n")}
+
+Retorne APENAS um objeto JSON (sem markdown) com o formato:
+{
+  "hmwQuestions": [
+    {
+      "question": "Como poder\xEDamos...",
+      "source": "bottleneck" | "unclearEnd",
+      "relatedItem": "Texto completo do gargalo ou fim pouco claro que originou esta pergunta"
+    }
+  ]
+}`;
+  try {
+    const result = await genAI2.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: prompt
+    });
+    const text2 = result.text;
+    if (!text2) throw new Error("Empty AI response");
+    const jsonMatch = text2.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Invalid AI response format");
+    return JSON.parse(jsonMatch[0]);
+  } catch (error) {
+    console.error("BPMN HMW generation error: - double-diamond-ai.ts:742", error);
     throw error;
   }
 }
@@ -7648,7 +8086,7 @@ var stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRE
   apiVersion: "2025-08-27.basil"
 }) : null;
 if (!stripe) {
-  console.warn("\u26A0\uFE0F  STRIPE_SECRET_KEY not set - payment features will be disabled");
+  console.warn("\u26A0\uFE0F  STRIPE_SECRET_KEY not set  payment features will be disabled - routes.ts:83");
 }
 var ADDON_PRICE_IDS = {
   double_diamond_pro: {
@@ -7722,6 +8160,21 @@ function requireProjectAccess(requiredRole = "viewer") {
     }
   };
 }
+function requireDoubleDiamondProAddon(req, res, next) {
+  if (req.user?.role === "admin") {
+    return next();
+  }
+  const hasAddon = req.subscription?.addons?.doubleDiamondPro;
+  if (!hasAddon) {
+    return res.status(403).json({
+      error: "BPMN features are available only with the Double Diamond Pro add-on.",
+      code: "BPMN_ADDON_REQUIRED",
+      upgrade_required: true,
+      upgradeUrl: "/addons"
+    });
+  }
+  next();
+}
 var storage_config = multer.memoryStorage();
 var upload = multer({
   storage: storage_config,
@@ -7790,7 +8243,7 @@ async function registerRoutes(app2) {
           );
         }
       } catch (err) {
-        console.log("Webhook signature verification failed.", err.message);
+        console.log("Webhook signature verification failed. - routes.ts:317", err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
       }
       try {
@@ -7932,11 +8385,11 @@ async function registerRoutes(app2) {
             break;
           }
           default:
-            console.log(`Unhandled event type ${event.type}`);
+            console.log(`Unhandled event type ${event.type} - routes.ts:509`);
         }
         res.json({ received: true });
       } catch (error) {
-        console.error("Error processing webhook:", error);
+        console.error("Error processing webhook: - routes.ts:514", error);
         res.status(500).json({ error: "Webhook processing failed" });
       }
     }
@@ -8047,19 +8500,19 @@ async function registerRoutes(app2) {
         projectAnalytics: projectAnalytics2
       });
     } catch (error) {
-      console.error("Failed to fetch full project data:", error);
+      console.error("Failed to fetch full project data: - routes.ts:641", error);
       res.status(500).json({ error: "Failed to fetch project data" });
     }
   });
-  app2.post("/api/projects", requireAuth, checkProjectLimit, async (req, res) => {
+  app2.post("/api/projects", requireAuth, loadUserSubscription, checkProjectLimit, async (req, res) => {
     try {
-      console.log("Creating project - Request body:", req.body);
-      console.log("User session:", req.session?.userId ? "authenticated" : "not authenticated");
+      console.log("Creating project  Request body: - routes.ts:648", req.body);
+      console.log("User session: - routes.ts:649", req.session?.userId ? "authenticated" : "not authenticated");
       const validatedData = insertProjectSchema.parse(req.body);
-      console.log("Data validated successfully:", validatedData);
+      console.log("Data validated successfully: - routes.ts:652", validatedData);
       const userId = req.session.userId;
       if (isDuplicateProjectCreation(userId, validatedData.name)) {
-        console.log(`Duplicate project creation attempt blocked for user ${userId}:`, validatedData.name);
+        console.log(`Duplicate project creation attempt blocked for user ${userId}: - routes.ts:657`, validatedData.name);
         return res.status(409).json({
           error: "Projeto duplicado detectado",
           message: "Voc\xEA j\xE1 criou um projeto com este nome recentemente. Por favor, aguarde alguns segundos antes de tentar novamente."
@@ -8067,10 +8520,10 @@ async function registerRoutes(app2) {
       }
       recordProjectCreation(userId, validatedData.name);
       const project = await storage.createProject({ ...validatedData, userId });
-      console.log("Project created successfully:", project.id);
+      console.log("Project created successfully: - routes.ts:668", project.id);
       res.status(201).json(project);
     } catch (error) {
-      console.error("Error creating project:", error);
+      console.error("Error creating project: - routes.ts:672", error);
       if (error && typeof error === "object" && "issues" in error) {
         const validationError = error;
         return res.status(400).json({
@@ -8100,7 +8553,7 @@ async function registerRoutes(app2) {
           await storage.createProjectBackup(req.params.id, userId, "auto", "Backup autom\xE1tico ap\xF3s atualiza\xE7\xE3o");
         }
       } catch (backupError) {
-        console.error("Error creating automatic backup:", backupError);
+        console.error("Error creating automatic backup: - routes.ts:711", backupError);
       }
       res.json(project);
     } catch (error) {
@@ -8111,7 +8564,7 @@ async function registerRoutes(app2) {
     try {
       const userId = req.session.userId;
       const isAdmin = req.session.user?.role === "admin";
-      console.log("[DELETE PROJECT] Request:", {
+      console.log("[DELETE PROJECT] Request: - routes.ts:725", {
         projectId: req.params.id,
         userId,
         isAdmin,
@@ -8119,36 +8572,36 @@ async function registerRoutes(app2) {
       });
       let success;
       if (isAdmin) {
-        console.log("[DELETE PROJECT] Admin delete - fetching all projects");
+        console.log("[DELETE PROJECT] Admin delete  fetching all projects - routes.ts:735");
         const allProjects = await storage.getAllProjects();
         const project = allProjects.find((p) => p.id === req.params.id);
-        console.log("[DELETE PROJECT] Project found:", {
+        console.log("[DELETE PROJECT] Project found: - routes.ts:740", {
           found: !!project,
           projectUserId: project?.userId
         });
         if (!project) {
-          console.log("[DELETE PROJECT] Project not found");
+          console.log("[DELETE PROJECT] Project not found - routes.ts:746");
           return res.status(404).json({ error: "Project not found" });
         }
-        console.log("[DELETE PROJECT] Calling deleteProject with:", {
+        console.log("[DELETE PROJECT] Calling deleteProject with: - routes.ts:751", {
           projectId: req.params.id,
           projectUserId: project.userId
         });
         success = await storage.deleteProject(req.params.id, project.userId);
-        console.log("[DELETE PROJECT] Delete result:", success);
+        console.log("[DELETE PROJECT] Delete result: - routes.ts:756", success);
       } else {
-        console.log("[DELETE PROJECT] Regular user delete");
+        console.log("[DELETE PROJECT] Regular user delete - routes.ts:759");
         success = await storage.deleteProject(req.params.id, userId);
-        console.log("[DELETE PROJECT] Delete result:", success);
+        console.log("[DELETE PROJECT] Delete result: - routes.ts:761", success);
       }
       if (!success) {
-        console.log("[DELETE PROJECT] Delete failed - returning 404");
+        console.log("[DELETE PROJECT] Delete failed  returning 404 - routes.ts:765");
         return res.status(404).json({ error: "Project not found" });
       }
-      console.log("[DELETE PROJECT] Delete successful");
+      console.log("[DELETE PROJECT] Delete successful - routes.ts:769");
       res.json({ success: true });
     } catch (error) {
-      console.error("[DELETE PROJECT] Error:", error);
+      console.error("[DELETE PROJECT] Error: - routes.ts:772", error);
       res.status(500).json({ error: "Failed to delete project" });
     }
   });
@@ -8379,7 +8832,33 @@ async function registerRoutes(app2) {
       const dataUrl = `data:image/jpeg;base64,${base64Image}`;
       res.json({ url: dataUrl });
     } catch (error) {
-      console.error("Erro no upload:", error);
+      console.error("Erro no upload: - routes.ts:1059", error);
+      res.status(500).json({ error: "Erro ao processar upload" });
+    }
+  });
+  app2.post("/api/upload/insight-image", requireAuth, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado" });
+      }
+      if (!req.file.mimetype?.startsWith("image/")) {
+        return res.status(400).json({ error: "Apenas arquivos de imagem s\xE3o permitidos" });
+      }
+      const maxSize = 5 * 1024 * 1024;
+      if (req.file.size && req.file.size > maxSize) {
+        return res.status(400).json({ error: "O arquivo \xE9 muito grande. O tamanho m\xE1ximo \xE9 5MB." });
+      }
+      const optimizedBuffer = await sharp(req.file.buffer).rotate().resize({ width: 1600, withoutEnlargement: true }).jpeg({ quality: 80, progressive: true }).toBuffer();
+      const base64Image = optimizedBuffer.toString("base64");
+      const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+      res.json({
+        url: dataUrl,
+        mimeType: "image/jpeg",
+        name: req.file.originalname,
+        size: optimizedBuffer.length
+      });
+    } catch (error) {
+      console.error("Erro no upload: - routes.ts:1059", error);
       res.status(500).json({ error: "Erro ao processar upload" });
     }
   });
@@ -8391,42 +8870,25 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch personas" });
     }
   });
-  app2.post("/api/projects/:projectId/personas", requireAuth, checkPersonaLimit, async (req, res) => {
-    try {
-      const validatedData = insertPersonaSchema.parse({
-        ...req.body,
-        projectId: req.params.projectId
-      });
-      const persona = await storage.createPersona(validatedData);
-      res.status(201).json(persona);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid persona data" });
-    }
-  });
-  app2.put("/api/personas/:id", requireAuth, async (req, res) => {
-    try {
-      const validatedData = insertPersonaSchema.omit({ projectId: true }).partial().parse(req.body);
-      const persona = await storage.updatePersona(req.params.id, validatedData);
-      if (!persona) {
-        return res.status(404).json({ error: "Persona not found" });
+  app2.post(
+    "/api/projects/:projectId/personas",
+    requireAuth,
+    loadUserSubscription,
+    checkPersonaLimit,
+    async (req, res) => {
+      try {
+        const validatedData = insertPersonaSchema.parse({
+          ...req.body,
+          projectId: req.params.projectId
+        });
+        const persona = await storage.createPersona(validatedData);
+        res.status(201).json(persona);
+      } catch (error) {
+        res.status(400).json({ error: "Invalid persona data" });
       }
-      res.json(persona);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid persona data" });
     }
-  });
-  app2.delete("/api/personas/:id", requireAuth, async (req, res) => {
-    try {
-      const success = await storage.deletePersona(req.params.id);
-      if (!success) {
-        return res.status(404).json({ error: "Persona not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete persona" });
-    }
-  });
-  app2.get("/api/projects/:projectId/interviews", requireAuth, async (req, res) => {
+  );
+  app2.post("/api/projects/:projectId/interviews", requireAuth, loadUserSubscription, async (req, res) => {
     try {
       const interviews2 = await storage.getInterviews(req.params.projectId);
       res.json(interviews2);
@@ -8436,18 +8898,18 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/projects/:projectId/interviews", requireAuth, async (req, res) => {
     try {
-      console.log("Interview creation request:", {
+      console.log("Interview creation request: - routes.ts:1124", {
         projectId: req.params.projectId,
         body: req.body
       });
       const questions = Array.isArray(req.body.questions) ? req.body.questions : [];
       const responses = Array.isArray(req.body.responses) ? req.body.responses : [];
-      console.log("Questions/Responses:", { questions, responses });
+      console.log("Questions/Responses: - routes.ts:1133", { questions, responses });
       const validPairs = questions.map((q, i) => ({
         question: String(q || "").trim(),
         response: String(responses[i] || "").trim()
       })).filter((pair) => pair.question !== "");
-      console.log("Valid pairs:", validPairs);
+      console.log("Valid pairs: - routes.ts:1143", validPairs);
       const dataToValidate = {
         ...req.body,
         projectId: req.params.projectId,
@@ -8455,14 +8917,14 @@ async function registerRoutes(app2) {
         questions: validPairs.map((p) => p.question),
         responses: validPairs.map((p) => p.response)
       };
-      console.log("Data to validate:", dataToValidate);
+      console.log("Data to validate: - routes.ts:1153", dataToValidate);
       const validatedData = insertInterviewSchema.parse(dataToValidate);
-      console.log("Data validated successfully");
+      console.log("Data validated successfully - routes.ts:1156");
       const interview = await storage.createInterview(validatedData);
-      console.log("Interview created:", interview.id);
+      console.log("Interview created: - routes.ts:1159", interview.id);
       res.status(201).json(interview);
     } catch (error) {
-      console.error("Interview creation error:", error);
+      console.error("Interview creation error: - routes.ts:1163", error);
       res.status(400).json({
         error: "Invalid interview data",
         details: error instanceof Error ? error.message : String(error)
@@ -8502,23 +8964,23 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/projects/:projectId/observations", requireAuth, async (req, res) => {
     try {
-      console.log("Creating observation - Request body:", JSON.stringify(req.body, null, 2));
-      console.log("Project ID:", req.params.projectId);
+      console.log("Creating observation  Request body: - routes.ts:1208", JSON.stringify(req.body, null, 2));
+      console.log("Project ID: - routes.ts:1209", req.params.projectId);
       const dataToValidate = {
         ...req.body,
         projectId: req.params.projectId,
         // Converter string de data para Date object se necessário
         date: req.body.date ? new Date(req.body.date) : /* @__PURE__ */ new Date()
       };
-      console.log("Data to validate:", JSON.stringify(dataToValidate, null, 2));
+      console.log("Data to validate: - routes.ts:1217", JSON.stringify(dataToValidate, null, 2));
       const validatedData = insertObservationSchema.parse(dataToValidate);
-      console.log("Data validated successfully:", JSON.stringify(validatedData, null, 2));
+      console.log("Data validated successfully: - routes.ts:1220", JSON.stringify(validatedData, null, 2));
       const observation = await storage.createObservation(validatedData);
       res.status(201).json(observation);
     } catch (error) {
-      console.error("Observation validation error:", error);
+      console.error("Observation validation error: - routes.ts:1225", error);
       if (error instanceof Error) {
-        console.error("Error message:", error.message);
+        console.error("Error message: - routes.ts:1227", error.message);
         res.status(400).json({ error: "Invalid observation data", details: error.message });
       } else {
         res.status(400).json({ error: "Invalid observation data" });
@@ -8546,6 +9008,93 @@ async function registerRoutes(app2) {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete observation" });
+    }
+  });
+  app2.get(
+    "/api/projects/:projectId/insights",
+    requireAuth,
+    requireProjectAccess("viewer"),
+    async (req, res) => {
+      try {
+        const insights = await storage.getProjectInsights(req.params.projectId);
+        res.json(insights);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch project insights" });
+      }
+    }
+  );
+  app2.post(
+    "/api/projects/:projectId/insights",
+    requireAuth,
+    requireProjectAccess("editor"),
+    async (req, res) => {
+      try {
+        const validatedData = insertProjectInsightSchema.parse({
+          ...req.body,
+          projectId: req.params.projectId
+        });
+        const insight = await storage.createProjectInsight(validatedData);
+        res.status(201).json(insight);
+      } catch (error) {
+        res.status(400).json({ error: "Invalid project insight data" });
+      }
+    }
+  );
+  app2.put("/api/insights/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const existing = await storage.getProjectInsight(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+      const ownerProject = await storage.getProject(existing.projectId, userId);
+      if (!ownerProject) {
+        const member = await storage.getProjectMember(existing.projectId, userId);
+        if (!member) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        const roleHierarchy = { viewer: 1, editor: 2, owner: 3 };
+        const userLevel = roleHierarchy[member.role] || 0;
+        if (userLevel < roleHierarchy.editor) {
+          return res.status(403).json({ error: "Insufficient permissions" });
+        }
+      }
+      const validatedData = insertProjectInsightSchema.omit({ projectId: true }).partial().parse(req.body);
+      const updated = await storage.updateProjectInsight(req.params.id, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid project insight data" });
+    }
+  });
+  app2.delete("/api/insights/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const existing = await storage.getProjectInsight(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+      const ownerProject = await storage.getProject(existing.projectId, userId);
+      if (!ownerProject) {
+        const member = await storage.getProjectMember(existing.projectId, userId);
+        if (!member) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        const roleHierarchy = { viewer: 1, editor: 2, owner: 3 };
+        const userLevel = roleHierarchy[member.role] || 0;
+        if (userLevel < roleHierarchy.editor) {
+          return res.status(403).json({ error: "Insufficient permissions" });
+        }
+      }
+      const success = await storage.deleteProjectInsight(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Insight not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete project insight" });
     }
   });
   app2.get("/api/projects/:projectId/pov-statements", requireAuth, async (req, res) => {
@@ -8699,6 +9248,176 @@ async function registerRoutes(app2) {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete guiding criterion" });
+    }
+  });
+  app2.get("/api/projects/:projectId/journeys", requireAuth, async (req, res) => {
+    try {
+      const journeys2 = await storage.getJourneys(req.params.projectId);
+      res.json(journeys2);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journeys" });
+    }
+  });
+  app2.post("/api/projects/:projectId/journeys", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneySchema.parse({
+        ...req.body,
+        projectId: req.params.projectId
+      });
+      const journey = await storage.createJourney(validatedData);
+      res.status(201).json(journey);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey data" });
+    }
+  });
+  app2.post("/api/projects/:projectId/journeys/ai-generate", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const projectId = req.params.projectId;
+      const project = await storage.getProject(projectId, userId);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      const [personas2, empathyMaps2, hmwQuestions2, guidingCriteria2] = await Promise.all([
+        storage.getPersonas(projectId),
+        storage.getEmpathyMaps(projectId),
+        storage.getHmwQuestions(projectId),
+        storage.getGuidingCriteria(projectId)
+      ]);
+      const language = req.body?.language || "pt-BR";
+      const suggestion = await designThinkingGeminiAI.generateJourneyMap({
+        projectName: project.name,
+        projectDescription: project.description || project.userProblemDescription || "",
+        personas: personas2,
+        empathyMaps: empathyMaps2,
+        hmwQuestions: hmwQuestions2,
+        guidingCriteria: guidingCriteria2,
+        language
+      });
+      res.json(suggestion);
+    } catch (error) {
+      console.error("[AI Journey] Failed to generate journey - routes.ts:1505", error);
+      res.status(500).json({ error: "Failed to generate journey with AI" });
+    }
+  });
+  app2.get("/api/journeys/:id", requireAuth, async (req, res) => {
+    try {
+      const journey = await storage.getJourney(req.params.id);
+      if (!journey) {
+        return res.status(404).json({ error: "Journey not found" });
+      }
+      res.json(journey);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journey" });
+    }
+  });
+  app2.put("/api/journeys/:id", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneySchema.omit({ projectId: true }).partial().parse(req.body);
+      const journey = await storage.updateJourney(req.params.id, validatedData);
+      if (!journey) {
+        return res.status(404).json({ error: "Journey not found" });
+      }
+      res.json(journey);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey data" });
+    }
+  });
+  app2.delete("/api/journeys/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteJourney(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Journey not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete journey" });
+    }
+  });
+  app2.get("/api/journeys/:journeyId/stages", requireAuth, async (req, res) => {
+    try {
+      const stages = await storage.getJourneyStages(req.params.journeyId);
+      res.json(stages);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journey stages" });
+    }
+  });
+  app2.post("/api/journeys/:journeyId/stages", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyStageSchema.parse({
+        ...req.body,
+        journeyId: req.params.journeyId
+      });
+      const stage = await storage.createJourneyStage(validatedData);
+      res.status(201).json(stage);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey stage data" });
+    }
+  });
+  app2.put("/api/journey-stages/:id", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyStageSchema.omit({ journeyId: true }).partial().parse(req.body);
+      const stage = await storage.updateJourneyStage(req.params.id, validatedData);
+      if (!stage) {
+        return res.status(404).json({ error: "Journey stage not found" });
+      }
+      res.json(stage);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey stage data" });
+    }
+  });
+  app2.delete("/api/journey-stages/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteJourneyStage(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Journey stage not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete journey stage" });
+    }
+  });
+  app2.get("/api/journey-stages/:stageId/touchpoints", requireAuth, async (req, res) => {
+    try {
+      const touchpoints = await storage.getJourneyTouchpoints(req.params.stageId);
+      res.json(touchpoints);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch journey touchpoints" });
+    }
+  });
+  app2.post("/api/journey-stages/:stageId/touchpoints", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyTouchpointSchema.parse({
+        ...req.body,
+        stageId: req.params.stageId
+      });
+      const touchpoint = await storage.createJourneyTouchpoint(validatedData);
+      res.status(201).json(touchpoint);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey touchpoint data" });
+    }
+  });
+  app2.put("/api/journey-touchpoints/:id", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertJourneyTouchpointSchema.omit({ stageId: true }).partial().parse(req.body);
+      const touchpoint = await storage.updateJourneyTouchpoint(req.params.id, validatedData);
+      if (!touchpoint) {
+        return res.status(404).json({ error: "Journey touchpoint not found" });
+      }
+      res.json(touchpoint);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid journey touchpoint data" });
+    }
+  });
+  app2.delete("/api/journey-touchpoints/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteJourneyTouchpoint(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Journey touchpoint not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete journey touchpoint" });
     }
   });
   app2.get("/api/projects/:projectId/ideas", requireAuth, async (req, res) => {
@@ -8856,9 +9575,13 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
-  app2.get("/api/articles", async (_req, res) => {
+  app2.get("/api/articles", requireAuth, loadUserSubscription, async (req, res) => {
     try {
       const articles2 = await storage.getArticles();
+      const limit = req.subscription?.limits?.libraryArticlesCount;
+      if (typeof limit === "number" && limit >= 0) {
+        return res.json(articles2.slice(0, limit));
+      }
       res.json(articles2);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch articles" });
@@ -8906,13 +9629,13 @@ async function registerRoutes(app2) {
             contentFr: validatedData.contentFr || translations.contentFr
           };
         } catch (translationError) {
-          console.error("Auto-translation error (continuing without translation):", translationError);
+          console.error("Autotranslation error (continuing without translation): - routes.ts:1897", translationError);
         }
       }
       const article = await storage.createArticle(validatedData);
       res.status(201).json(article);
     } catch (error) {
-      console.error("Error creating article:", error);
+      console.error("Error creating article: - routes.ts:1905", error);
       res.status(400).json({ error: "Invalid article data" });
     }
   });
@@ -8943,7 +9666,7 @@ async function registerRoutes(app2) {
                 contentFr: validatedData.contentFr || existingArticle.contentFr || translations.contentFr
               };
             } catch (translationError) {
-              console.error("Auto-translation error (continuing without translation):", translationError);
+              console.error("Autotranslation error (continuing without translation): - routes.ts:1945", translationError);
             }
           }
         }
@@ -8954,7 +9677,7 @@ async function registerRoutes(app2) {
       }
       res.json(article);
     } catch (error) {
-      console.error("Error updating article:", error);
+      console.error("Error updating article: - routes.ts:1958", error);
       res.status(400).json({ error: "Invalid article data" });
     }
   });
@@ -8978,7 +9701,7 @@ async function registerRoutes(app2) {
       const translations = await translateArticle({ title, description, content });
       res.json(translations);
     } catch (error) {
-      console.error("Translation error:", error);
+      console.error("Translation error: - routes.ts:1987", error);
       res.status(500).json({ error: "Failed to translate article" });
     }
   });
@@ -8991,7 +9714,7 @@ async function registerRoutes(app2) {
       const translations = await translateVideo({ title, description });
       res.json(translations);
     } catch (error) {
-      console.error("Translation error:", error);
+      console.error("Translation error: - routes.ts:2003", error);
       res.status(500).json({ error: "Failed to translate video" });
     }
   });
@@ -9004,7 +9727,7 @@ async function registerRoutes(app2) {
       const translations = await translateTestimonial({ testimonialPt });
       res.json(translations);
     } catch (error) {
-      console.error("Translation error:", error);
+      console.error("Translation error: - routes.ts:2019", error);
       res.status(500).json({ error: "Failed to translate testimonial" });
     }
   });
@@ -9072,7 +9795,7 @@ async function registerRoutes(app2) {
       const videos = await storage.getVideoTutorials();
       res.json(videos);
     } catch (error) {
-      console.error("[ERROR] /api/video-tutorials failed:", error);
+      console.error("[ERROR] /api/videotutorials failed: - routes.ts:2096", error);
       res.status(500).json({ error: "Failed to fetch video tutorials" });
     }
   });
@@ -9109,7 +9832,7 @@ async function registerRoutes(app2) {
       const video = await storage.createVideoTutorial(validatedData);
       res.status(201).json(video);
     } catch (error) {
-      console.error("Error creating video tutorial:", error);
+      console.error("Error creating video tutorial: - routes.ts:2138", error);
       res.status(400).json({ error: "Invalid video tutorial data" });
     }
   });
@@ -9122,7 +9845,7 @@ async function registerRoutes(app2) {
       }
       res.json(video);
     } catch (error) {
-      console.error("Error updating video tutorial:", error);
+      console.error("Error updating video tutorial: - routes.ts:2152", error);
       res.status(400).json({ error: "Invalid video tutorial data" });
     }
   });
@@ -9318,13 +10041,13 @@ async function registerRoutes(app2) {
           projectId: project.id
         });
       }
-      console.log(`\u{1F4E6} About to save AI-generated assets for project ${project.id}`);
+      console.log(`\u{1F4E6} About to save AIgenerated assets for project ${project.id} - routes.ts:2394`);
       try {
         await aiGenerationService2.saveGeneratedAssets(project.id, generatedMVP);
-        console.log(`\u2705 AI-generated assets saved successfully for project ${project.id}`);
+        console.log(`\u2705 AIgenerated assets saved successfully for project ${project.id} - routes.ts:2397`);
       } catch (assetError) {
-        console.error(`\u274C CRITICAL: Failed to save AI-generated assets for project ${project.id}:`, assetError);
-        console.error(`\u274C Asset Error Stack:`, assetError instanceof Error ? assetError.stack : "No stack");
+        console.error(`\u274C CRITICAL: Failed to save AIgenerated assets for project ${project.id}: - routes.ts:2399`, assetError);
+        console.error(`\u274C Asset Error Stack: - routes.ts:2400`, assetError instanceof Error ? assetError.stack : "No stack");
       }
       await storage.updateUserProgress({
         userId: req.session.userId,
@@ -9344,9 +10067,9 @@ async function registerRoutes(app2) {
         message: "MVP successfully generated"
       });
     } catch (error) {
-      console.error("\u274C [AI Generation Error] Full error:", error);
-      console.error("\u274C [AI Generation Error] Stack:", error instanceof Error ? error.stack : "No stack trace");
-      console.error("\u274C [AI Generation Error] Message:", error instanceof Error ? error.message : error);
+      console.error("\u274C [AI Generation Error] Full error: - routes.ts:2424", error);
+      console.error("\u274C [AI Generation Error] Stack: - routes.ts:2425", error instanceof Error ? error.stack : "No stack trace");
+      console.error("\u274C [AI Generation Error] Message: - routes.ts:2426", error instanceof Error ? error.message : error);
       res.status(500).json({
         error: "Failed to generate project",
         details: error instanceof Error ? error.message : "Unknown error",
@@ -9409,6 +10132,11 @@ async function registerRoutes(app2) {
       if (!user) {
         return res.status(401).json({ error: "Email ou senha inv\xE1lidos" });
       }
+      if (!user.password) {
+        return res.status(401).json({
+          error: "Esta conta n\xE3o possui senha. Fa\xE7a login com Google ou crie uma senha para sua conta."
+        });
+      }
       const isValidPassword = await bcrypt2.compare(password, user.password);
       if (!isValidPassword) {
         return res.status(401).json({ error: "Email ou senha inv\xE1lidos" });
@@ -9423,7 +10151,24 @@ async function registerRoutes(app2) {
       };
       res.json({ user: userWithoutPassword });
     } catch (error) {
-      console.error("Login error:", error);
+      const errAny = error;
+      const message = error instanceof Error ? error.message : String(error);
+      const details = message || (typeof errAny?.code === "string" ? errAny.code : "") || (typeof errAny?.name === "string" ? errAny.name : "") || (typeof errAny === "string" ? errAny : "") || (() => {
+        try {
+          return JSON.stringify(errAny);
+        } catch {
+          return "";
+        }
+      })() || "Unknown error";
+      console.error("Login error: - routes.ts:/api/auth/login", {
+        name: errAny?.name,
+        message: errAny?.message,
+        code: errAny?.code,
+        stack: errAny?.stack
+      });
+      if (process.env.NODE_ENV !== "production") {
+        return res.status(500).json({ error: "Login failed", details });
+      }
       res.status(500).json({ error: "Login failed" });
     }
   });
@@ -9446,8 +10191,8 @@ async function registerRoutes(app2) {
       const allPlans = await storage.getSubscriptionPlans();
       const freePlan = allPlans.find((p) => p.name.toLowerCase() === "free");
       if (!freePlan) {
-        console.error("\u274C Free plan not found in database!");
-        console.error("Available plans:", allPlans.map((p) => p.name).join(", "));
+        console.error("\u274C Free plan not found in database! - routes.ts:2574");
+        console.error("Available plans: - routes.ts:2575", allPlans.map((p) => p.name).join(", "));
         return res.status(500).json({ error: "Erro de configura\xE7\xE3o do sistema. Contate o suporte." });
       }
       const userData = {
@@ -9464,7 +10209,7 @@ async function registerRoutes(app2) {
         subscriptionStatus: "active"
       };
       const user = await storage.createUser(userData);
-      console.log(`\u2705 User created successfully with Free plan: ${user.email}`);
+      console.log(`\u2705 User created successfully with Free plan: ${user.email} - routes.ts:2591`);
       req.session.userId = user.id;
       req.session.user = {
         id: user.id,
@@ -9475,7 +10220,7 @@ async function registerRoutes(app2) {
       await new Promise((resolve, reject) => {
         req.session.save((err) => {
           if (err) {
-            console.error("Session save error after signup:", err);
+            console.error("Session save error after signup: - routes.ts:2606", err);
             reject(err);
           } else {
             resolve();
@@ -9485,7 +10230,7 @@ async function registerRoutes(app2) {
       const { password: _, ...userWithoutPassword } = user;
       res.status(201).json({ user: userWithoutPassword, message: "Conta criada com sucesso!" });
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error("Signup error: - routes.ts:2618", error);
       res.status(500).json({ error: "Erro ao criar conta. Tente novamente." });
     }
   });
@@ -9502,37 +10247,50 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Logout failed" });
     }
   });
-  app2.get("/api/auth/google", passport_config_default.authenticate("google", {
-    scope: ["profile", "email"]
-  }));
-  app2.get(
-    "/api/auth/google/callback",
-    passport_config_default.authenticate("google", {
-      failureRedirect: "/login?error=oauth_failed",
-      failureMessage: true
-    }),
-    (req, res) => {
-      if (req.user) {
-        const user = req.user;
-        req.session.userId = user.id;
-        req.session.user = {
-          id: user.id,
-          username: user.username,
-          role: user.role || "user",
-          createdAt: user.createdAt || /* @__PURE__ */ new Date()
-        };
-        req.session.save((err) => {
-          if (err) {
-            console.error("Session save error:", err);
-            return res.redirect("/login?error=session_failed");
-          }
-          res.redirect("/dashboard");
-        });
-      } else {
-        res.redirect("/login?error=no_user");
+  const hasGoogleCredentials = !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+  if (!hasGoogleCredentials) {
+    app2.get("/api/auth/google", (req, res) => {
+      res.redirect("/login?error=google_not_configured");
+    });
+    app2.get("/api/auth/google/callback", (req, res) => {
+      res.redirect("/login?error=google_not_configured");
+    });
+  } else {
+    app2.get(
+      "/api/auth/google",
+      passport_config_default.authenticate("google", {
+        scope: ["profile", "email"]
+      })
+    );
+    app2.get(
+      "/api/auth/google/callback",
+      passport_config_default.authenticate("google", {
+        failureRedirect: "/login?error=oauth_failed",
+        failureMessage: true
+      }),
+      (req, res) => {
+        if (req.user) {
+          const user = req.user;
+          req.session.userId = user.id;
+          req.session.user = {
+            id: user.id,
+            username: user.username,
+            role: user.role || "user",
+            createdAt: user.createdAt || /* @__PURE__ */ new Date()
+          };
+          req.session.save((err) => {
+            if (err) {
+              console.error("Session save error: - routes.ts:2665", err);
+              return res.redirect("/login?error=session_failed");
+            }
+            res.redirect("/dashboard");
+          });
+        } else {
+          res.redirect("/login?error=no_user");
+        }
       }
-    }
-  );
+    );
+  }
   app2.get("/api/auth/me", async (req, res) => {
     try {
       if (!req.session?.userId || !req.session?.user) {
@@ -9553,7 +10311,7 @@ async function registerRoutes(app2) {
       const { password: _, ...userWithoutPassword } = freshUser;
       res.json({ user: userWithoutPassword });
     } catch (error) {
-      console.error("Auth check error:", error);
+      console.error("Auth check error: - routes.ts:2704", error);
       res.status(500).json({ error: "Failed to check authentication" });
     }
   });
@@ -9577,22 +10335,22 @@ async function registerRoutes(app2) {
       if (!req.user?.id) {
         return res.status(401).json({ error: "User not authenticated" });
       }
-      console.log("[Profile Update] User ID:", req.user.id);
-      console.log("[Profile Update] Received fields:", Object.keys(req.body));
-      console.log("[Profile Update] Has profile_picture:", !!req.body.profile_picture);
+      console.log("[Profile Update] User ID: - routes.ts:2735", req.user.id);
+      console.log("[Profile Update] Received fields: - routes.ts:2736", Object.keys(req.body));
+      console.log("[Profile Update] Has profile_picture: - routes.ts:2737", !!req.body.profile_picture);
       if (req.body.profile_picture) {
-        console.log("[Profile Update] profile_picture size:", req.body.profile_picture.length, "chars");
+        console.log("[Profile Update] profile_picture size: - routes.ts:2739", req.body.profile_picture.length, "chars");
       }
       const validatedData = updateProfileSchema.parse(req.body);
-      console.log("[Profile Update] Validated fields:", Object.keys(validatedData));
-      console.log("[Profile Update] Has profilePicture after validation:", !!validatedData.profilePicture);
+      console.log("[Profile Update] Validated fields: - routes.ts:2743", Object.keys(validatedData));
+      console.log("[Profile Update] Has profilePicture after validation: - routes.ts:2744", !!validatedData.profilePicture);
       const user = await storage.updateUser(req.user.id, validatedData);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      console.log("[Profile Update] User updated. Has profilePicture:", !!user.profilePicture);
+      console.log("[Profile Update] User updated. Has profilePicture: - routes.ts:2752", !!user.profilePicture);
       if (user.profilePicture) {
-        console.log("[Profile Update] Saved profilePicture size:", user.profilePicture.length, "chars");
+        console.log("[Profile Update] Saved profilePicture size: - routes.ts:2754", user.profilePicture.length, "chars");
       }
       if (req.session?.user) {
         req.session.user = {
@@ -9604,7 +10362,7 @@ async function registerRoutes(app2) {
       const { password: _, ...userProfile } = user;
       res.json(userProfile);
     } catch (error) {
-      console.error("[Profile Update] Error:", error);
+      console.error("[Profile Update] Error: - routes.ts:2769", error);
       if (error instanceof Error) {
         res.status(400).json({ error: error.message });
       } else {
@@ -9623,9 +10381,9 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/users", requireAdmin, async (req, res) => {
     try {
-      console.log("[Create User] Request body:", req.body);
+      console.log("[Create User] Request body: - routes.ts:2792", req.body);
       const validatedData = insertUserSchema.parse(req.body);
-      console.log("[Create User] Validated data:", validatedData);
+      console.log("[Create User] Validated data: - routes.ts:2794", validatedData);
       if (!validatedData.password) {
         return res.status(400).json({ error: "Password is required" });
       }
@@ -9638,7 +10396,7 @@ async function registerRoutes(app2) {
       const { password: _, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {
-      console.error("[Create User] Error:", error);
+      console.error("[Create User] Error: - routes.ts:2813", error);
       if (error instanceof Error) {
         res.status(400).json({ error: error.message });
       } else {
@@ -9659,35 +10417,84 @@ async function registerRoutes(app2) {
       res.status(400).json({ error: "Invalid user data" });
     }
   });
-  app2.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req, res) => {
+  app2.get("/api/admin/users/:id/limits", requireAdmin, async (req, res) => {
     try {
-      const { customMaxProjects, customMaxDoubleDiamondProjects, customAiChatLimit } = req.body;
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({
+        customMaxProjects: user.customMaxProjects ?? null,
+        customMaxDoubleDiamondProjects: user.customMaxDoubleDiamondProjects ?? null,
+        customMaxDoubleDiamondExports: user.customMaxDoubleDiamondExports ?? null,
+        customAiChatLimit: user.customAiChatLimit ?? null,
+        customLimitsTrialEndDate: user.customLimitsTrialEndDate ?? null
+      });
+    } catch (error) {
+      console.error("Error fetching user limits: - routes.ts:3020", error);
+      res.status(500).json({ error: "Failed to fetch limits" });
+    }
+  });
+  app2.put("/api/admin/users/:id/limits", requireAdmin, async (req, res) => {
+    try {
+      const {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
+        customAiChatLimit,
+        trialDays
+      } = req.body;
+      const trialDaysProvided = req.body && Object.prototype.hasOwnProperty.call(req.body, "trialDays");
+      const normalizedTrialDays = typeof trialDays === "number" && Number.isFinite(trialDays) && trialDays > 0 ? Math.floor(trialDays) : null;
+      const customLimitsTrialEndDate = trialDaysProvided ? normalizedTrialDays ? new Date(Date.now() + normalizedTrialDays * 24 * 60 * 60 * 1e3) : null : void 0;
       await storage.updateUserLimits(req.params.id, {
         customMaxProjects,
         customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
+        customAiChatLimit,
+        ...trialDaysProvided ? { customLimitsTrialEndDate } : {}
+      });
+      res.json({ message: "Limites atualizados com sucesso" });
+    } catch (error) {
+      console.error("Error updating user limits: - routes.ts:3047", error);
+      res.status(500).json({ error: "Failed to update limits" });
+    }
+  });
+  app2.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
+        customAiChatLimit
+      } = req.body;
+      await storage.updateUserLimits(req.params.id, {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
         customAiChatLimit
       });
       res.json({ message: "Limites atualizados com sucesso" });
     } catch (error) {
-      console.error("Error updating user limits:", error);
+      console.error("Error updating user limits: - routes.ts:2850", error);
       res.status(500).json({ error: "Failed to update limits" });
     }
   });
   app2.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
-      console.log(`[API DELETE USER] Starting deletion of user ${req.params.id}`);
+      console.log(`[API DELETE USER] Starting deletion of user ${req.params.id} - routes.ts:2857`);
       const success = await storage.deleteUser(req.params.id);
       if (!success) {
-        console.log(`[API DELETE USER] User not found: ${req.params.id}`);
+        console.log(`[API DELETE USER] User not found: ${req.params.id} - routes.ts:2860`);
         return res.status(404).json({ error: "User not found" });
       }
-      console.log(`[API DELETE USER] \u2705 Successfully deleted user ${req.params.id}`);
+      console.log(`[API DELETE USER] \u2705 Successfully deleted user ${req.params.id} - routes.ts:2863`);
       res.json({ success: true });
     } catch (error) {
-      console.error(`[API DELETE USER] \u274C EXCEPTION:`, error);
-      console.error(`[API DELETE USER] Error code: ${error?.code}`);
-      console.error(`[API DELETE USER] Error message: ${error?.message}`);
-      console.error(`[API DELETE USER] Error stack:`, error?.stack);
+      console.error(`[API DELETE USER] \u274C EXCEPTION: - routes.ts:2866`, error);
+      console.error(`[API DELETE USER] Error code: ${error?.code} - routes.ts:2867`);
+      console.error(`[API DELETE USER] Error message: ${error?.message} - routes.ts:2868`);
+      console.error(`[API DELETE USER] Error stack: - routes.ts:2869`, error?.stack);
       res.status(500).json({
         error: "Failed to delete user",
         details: {
@@ -9717,7 +10524,7 @@ async function registerRoutes(app2) {
         raw: activeAddons
       });
     } catch (error) {
-      console.error("Error fetching user addons:", error);
+      console.error("Error fetching user addons: - routes.ts:2905", error);
       res.status(500).json({ error: "Failed to fetch user addons" });
     }
   });
@@ -9729,9 +10536,14 @@ async function registerRoutes(app2) {
         exportPro,
         aiTurbo,
         collabAdvanced,
-        libraryPremium
+        libraryPremium,
+        trialDays
       } = req.body || {};
       const currentAddons = await storage.getUserAddons(userId);
+      const trialDaysProvided = req.body && Object.prototype.hasOwnProperty.call(req.body, "trialDays");
+      const normalizedTrialDays = typeof trialDays === "number" && Number.isFinite(trialDays) && trialDays > 0 ? Math.floor(trialDays) : null;
+      const now = /* @__PURE__ */ new Date();
+      const trialEndDate = normalizedTrialDays ? new Date(now.getTime() + normalizedTrialDays * 24 * 60 * 60 * 1e3) : null;
       const updateAddon = async (addonKey, enabled) => {
         if (typeof enabled !== "boolean") return;
         const existingForKey = currentAddons.filter((addon) => addon.addonKey === addonKey);
@@ -9745,15 +10557,26 @@ async function registerRoutes(app2) {
               source: "admin",
               billingPeriod: null,
               stripeSubscriptionId: null,
-              currentPeriodStart: /* @__PURE__ */ new Date(),
-              currentPeriodEnd: null
+              currentPeriodStart: now,
+              currentPeriodEnd: trialEndDate
             });
+          } else if (trialDaysProvided) {
+            await Promise.all(
+              activeForKey.map(
+                (addon) => storage.updateUserAddon(addon.id, {
+                  currentPeriodEnd: trialEndDate
+                })
+              )
+            );
           }
         } else {
           if (activeForKey.length > 0) {
             await Promise.all(
               activeForKey.map(
-                (addon) => storage.updateUserAddon(addon.id, { status: "canceled" })
+                (addon) => storage.updateUserAddon(addon.id, {
+                  status: "canceled",
+                  currentPeriodEnd: now
+                })
               )
             );
           }
@@ -9780,7 +10603,7 @@ async function registerRoutes(app2) {
         raw: activeAddons
       });
     } catch (error) {
-      console.error("Error updating user addons:", error);
+      console.error("Error updating user addons: - routes.ts:2976", error);
       res.status(500).json({ error: "Failed to update user addons" });
     }
   });
@@ -9844,7 +10667,7 @@ async function registerRoutes(app2) {
       };
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching admin stats:", error);
+      console.error("Error fetching admin stats: - routes.ts:3045", error);
       res.status(500).json({ error: "Failed to fetch admin stats" });
     }
   });
@@ -9987,7 +10810,7 @@ async function registerRoutes(app2) {
       } catch (err) {
         const raw = err?.raw;
         if (raw?.code === "resource_missing" && raw?.param === "customer") {
-          console.warn("[Stripe] Customer not found for current API key, recreating customer and retrying checkout...");
+          console.warn("[Stripe] Customer not found for current API key, recreating customer and retrying checkout... - routes.ts:3232");
           const customer = await stripe.customers.create({
             email: user.username,
             metadata: {
@@ -10003,7 +10826,7 @@ async function registerRoutes(app2) {
       }
       res.json({ url: session2.url });
     } catch (error) {
-      console.error("Error creating add-on checkout session:", error);
+      console.error("Error creating addon checkout session: - routes.ts:3250", error);
       res.status(500).json({ error: "Failed to create add-on checkout session" });
     }
   });
@@ -10056,7 +10879,7 @@ async function registerRoutes(app2) {
         message: "Add-on cancelado com sucesso. Ele permanecer\xE1 ativo at\xE9 o fim do per\xEDodo atual de cobran\xE7a."
       });
     } catch (error) {
-      console.error("Error canceling add-on subscription:", error);
+      console.error("Error canceling addon subscription: - routes.ts:3325", error);
       res.status(500).json({ error: "Failed to cancel add-on subscription" });
     }
   });
@@ -10081,7 +10904,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true, message: "Subscription will be canceled at the end of the billing period" });
     } catch (error) {
-      console.error("Error canceling subscription:", error);
+      console.error("Error canceling subscription: - routes.ts:3362", error);
       res.status(500).json({ error: "Failed to cancel subscription" });
     }
   });
@@ -10098,7 +10921,7 @@ async function registerRoutes(app2) {
       const response = await designThinkingGeminiAI.chat(lastMessage.content, context);
       res.json({ message: response });
     } catch (error) {
-      console.error("Error in AI chat:", error);
+      console.error("Error in AI chat: - routes.ts:3385", error);
       res.json({ message: "Desculpe, houve um problema tempor\xE1rio. Tente novamente ou continue usando as ferramentas de Design Thinking dispon\xEDveis na plataforma." });
     }
   });
@@ -10114,7 +10937,7 @@ async function registerRoutes(app2) {
       const suggestions = await designThinkingGeminiAI.generateSuggestions(context);
       res.json({ suggestions });
     } catch (error) {
-      console.error("Error generating suggestions:", error);
+      console.error("Error generating suggestions: - routes.ts:3407", error);
       res.status(500).json({ error: "Failed to generate suggestions" });
     }
   });
@@ -10151,7 +10974,7 @@ async function registerRoutes(app2) {
       const analysis = await designThinkingAI.analyzeProjectPhase(projectData, currentPhase || project.currentPhase);
       res.json(analysis);
     } catch (error) {
-      console.error("Error analyzing project:", error);
+      console.error("Error analyzing project: - routes.ts:3451", error);
       res.status(500).json({ error: "Failed to analyze project" });
     }
   });
@@ -10196,7 +11019,7 @@ async function registerRoutes(app2) {
       const analysis = await designThinkingAI.analyzeCompleteProject(analysisData);
       res.json(analysis);
     } catch (error) {
-      console.error("Error generating AI analysis:", error);
+      console.error("Error generating AI analysis: - routes.ts:3507", error);
       if (error instanceof Error && error.message.includes("OpenAI")) {
         res.status(503).json({ error: "AI service temporarily unavailable. Please check API configuration." });
       } else {
@@ -10210,7 +11033,7 @@ async function registerRoutes(app2) {
       const drawings = await storage.getCanvasDrawings(projectId);
       res.json(drawings);
     } catch (error) {
-      console.error("Error fetching canvas drawings:", error);
+      console.error("Error fetching canvas drawings: - routes.ts:3524", error);
       res.status(500).json({ error: "Failed to fetch canvas drawings" });
     }
   });
@@ -10220,7 +11043,7 @@ async function registerRoutes(app2) {
       const drawing = await storage.createCanvasDrawing(parsed);
       res.status(201).json(drawing);
     } catch (error) {
-      console.error("Error creating canvas drawing:", error);
+      console.error("Error creating canvas drawing: - routes.ts:3536", error);
       res.status(500).json({ error: "Failed to create canvas drawing" });
     }
   });
@@ -10234,7 +11057,7 @@ async function registerRoutes(app2) {
       }
       res.json(drawing);
     } catch (error) {
-      console.error("Error updating canvas drawing:", error);
+      console.error("Error updating canvas drawing: - routes.ts:3554", error);
       res.status(500).json({ error: "Failed to update canvas drawing" });
     }
   });
@@ -10247,7 +11070,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting canvas drawing:", error);
+      console.error("Error deleting canvas drawing: - routes.ts:3571", error);
       res.status(500).json({ error: "Failed to delete canvas drawing" });
     }
   });
@@ -10257,7 +11080,7 @@ async function registerRoutes(app2) {
       const cards = await storage.getPhaseCards(projectId);
       res.json(cards);
     } catch (error) {
-      console.error("Error fetching phase cards:", error);
+      console.error("Error fetching phase cards: - routes.ts:3584", error);
       res.status(500).json({ error: "Failed to fetch phase cards" });
     }
   });
@@ -10267,7 +11090,7 @@ async function registerRoutes(app2) {
       const card = await storage.createPhaseCard(parsed);
       res.status(201).json(card);
     } catch (error) {
-      console.error("Error creating phase card:", error);
+      console.error("Error creating phase card: - routes.ts:3596", error);
       res.status(500).json({ error: "Failed to create phase card" });
     }
   });
@@ -10281,7 +11104,7 @@ async function registerRoutes(app2) {
       }
       res.json(card);
     } catch (error) {
-      console.error("Error updating phase card:", error);
+      console.error("Error updating phase card: - routes.ts:3614", error);
       res.status(500).json({ error: "Failed to update phase card" });
     }
   });
@@ -10294,7 +11117,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting phase card:", error);
+      console.error("Error deleting phase card: - routes.ts:3631", error);
       res.status(500).json({ error: "Failed to delete phase card" });
     }
   });
@@ -10305,7 +11128,7 @@ async function registerRoutes(app2) {
       const backup = await storage.createProjectBackup(projectId, "manual", description);
       res.status(201).json(backup);
     } catch (error) {
-      console.error("Error creating backup:", error);
+      console.error("Error creating backup: - routes.ts:3646", error);
       res.status(500).json({ error: "Failed to create backup" });
     }
   });
@@ -10315,7 +11138,7 @@ async function registerRoutes(app2) {
       const backups = await storage.getProjectBackups(projectId);
       res.json(backups);
     } catch (error) {
-      console.error("Error fetching backups:", error);
+      console.error("Error fetching backups: - routes.ts:3658", error);
       res.status(500).json({ error: "Failed to fetch backups" });
     }
   });
@@ -10328,7 +11151,7 @@ async function registerRoutes(app2) {
       }
       res.json(backup);
     } catch (error) {
-      console.error("Error fetching backup:", error);
+      console.error("Error fetching backup: - routes.ts:3675", error);
       res.status(500).json({ error: "Failed to fetch backup" });
     }
   });
@@ -10341,7 +11164,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true, message: "Project restored successfully" });
     } catch (error) {
-      console.error("Error restoring backup:", error);
+      console.error("Error restoring backup: - routes.ts:3692", error);
       res.status(500).json({ error: "Failed to restore backup" });
     }
   });
@@ -10354,7 +11177,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting backup:", error);
+      console.error("Error deleting backup: - routes.ts:3709", error);
       res.status(500).json({ error: "Failed to delete backup" });
     }
   });
@@ -10364,7 +11187,7 @@ async function registerRoutes(app2) {
       const benchmarks2 = await storage.getBenchmarks(projectId);
       res.json(benchmarks2);
     } catch (error) {
-      console.error("Error fetching benchmarks:", error);
+      console.error("Error fetching benchmarks: - routes.ts:3722", error);
       res.status(500).json({ error: "Failed to fetch benchmarks" });
     }
   });
@@ -10377,7 +11200,7 @@ async function registerRoutes(app2) {
       }
       res.json(benchmark);
     } catch (error) {
-      console.error("Error fetching benchmark:", error);
+      console.error("Error fetching benchmark: - routes.ts:3739", error);
       res.status(500).json({ error: "Failed to fetch benchmark" });
     }
   });
@@ -10387,7 +11210,7 @@ async function registerRoutes(app2) {
       const benchmark = await storage.createBenchmark(parsed);
       res.status(201).json(benchmark);
     } catch (error) {
-      console.error("Error creating benchmark:", error);
+      console.error("Error creating benchmark: - routes.ts:3751", error);
       res.status(500).json({ error: "Failed to create benchmark" });
     }
   });
@@ -10401,7 +11224,7 @@ async function registerRoutes(app2) {
       }
       res.json(benchmark);
     } catch (error) {
-      console.error("Error updating benchmark:", error);
+      console.error("Error updating benchmark: - routes.ts:3769", error);
       res.status(500).json({ error: "Failed to update benchmark" });
     }
   });
@@ -10414,7 +11237,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting benchmark:", error);
+      console.error("Error deleting benchmark: - routes.ts:3786", error);
       res.status(500).json({ error: "Failed to delete benchmark" });
     }
   });
@@ -10424,7 +11247,7 @@ async function registerRoutes(app2) {
       const assessments = await storage.getBenchmarkAssessments(benchmarkId);
       res.json(assessments);
     } catch (error) {
-      console.error("Error fetching benchmark assessments:", error);
+      console.error("Error fetching benchmark assessments: - routes.ts:3799", error);
       res.status(500).json({ error: "Failed to fetch benchmark assessments" });
     }
   });
@@ -10434,7 +11257,7 @@ async function registerRoutes(app2) {
       const assessment = await storage.createBenchmarkAssessment(parsed);
       res.status(201).json(assessment);
     } catch (error) {
-      console.error("Error creating benchmark assessment:", error);
+      console.error("Error creating benchmark assessment: - routes.ts:3811", error);
       res.status(500).json({ error: "Failed to create benchmark assessment" });
     }
   });
@@ -10448,7 +11271,7 @@ async function registerRoutes(app2) {
       }
       res.json(assessment);
     } catch (error) {
-      console.error("Error updating benchmark assessment:", error);
+      console.error("Error updating benchmark assessment: - routes.ts:3829", error);
       res.status(500).json({ error: "Failed to update benchmark assessment" });
     }
   });
@@ -10461,7 +11284,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting benchmark assessment:", error);
+      console.error("Error deleting benchmark assessment: - routes.ts:3846", error);
       res.status(500).json({ error: "Failed to delete benchmark assessment" });
     }
   });
@@ -10471,7 +11294,7 @@ async function registerRoutes(app2) {
       const assessments = await storage.getDvfAssessments(projectId);
       res.json(assessments);
     } catch (error) {
-      console.error("Error fetching DVF assessments:", error);
+      console.error("Error fetching DVF assessments: - routes.ts:3859", error);
       res.status(500).json({ error: "Failed to fetch DVF assessments" });
     }
   });
@@ -10481,7 +11304,7 @@ async function registerRoutes(app2) {
       const assessment = await storage.createDvfAssessment(parsed);
       res.status(201).json(assessment);
     } catch (error) {
-      console.error("Error creating DVF assessment:", error);
+      console.error("Error creating DVF assessment: - routes.ts:3871", error);
       res.status(500).json({ error: "Failed to create DVF assessment" });
     }
   });
@@ -10495,7 +11318,7 @@ async function registerRoutes(app2) {
       }
       res.json(assessment);
     } catch (error) {
-      console.error("Error updating DVF assessment:", error);
+      console.error("Error updating DVF assessment: - routes.ts:3889", error);
       res.status(500).json({ error: "Failed to update DVF assessment" });
     }
   });
@@ -10508,7 +11331,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting DVF assessment:", error);
+      console.error("Error deleting DVF assessment: - routes.ts:3906", error);
       res.status(500).json({ error: "Failed to delete DVF assessment" });
     }
   });
@@ -10518,7 +11341,7 @@ async function registerRoutes(app2) {
       const metrics = await storage.getLovabilityMetrics(projectId);
       res.json(metrics);
     } catch (error) {
-      console.error("Error fetching lovability metrics:", error);
+      console.error("Error fetching lovability metrics: - routes.ts:3919", error);
       res.status(500).json({ error: "Failed to fetch lovability metrics" });
     }
   });
@@ -10528,7 +11351,7 @@ async function registerRoutes(app2) {
       const metric = await storage.createLovabilityMetric(parsed);
       res.status(201).json(metric);
     } catch (error) {
-      console.error("Error creating lovability metric:", error);
+      console.error("Error creating lovability metric: - routes.ts:3931", error);
       res.status(500).json({ error: "Failed to create lovability metric" });
     }
   });
@@ -10542,7 +11365,7 @@ async function registerRoutes(app2) {
       }
       res.json(metric);
     } catch (error) {
-      console.error("Error updating lovability metric:", error);
+      console.error("Error updating lovability metric: - routes.ts:3949", error);
       res.status(500).json({ error: "Failed to update lovability metric" });
     }
   });
@@ -10555,7 +11378,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting lovability metric:", error);
+      console.error("Error deleting lovability metric: - routes.ts:3966", error);
       res.status(500).json({ error: "Failed to delete lovability metric" });
     }
   });
@@ -10565,7 +11388,7 @@ async function registerRoutes(app2) {
       const analytics = await storage.createProjectAnalytics(parsed);
       res.status(201).json(analytics);
     } catch (error) {
-      console.error("Error creating project analytics:", error);
+      console.error("Error creating project analytics: - routes.ts:3978", error);
       res.status(500).json({ error: "Failed to create project analytics" });
     }
   });
@@ -10579,7 +11402,7 @@ async function registerRoutes(app2) {
       }
       res.json(analytics);
     } catch (error) {
-      console.error("Error updating project analytics:", error);
+      console.error("Error updating project analytics: - routes.ts:3996", error);
       res.status(500).json({ error: "Failed to update project analytics" });
     }
   });
@@ -10589,7 +11412,7 @@ async function registerRoutes(app2) {
       const analyses = await storage.getCompetitiveAnalyses(projectId);
       res.json(analyses);
     } catch (error) {
-      console.error("Error fetching competitive analyses:", error);
+      console.error("Error fetching competitive analyses: - routes.ts:4009", error);
       res.status(500).json({ error: "Failed to fetch competitive analyses" });
     }
   });
@@ -10599,7 +11422,7 @@ async function registerRoutes(app2) {
       const analysis = await storage.createCompetitiveAnalysis(parsed);
       res.status(201).json(analysis);
     } catch (error) {
-      console.error("Error creating competitive analysis:", error);
+      console.error("Error creating competitive analysis: - routes.ts:4021", error);
       res.status(500).json({ error: "Failed to create competitive analysis" });
     }
   });
@@ -10613,7 +11436,7 @@ async function registerRoutes(app2) {
       }
       res.json(analysis);
     } catch (error) {
-      console.error("Error updating competitive analysis:", error);
+      console.error("Error updating competitive analysis: - routes.ts:4039", error);
       res.status(500).json({ error: "Failed to update competitive analysis" });
     }
   });
@@ -10626,7 +11449,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting competitive analysis:", error);
+      console.error("Error deleting competitive analysis: - routes.ts:4056", error);
       res.status(500).json({ error: "Failed to delete competitive analysis" });
     }
   });
@@ -10707,7 +11530,7 @@ async function registerRoutes(app2) {
         }
       });
     } catch (error) {
-      console.error("Error generating AI benchmarking recommendations:", error);
+      console.error("Error generating AI benchmarking recommendations: - routes.ts:4159", error);
       res.status(500).json({
         error: "Failed to generate AI recommendations",
         details: error instanceof Error ? error.message : "Unknown error"
@@ -10718,23 +11541,23 @@ async function registerRoutes(app2) {
     try {
       const { id } = req.params;
       const userId = req.session.userId;
-      console.log(`[PPTX Export] Starting export for project ${id}, user ${userId}`);
+      console.log(`[PPTX Export] Starting export for project ${id}, user ${userId} - routes.ts:4175`);
       const project = await storage.getProject(id, userId);
       if (!project) {
-        console.log(`[PPTX Export] Project not found: ${id}`);
+        console.log(`[PPTX Export] Project not found: ${id} - routes.ts:4180`);
         return res.status(404).json({ error: "Project not found" });
       }
-      console.log(`[PPTX Export] Generating PPTX for project: ${project.name}`);
+      console.log(`[PPTX Export] Generating PPTX for project: ${project.name} - routes.ts:4184`);
       const pptxService = new PPTXService();
       const pptxBuffer = await pptxService.generateProjectPPTX(id, userId);
-      console.log(`[PPTX Export] PPTX generated successfully, size: ${pptxBuffer.length} bytes`);
+      console.log(`[PPTX Export] PPTX generated successfully, size: ${pptxBuffer.length} bytes - routes.ts:4190`);
       const filename = `${project.name.replace(/[^a-zA-Z0-9]/g, "_")}_DTTools.pptx`;
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.setHeader("Content-Length", pptxBuffer.length);
       res.end(pptxBuffer);
     } catch (error) {
-      console.error("[PPTX Export] Error generating PPTX:", error);
+      console.error("[PPTX Export] Error generating PPTX: - routes.ts:4202", error);
       if (!res.headersSent) {
         res.status(500).json({ error: "Failed to generate PPTX presentation" });
       }
@@ -10744,23 +11567,23 @@ async function registerRoutes(app2) {
     try {
       const { id } = req.params;
       const userId = req.session.userId;
-      console.log(`[PDF Export] Starting export for project ${id}, user ${userId}`);
+      console.log(`[PDF Export] Starting export for project ${id}, user ${userId} - routes.ts:4216`);
       const project = await storage.getProject(id, userId);
       if (!project) {
-        console.log(`[PDF Export] Project not found: ${id}`);
+        console.log(`[PDF Export] Project not found: ${id} - routes.ts:4221`);
         return res.status(404).json({ error: "Project not found" });
       }
-      console.log(`[PDF Export] Generating PDF for project: ${project.name}`);
+      console.log(`[PDF Export] Generating PDF for project: ${project.name} - routes.ts:4225`);
       const pptxService = new PPTXService();
       const pdfBuffer = await pptxService.generateProjectPDF(id, userId);
-      console.log(`[PDF Export] PDF generated successfully, size: ${pdfBuffer.length} bytes`);
+      console.log(`[PDF Export] PDF generated successfully, size: ${pdfBuffer.length} bytes - routes.ts:4231`);
       const filename = `${project.name.replace(/[^a-zA-Z0-9]/g, "_")}_DTTools.pdf`;
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.setHeader("Content-Length", pdfBuffer.length);
       res.end(pdfBuffer);
     } catch (error) {
-      console.error("[PDF Export] Error generating PDF:", error);
+      console.error("[PDF Export] Error generating PDF: - routes.ts:4243", error);
       if (!res.headersSent) {
         res.status(500).json({ error: "Failed to generate PDF document" });
       }
@@ -10782,7 +11605,7 @@ async function registerRoutes(app2) {
       res.setHeader("Content-Length", Buffer.byteLength(markdown, "utf8"));
       res.send(markdown);
     } catch (error) {
-      console.error("Error generating Markdown:", error);
+      console.error("Error generating Markdown: - routes.ts:4277", error);
       res.status(500).json({ error: "Failed to generate Markdown document" });
     }
   });
@@ -10803,7 +11626,7 @@ async function registerRoutes(app2) {
       articles2.sort((a, b) => (a.order || 0) - (b.order || 0));
       res.json(articles2);
     } catch (error) {
-      console.error("Error fetching help articles:", error);
+      console.error("Error fetching help articles: - routes.ts:4311", error);
       res.status(500).json({ error: "Failed to fetch help articles" });
     }
   });
@@ -10817,7 +11640,7 @@ async function registerRoutes(app2) {
       const articles2 = await storage.searchHelpArticles(searchTerm);
       res.json(articles2);
     } catch (error) {
-      console.error("Error searching help articles:", error);
+      console.error("Error searching help articles: - routes.ts:4330", error);
       res.status(500).json({ error: "Failed to search help articles" });
     }
   });
@@ -10831,7 +11654,7 @@ async function registerRoutes(app2) {
       const updatedArticle = await storage.incrementHelpArticleViews(article.id);
       res.json(updatedArticle || article);
     } catch (error) {
-      console.error("Error fetching help article:", error);
+      console.error("Error fetching help article: - routes.ts:4350", error);
       res.status(500).json({ error: "Failed to fetch help article" });
     }
   });
@@ -10844,7 +11667,7 @@ async function registerRoutes(app2) {
       }
       res.json(article);
     } catch (error) {
-      console.error("Error marking article helpful:", error);
+      console.error("Error marking article helpful: - routes.ts:4367", error);
       res.status(500).json({ error: "Failed to mark article as helpful" });
     }
   });
@@ -10856,7 +11679,7 @@ async function registerRoutes(app2) {
       const categories = Array.from(categorySet);
       res.json(categories);
     } catch (error) {
-      console.error("Error fetching help categories:", error);
+      console.error("Error fetching help categories: - routes.ts:4382", error);
       res.status(500).json({ error: "Failed to fetch help categories" });
     }
   });
@@ -10866,7 +11689,7 @@ async function registerRoutes(app2) {
       const newArticle = await storage.createHelpArticle(articleData);
       res.json(newArticle);
     } catch (error) {
-      console.error("Error creating help article:", error);
+      console.error("Error creating help article: - routes.ts:4394", error);
       res.status(500).json({ error: "Failed to create help article" });
     }
   });
@@ -10880,7 +11703,7 @@ async function registerRoutes(app2) {
       }
       res.json(updatedArticle);
     } catch (error) {
-      console.error("Error updating help article:", error);
+      console.error("Error updating help article: - routes.ts:4412", error);
       res.status(500).json({ error: "Failed to update help article" });
     }
   });
@@ -10893,7 +11716,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true, message: "Article deleted successfully" });
     } catch (error) {
-      console.error("Error deleting help article:", error);
+      console.error("Error deleting help article: - routes.ts:4429", error);
       res.status(500).json({ error: "Failed to delete help article" });
     }
   });
@@ -10924,7 +11747,7 @@ async function registerRoutes(app2) {
         message: "Colunas de usu\xE1rios adicionais criadas com sucesso!"
       });
     } catch (error) {
-      console.error("Error migrating subscription columns:", error);
+      console.error("Error migrating subscription columns: - routes.ts:4475", error);
       res.status(500).json({
         success: false,
         error: "Failed to migrate subscription columns",
@@ -10949,7 +11772,7 @@ async function registerRoutes(app2) {
         message: needsMigration ? "Migra\xE7\xE3o necess\xE1ria - execute /api/admin/migrate-subscription-columns" : "Colunas j\xE1 existem!"
       });
     } catch (error) {
-      console.error("Error checking subscription columns:", error);
+      console.error("Error checking subscription columns: - routes.ts:4507", error);
       res.status(500).json({ error: "Failed to check subscription columns" });
     }
   });
@@ -10985,7 +11808,7 @@ async function registerRoutes(app2) {
         }
       });
     } catch (error) {
-      console.error("Error updating subscription prices:", error);
+      console.error("Error updating subscription prices: - routes.ts:4546", error);
       res.status(500).json({ error: "Failed to update subscription prices" });
     }
   });
@@ -11164,7 +11987,7 @@ async function registerRoutes(app2) {
         projectId: project.id
       });
     } catch (error) {
-      console.error("Error creating prenatal project:", error);
+      console.error("Error creating prenatal project: - routes.ts:4746", error);
       res.status(500).json({ error: "Failed to create prenatal project" });
     }
   });
@@ -11174,7 +11997,7 @@ async function registerRoutes(app2) {
       const projects2 = await storage.getDoubleDiamondProjects(userId);
       res.json(projects2);
     } catch (error) {
-      console.error("Error fetching Double Diamond projects:", error);
+      console.error("Error fetching Double Diamond projects: - routes.ts:4760", error);
       res.status(500).json({ error: "Failed to fetch Double Diamond projects" });
     }
   });
@@ -11194,7 +12017,7 @@ async function registerRoutes(app2) {
       }
       res.json(project);
     } catch (error) {
-      console.error("Error fetching Double Diamond project:", error);
+      console.error("Error fetching Double Diamond project: - routes.ts:4788", error);
       res.status(500).json({ error: "Failed to fetch Double Diamond project" });
     }
   });
@@ -11213,7 +12036,7 @@ async function registerRoutes(app2) {
       const project = await storage.createDoubleDiamondProject(cleanedData);
       res.status(201).json(project);
     } catch (error) {
-      console.error("Error creating Double Diamond project:", error);
+      console.error("Error creating Double Diamond project: - routes.ts:4812", error);
       res.status(500).json({ error: "Failed to create Double Diamond project" });
     }
   });
@@ -11239,7 +12062,7 @@ async function registerRoutes(app2) {
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error updating Double Diamond project:", error);
+      console.error("Error updating Double Diamond project: - routes.ts:4861", error);
       res.status(500).json({ error: "Failed to update Double Diamond project" });
     }
   });
@@ -11252,51 +12075,210 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting Double Diamond project:", error);
+      console.error("Error deleting Double Diamond project: - routes.ts:4876", error);
       res.status(500).json({ error: "Failed to delete Double Diamond project" });
     }
   });
-  app2.post("/api/double-diamond/:id/generate/discover", requireAuth, async (req, res) => {
-    try {
-      const userId = req.session.userId;
-      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
-      if (!project) {
-        return res.status(404).json({ error: "Double Diamond project not found" });
+  app2.get(
+    "/api/double-diamond/:id/bpmn-diagrams",
+    requireAuth,
+    loadUserSubscription,
+    requireDoubleDiamondProAddon,
+    async (req, res) => {
+      try {
+        const userId = req.session.userId;
+        const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+        if (!project) {
+          return res.status(404).json({ error: "Double Diamond project not found" });
+        }
+        const diagrams = await storage.getBpmnDiagramsByProject(project.id);
+        res.json(diagrams);
+      } catch (error) {
+        console.error("Error fetching BPMN diagrams: - routes.ts:4898", error);
+        res.status(500).json({ error: "Failed to fetch BPMN diagrams" });
       }
-      let sectorName = req.body.sector || "General";
-      let caseName = req.body.successCase;
-      if (project.sectorId && !req.body.sector) {
-        const sector = await storage.getIndustrySector(project.sectorId);
-        if (sector) sectorName = sector.name;
-      }
-      if (project.successCaseId && !req.body.successCase) {
-        const successCase = await storage.getSuccessCase(project.successCaseId);
-        if (successCase) caseName = successCase.name;
-      }
-      const language = req.body.language || "pt-BR";
-      const result = await generateDiscoverPhase({
-        sector: sectorName,
-        successCase: caseName,
-        targetAudience: project.targetAudience || "",
-        problemStatement: project.problemStatement || "",
-        language
-      });
-      const updated = await storage.updateDoubleDiamondProject(project.id, userId, {
-        discoverPainPoints: result.painPoints,
-        discoverInsights: result.insights,
-        discoverUserNeeds: result.userNeeds,
-        discoverEmpathyMap: result.empathyMap,
-        discoverStatus: "completed",
-        currentPhase: "define",
-        completionPercentage: 25,
-        generationCount: (project.generationCount || 0) + 1
-      });
-      res.json(updated);
-    } catch (error) {
-      console.error("Error generating Discover phase:", error);
-      res.status(500).json({ error: "Failed to generate Discover phase" });
     }
-  });
+  );
+  app2.put(
+    "/api/bpmn-diagrams/:id",
+    requireAuth,
+    loadUserSubscription,
+    requireDoubleDiamondProAddon,
+    async (req, res) => {
+      try {
+        const userId = req.session.userId;
+        const existing = await storage.getBpmnDiagram(req.params.id);
+        if (!existing) {
+          return res.status(404).json({ error: "BPMN diagram not found" });
+        }
+        const project = await storage.getDoubleDiamondProject(existing.projectId, userId);
+        if (!project) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        const updates = insertBpmnDiagramSchema.partial().parse(req.body);
+        const updated = await storage.updateBpmnDiagram(req.params.id, updates);
+        if (!updated) {
+          return res.status(404).json({ error: "BPMN diagram not found" });
+        }
+        res.json(updated);
+      } catch (error) {
+        console.error("Error updating BPMN diagram: - routes.ts:4930", error);
+        res.status(500).json({ error: "Failed to update BPMN diagram" });
+      }
+    }
+  );
+  app2.delete(
+    "/api/bpmn-diagrams/:id",
+    requireAuth,
+    loadUserSubscription,
+    requireDoubleDiamondProAddon,
+    async (req, res) => {
+      try {
+        const userId = req.session.userId;
+        const existing = await storage.getBpmnDiagram(req.params.id);
+        if (!existing) {
+          return res.status(404).json({ error: "BPMN diagram not found" });
+        }
+        const project = await storage.getDoubleDiamondProject(existing.projectId, userId);
+        if (!project) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        const success = await storage.deleteBpmnDiagram(req.params.id);
+        if (!success) {
+          return res.status(404).json({ error: "BPMN diagram not found" });
+        }
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting BPMN diagram: - routes.ts:4961", error);
+        res.status(500).json({ error: "Failed to delete BPMN diagram" });
+      }
+    }
+  );
+  app2.post(
+    "/api/bpmn-diagrams/:id/analyze",
+    requireAuth,
+    loadUserSubscription,
+    requireDoubleDiamondProAddon,
+    async (req, res) => {
+      try {
+        const userId = req.session.userId;
+        const diagram = await storage.getBpmnDiagram(req.params.id);
+        if (!diagram) {
+          return res.status(404).json({ error: "BPMN diagram not found" });
+        }
+        const project = await storage.getDoubleDiamondProject(diagram.projectId, userId);
+        if (!project) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        if (!diagram.bpmnXml || diagram.bpmnXml.trim() === "") {
+          return res.status(400).json({ error: "BPMN diagram has no XML to analyze" });
+        }
+        const language = req.body.language || "pt-BR";
+        const analysis = await analyzeBpmnProcess({
+          bpmnXml: diagram.bpmnXml,
+          language
+        });
+        try {
+          await storage.updateBpmnDiagram(diagram.id, { analysis });
+        } catch (persistError) {
+          console.error("Error saving BPMN AI analysis to diagram: - routes.ts:5001", persistError);
+        }
+        res.json(analysis);
+      } catch (error) {
+        console.error("Error analyzing BPMN diagram with AI: - routes.ts:5007", error);
+        res.status(500).json({ error: "Failed to analyze BPMN diagram" });
+      }
+    }
+  );
+  app2.post(
+    "/api/double-diamond/:id/generate/hmw-from-bpmn",
+    requireAuth,
+    loadUserSubscription,
+    requireDoubleDiamondProAddon,
+    async (req, res) => {
+      try {
+        const userId = req.session.userId;
+        const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+        if (!project) {
+          return res.status(404).json({ error: "Double Diamond project not found" });
+        }
+        const diagramId = req.body.diagramId;
+        if (!diagramId) {
+          return res.status(400).json({ error: "BPMN diagram ID is required" });
+        }
+        const diagram = await storage.getBpmnDiagram(diagramId);
+        if (!diagram || diagram.projectId !== project.id) {
+          return res.status(404).json({ error: "BPMN diagram not found" });
+        }
+        if (!diagram.bpmnXml || diagram.bpmnXml.trim() === "") {
+          return res.status(400).json({ error: "BPMN diagram has no XML" });
+        }
+        const language = req.body.language || "pt-BR";
+        let analysis = diagram.analysis;
+        if (!analysis) {
+          analysis = await analyzeBpmnProcess({
+            bpmnXml: diagram.bpmnXml,
+            language
+          });
+          try {
+            await storage.updateBpmnDiagram(diagram.id, { analysis });
+          } catch (persistError) {
+            console.error("Error saving BPMN AI analysis before HMW generation: - routes.ts:5054", persistError);
+          }
+        }
+        const hasBottlenecks = Array.isArray(analysis.bottlenecks) && analysis.bottlenecks.length > 0;
+        const hasUnclearEnds = Array.isArray(analysis.unclearEnds) && analysis.unclearEnds.length > 0;
+        if (!hasBottlenecks && !hasUnclearEnds) {
+          return res.status(400).json({
+            error: "BPMN analysis has no bottlenecks or unclear ends to generate HMW questions"
+          });
+        }
+        const hmwResult = await generateHmwFromBpmnAnalysis({
+          analysis,
+          language
+        });
+        const existingHmw = project.defineHmwQuestions || [];
+        const merged = [...existingHmw];
+        for (const hmw of hmwResult.hmwQuestions || []) {
+          if (!hmw.question) continue;
+          const trimmed = String(hmw.question).trim();
+          if (!trimmed) continue;
+          const alreadyExists = merged.some(
+            (q) => (q.question || "").trim() === trimmed
+          );
+          if (!alreadyExists) {
+            merged.push({
+              question: trimmed,
+              source: hmw.source,
+              relatedItem: hmw.relatedItem
+            });
+          }
+        }
+        if (merged.length === existingHmw.length) {
+          return res.status(400).json({
+            error: "No new HMW questions were generated from the BPMN analysis"
+          });
+        }
+        const updates = {
+          defineHmwQuestions: merged
+        };
+        if (!project.defineSelectedHmw && merged.length > 0) {
+          updates.defineSelectedHmw = merged[0].question;
+        }
+        if (project.defineStatus === "pending") {
+          updates.defineStatus = "in_progress";
+        }
+        const updated = await storage.updateDoubleDiamondProject(project.id, userId, updates);
+        if (!updated) {
+          return res.status(404).json({ error: "Double Diamond project not found" });
+        }
+        res.json(updated);
+      } catch (error) {
+        console.error("Error generating HMW from BPMN analysis: - routes.ts:5117", error);
+        res.status(500).json({ error: "Failed to generate HMW from BPMN analysis" });
+      }
+    }
+  );
   app2.post("/api/double-diamond/:id/generate/define", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId;
@@ -11326,7 +12308,7 @@ async function registerRoutes(app2) {
       });
       res.json(updated);
     } catch (error) {
-      console.error("Error generating Define phase:", error);
+      console.error("Error generating Define phase: - routes.ts:5159", error);
       res.status(500).json({ error: "Failed to generate Define phase" });
     }
   });
@@ -11364,7 +12346,7 @@ async function registerRoutes(app2) {
       });
       res.json(updated);
     } catch (error) {
-      console.error("Error generating Develop phase:", error);
+      console.error("Error generating Develop phase: - routes.ts:5209", error);
       res.status(500).json({ error: "Failed to generate Develop phase" });
     }
   });
@@ -11376,7 +12358,7 @@ async function registerRoutes(app2) {
         return res.status(404).json({ error: "Double Diamond project not found" });
       }
       if ((!project.developSelectedIdeas || project.developSelectedIdeas.length === 0) && project.developIdeas && project.developIdeas.length > 0) {
-        console.log(`[AUTO-FIX] Auto-selecting top 3 ideas for project ${project.id}`);
+        console.log(`[AUTOFIX] Autoselecting top 3 ideas for project ${project.id} - routes.ts:5225`);
         const topIdeas = project.developIdeas.slice(0, 3);
         project = await storage.updateDoubleDiamondProject(project.id, userId, {
           developSelectedIdeas: topIdeas
@@ -11410,7 +12392,7 @@ async function registerRoutes(app2) {
       });
       res.json(updated);
     } catch (error) {
-      console.error("Error generating Deliver phase:", error);
+      console.error("Error generating Deliver phase: - routes.ts:5269", error);
       res.status(500).json({ error: "Failed to generate Deliver phase" });
     }
   });
@@ -11452,7 +12434,7 @@ async function registerRoutes(app2) {
       });
       res.json(updated);
     } catch (error) {
-      console.error("Error generating DFV analysis:", error);
+      console.error("Error generating DFV analysis: - routes.ts:5324", error);
       res.status(500).json({ error: "Failed to generate DFV analysis" });
     }
   });
@@ -11461,7 +12443,7 @@ async function registerRoutes(app2) {
       const projects2 = await storage.getAllDoubleDiamondProjects();
       res.json(projects2);
     } catch (error) {
-      console.error("Error fetching all Double Diamond projects:", error);
+      console.error("Error fetching all Double Diamond projects: - routes.ts:5337", error);
       res.status(500).json({ error: "Failed to fetch Double Diamond projects" });
     }
   });
@@ -11478,7 +12460,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting Double Diamond project:", error);
+      console.error("Error deleting Double Diamond project: - routes.ts:5360", error);
       res.status(500).json({ error: "Failed to delete Double Diamond project" });
     }
   });
@@ -11508,7 +12490,7 @@ async function registerRoutes(app2) {
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error updating Double Diamond project:", error);
+      console.error("Error updating Double Diamond project: - routes.ts:5418", error);
       res.status(500).json({ error: "Failed to update Double Diamond project" });
     }
   });
@@ -11517,7 +12499,7 @@ async function registerRoutes(app2) {
       const sectors = await storage.listIndustrySectors();
       res.json(sectors);
     } catch (error) {
-      console.error("Error fetching industry sectors:", error);
+      console.error("Error fetching industry sectors: - routes.ts:5429", error);
       res.status(500).json({ error: "Failed to fetch industry sectors" });
     }
   });
@@ -11526,11 +12508,11 @@ async function registerRoutes(app2) {
       const successCases2 = await storage.listSuccessCases();
       res.json(successCases2);
     } catch (error) {
-      console.error("Error fetching success cases:", error);
+      console.error("Error fetching success cases: - routes.ts:5440", error);
       res.status(500).json({ error: "Failed to fetch success cases" });
     }
   });
-  app2.post("/api/double-diamond/:id/export", requireAuth, async (req, res) => {
+  app2.post("/api/double-diamond/:id/export", requireAuth, loadUserSubscription, async (req, res) => {
     try {
       const { id } = req.params;
       const { projectName } = req.body;
@@ -11542,9 +12524,8 @@ async function registerRoutes(app2) {
       const user = await storage.getUserById(userId);
       const isAdmin = user?.role === "admin";
       if (!isAdmin) {
-        const plan = user?.subscriptionPlanId ? await storage.getSubscriptionPlan(user.subscriptionPlanId) : null;
-        const maxExports = user?.customMaxDoubleDiamondExports ?? plan?.maxDoubleDiamondExports;
-        if (maxExports !== null && maxExports !== void 0) {
+        const maxExports = req.subscription?.limits?.maxDoubleDiamondExports;
+        if (typeof maxExports === "number" && maxExports >= 0) {
           const exportsThisMonth = await storage.getDoubleDiamondExportsByMonth(userId);
           if (exportsThisMonth.length >= maxExports) {
             return res.status(403).json({
@@ -11658,7 +12639,7 @@ async function registerRoutes(app2) {
           });
         }
       } catch (phaseError) {
-        console.error("Erro ao mapear dados do Double Diamond para projeto principal:", phaseError);
+        console.error("Erro ao mapear dados do Double Diamond para projeto principal: - routes.ts:5599", phaseError);
       }
       try {
         if (project.dfvDesirabilityScore != null && project.dfvFeasibilityScore != null && project.dfvViabilityScore != null) {
@@ -11701,7 +12682,7 @@ async function registerRoutes(app2) {
           });
         }
       } catch (dfvError) {
-        console.error("Erro ao criar avalia\xE7\xE3o DVF para projeto principal:", dfvError);
+        console.error("Erro ao criar avalia\xE7\xE3o DVF para projeto principal: - routes.ts:5654", dfvError);
       }
       await storage.createDoubleDiamondExport({
         userId,
@@ -11715,7 +12696,7 @@ async function registerRoutes(app2) {
         projectId: createdProject.id
       });
     } catch (error) {
-      console.error("Erro ao exportar projeto:", error);
+      console.error("Erro ao exportar projeto: - routes.ts:5673", error);
       return res.status(500).json({
         success: false,
         error: "Erro interno ao exportar projeto"
@@ -11736,7 +12717,7 @@ async function registerRoutes(app2) {
       res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
       res.send(pdfBuffer);
     } catch (error) {
-      console.error("Error generating Double Diamond PDF:", error);
+      console.error("Error generating Double Diamond PDF: - routes.ts:5700", error);
       res.status(500).json({ error: "Failed to generate PDF" });
     }
   });
@@ -11928,6 +12909,10 @@ app.use((req, res, next) => {
         ADD COLUMN IF NOT EXISTS custom_ai_chat_limit INTEGER;
       `);
       await db2.execute(`
+        ALTER TABLE IF EXISTS users 
+        ADD COLUMN IF NOT EXISTS custom_limits_trial_end_date TIMESTAMP;
+      `);
+      await db2.execute(`
         ALTER TABLE IF EXISTS subscription_plans 
         ADD COLUMN IF NOT EXISTS max_double_diamond_projects INTEGER;
       `);
@@ -11974,6 +12959,22 @@ app.use((req, res, next) => {
       await db2.execute(`
         ALTER TABLE IF EXISTS video_tutorials 
         ADD COLUMN IF NOT EXISTS description_fr TEXT;
+      `);
+      await db2.execute(`
+        ALTER TABLE IF EXISTS bpmn_diagrams
+        ADD COLUMN IF NOT EXISTS analysis JSONB;
+      `);
+      await db2.execute(`
+        CREATE TABLE IF NOT EXISTS project_insights (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          project_id VARCHAR NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          content TEXT NOT NULL,
+          links JSONB DEFAULT '[]'::jsonb,
+          image_url TEXT,
+          image_meta JSONB,
+          created_at TIMESTAMP DEFAULT now(),
+          updated_at TIMESTAMP DEFAULT now()
+        );
       `);
       log2("\u2705 [STARTUP] Schema columns verified and ready");
     } catch (schemaError) {

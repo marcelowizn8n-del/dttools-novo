@@ -42,6 +42,7 @@ const CURRENCY_CODES = {
 // Translation dictionaries
 const translations = {
   "pt-BR": {
+    "common.loading": "Carregando...",
     // Navigation
     "nav.projects": "Projetos",
     "nav.library": "Biblioteca",
@@ -1190,10 +1191,31 @@ const translations = {
     "admin.users.toast.delete.success.description": "O usuário foi removido com sucesso.",
     "admin.users.toast.delete.error.title": "Erro ao excluir usuário",
     "admin.users.toast.delete.error.description": "Ocorreu um erro ao tentar excluir o usuário.",
+
+    // Admin - Common
+    "admin.common.cancel": "Cancelar",
+    "admin.common.save": "Salvar",
+    "admin.common.saving": "Salvando...",
+
+    // Admin - User Limits Dialog
+    "admin.users.limits.title": "Limites personalizados: {username}",
+    "admin.users.limits.description": "Defina limites personalizados para este usuário. Se você deixar em branco, o sistema usa os limites do plano (e add-ons, se houver).",
+    "admin.users.limits.trialDays.label": "Duração do trial (dias)",
+    "admin.users.limits.trialDays.placeholder": "Ex.: 14",
+    "admin.users.limits.trialDays.help": "Opcional. Se preenchido, esses limites personalizados expiram automaticamente após esse número de dias. Se vazio, ficam sem expiração.",
+    "admin.users.limits.maxProjects": "Máx. de projetos",
+    "admin.users.limits.maxDoubleDiamondProjects": "Máx. de projetos Double Diamond",
+    "admin.users.limits.maxDoubleDiamondExports": "Máx. de exportações Double Diamond",
+    "admin.users.limits.aiChatLimit": "Limite de mensagens de IA",
+    "admin.users.limits.placeholder.default": "Padrão do plano",
+    "admin.users.limits.help.maxProjects": "Dica: use um número para sobrescrever o plano. Deixe vazio para manter o padrão.",
     
     // Admin - User Add-ons Dialog
     "admin.addons.dialog.title": "Ferramentas adicionais: {username}",
     "admin.addons.dialog.description": "Ative ou desative add-ons específicos para este usuário. Esses add-ons ajustam os limites e recursos além do plano base.",
+    "admin.addons.trialDays.label": "Duração do trial (dias)",
+    "admin.addons.trialDays.placeholder": "Ex.: 14",
+    "admin.addons.trialDays.help": "Opcional. Se preenchido, ao habilitar um add-on ele expira automaticamente após esse número de dias. Se vazio, fica sem expiração.",
     "admin.addons.item.doubleDiamondPro.title": "Double Diamond Pro",
     "admin.addons.item.doubleDiamondPro.description": "Projetos Double Diamond ilimitados e exportações liberadas.",
     "admin.addons.item.exportPro.title": "Export Pro",
@@ -2176,6 +2198,7 @@ const translations = {
   },
   
   "en": {
+    "common.loading": "Loading...",
     // Navigation
     "nav.projects": "Projects",
     "nav.library": "Library", 
@@ -3315,10 +3338,31 @@ const translations = {
     "admin.users.toast.delete.success.description": "The user was removed successfully.",
     "admin.users.toast.delete.error.title": "Error deleting user",
     "admin.users.toast.delete.error.description": "An error occurred while trying to delete the user.",
+
+    // Admin - Common
+    "admin.common.cancel": "Cancel",
+    "admin.common.save": "Save",
+    "admin.common.saving": "Saving...",
+
+    // Admin - User Limits Dialog
+    "admin.users.limits.title": "Custom limits: {username}",
+    "admin.users.limits.description": "Set custom limits for this user. If left empty, the system uses the plan limits (and add-ons, if any).",
+    "admin.users.limits.trialDays.label": "Trial duration (days)",
+    "admin.users.limits.trialDays.placeholder": "e.g., 14",
+    "admin.users.limits.trialDays.help": "Optional. If set, these custom limits will automatically expire after this many days. If empty, they have no expiration.",
+    "admin.users.limits.maxProjects": "Max projects",
+    "admin.users.limits.maxDoubleDiamondProjects": "Max Double Diamond projects",
+    "admin.users.limits.maxDoubleDiamondExports": "Max Double Diamond exports",
+    "admin.users.limits.aiChatLimit": "AI messages limit",
+    "admin.users.limits.placeholder.default": "Plan default",
+    "admin.users.limits.help.maxProjects": "Tip: set a number to override the plan. Leave empty to keep the default.",
     
     // Admin - User Add-ons Dialog
     "admin.addons.dialog.title": "Additional tools: {username}",
     "admin.addons.dialog.description": "Enable or disable specific add-ons for this user. These add-ons adjust limits and features beyond the base plan.",
+    "admin.addons.trialDays.label": "Trial duration (days)",
+    "admin.addons.trialDays.placeholder": "e.g., 14",
+    "admin.addons.trialDays.help": "Optional. If set, enabling an add-on will make it automatically expire after this many days. If empty, it has no expiration.",
     "admin.addons.item.doubleDiamondPro.title": "Double Diamond Pro",
     "admin.addons.item.doubleDiamondPro.description": "Unlimited Double Diamond projects and exports unlocked.",
     "admin.addons.item.exportPro.title": "Export Pro",
@@ -4589,6 +4633,7 @@ const translations = {
   },
 
   "de": {
+    "common.loading": "Wird geladen...",
     // Navigation
     "nav.projects": "Projekte",
     "nav.library": "Bibliothek",

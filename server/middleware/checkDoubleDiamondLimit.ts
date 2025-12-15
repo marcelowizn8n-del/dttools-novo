@@ -81,8 +81,15 @@ export async function checkDoubleDiamondLimit(
       planData = plan && plan.length > 0 ? plan[0] : null;
     }
 
+    // Se o trial de limites expirou, ignora overrides custom do usuário
+    const now = new Date();
+    const isCustomLimitsActive =
+      !(userData as any).customLimitsTrialEndDate || (userData as any).customLimitsTrialEndDate > now;
+
     // Limite personalizado do usuário (se definido e >= 0, sobrescreve plano)
-    const userCustomLimitRaw = (userData as any).customMaxDoubleDiamondProjects as number | null | undefined;
+    const userCustomLimitRaw = isCustomLimitsActive
+      ? ((userData as any).customMaxDoubleDiamondProjects as number | null | undefined)
+      : null;
     const userCustomLimit = typeof userCustomLimitRaw === "number" && userCustomLimitRaw >= 0
       ? userCustomLimitRaw
       : null;

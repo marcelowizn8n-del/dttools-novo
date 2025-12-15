@@ -17,16 +17,19 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import type { Project, DvfAssessment, GuidingCriterion, ProjectInsight } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
-import TeamManagement from "@/components/TeamManagement";
-import Phase1Tools from "@/components/phase1/Phase1Tools";
-import Phase2Tools from "@/components/phase2/Phase2Tools";
-import Phase3Tools from "@/components/phase3/Phase3Tools";
-import Phase4Tools from "@/components/phase4/Phase4Tools";
-import Phase5Tools from "@/components/phase5/Phase5Tools";
-import AnalysisReport from "@/components/AnalysisReport";
-import { KanbanBoard } from "@/components/KanbanBoard";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+const TeamManagement = lazy(() => import("@/components/TeamManagement"));
+const Phase1Tools = lazy(() => import("@/components/phase1/Phase1Tools"));
+const Phase2Tools = lazy(() => import("@/components/phase2/Phase2Tools"));
+const Phase3Tools = lazy(() => import("@/components/phase3/Phase3Tools"));
+const Phase4Tools = lazy(() => import("@/components/phase4/Phase4Tools"));
+const Phase5Tools = lazy(() => import("@/components/phase5/Phase5Tools"));
+const AnalysisReport = lazy(() => import("@/components/AnalysisReport"));
+const KanbanBoard = lazy(() =>
+  import("@/components/KanbanBoard").then((m) => ({ default: m.KanbanBoard }))
+);
 
 const editProjectSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").transform(val => val.trim()).refine(val => val.length > 0, "Nome não pode ser apenas espaços"),
@@ -1052,6 +1055,7 @@ export default function ProjectDetailPage() {
               <h2 className="text-2xl font-bold text-gray-900">
                 {t("project.detail.phases.title")}
               </h2>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5].map((phaseNumber) => (
                   <PhaseCard
@@ -1093,25 +1097,73 @@ export default function ProjectDetailPage() {
                   </CardContent>
                 </Card>
               </div>
-            </div>
 
-            {/* Ferramentas da Fase Selecionada */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {t("project.detail.phaseTools.title", {
-                  phase: String(effectivePhase),
-                })}
-              </h2>
-              {effectivePhase === 1 && <Phase1Tools projectId={project.id} />}
-              {effectivePhase === 2 && <Phase2Tools projectId={project.id} />}
-              {effectivePhase === 3 && <Phase3Tools projectId={project.id} />}
-              {effectivePhase === 4 && <Phase4Tools projectId={project.id} />}
-              {effectivePhase === 5 && <Phase5Tools projectId={project.id} />}
+              <div className="space-y-6">
+                {effectivePhase === 1 && (
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                        <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                      </div>
+                    }
+                  >
+                    <Phase1Tools projectId={project.id} />
+                  </Suspense>
+                )}
+                {effectivePhase === 2 && (
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                        <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                      </div>
+                    }
+                  >
+                    <Phase2Tools projectId={project.id} />
+                  </Suspense>
+                )}
+                {effectivePhase === 3 && (
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                        <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                      </div>
+                    }
+                  >
+                    <Phase3Tools projectId={project.id} />
+                  </Suspense>
+                )}
+                {effectivePhase === 4 && (
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                        <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                      </div>
+                    }
+                  >
+                    <Phase4Tools projectId={project.id} />
+                  </Suspense>
+                )}
+                {effectivePhase === 5 && (
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                        <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                      </div>
+                    }
+                  >
+                    <Phase5Tools projectId={project.id} />
+                  </Suspense>
+                )}
+              </div>
             </div>
 
             <ProjectInsightsSection projectId={project.id} />
 
-            {/* DFV Assessment Section */}
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">
                 {t("project.detail.dfvSection.title")}
@@ -1121,11 +1173,29 @@ export default function ProjectDetailPage() {
           </TabsContent>
 
           <TabsContent value="kanban" className="space-y-6">
-            <KanbanBoard projectId={project.id} />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                  <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                </div>
+              }
+            >
+              <KanbanBoard projectId={project.id} />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="analysis" className="space-y-6">
-            <AnalysisReport projectId={project.id} />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                  <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                </div>
+              }
+            >
+              <AnalysisReport projectId={project.id} />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="team" className="space-y-6">
@@ -1135,10 +1205,19 @@ export default function ProjectDetailPage() {
             <p className="text-gray-600 mb-2">
               {t("project.detail.team.description")}
             </p>
-            <TeamManagement
-              projectId={project.id}
-              isOwner={project.userId === user?.id}
-            />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                  <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
+                </div>
+              }
+            >
+              <TeamManagement
+                projectId={project.id}
+                isOwner={project.userId === user?.id}
+              />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>

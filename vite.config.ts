@@ -30,6 +30,25 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "client/dist"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+
+          const normalizedId = id.replace(/\\/g, "/");
+          const isReactCore = /\/node_modules\/(react|react-dom|scheduler)\//.test(normalizedId);
+
+          if (id.includes("bpmn-js")) return "bpmn";
+          if (id.includes("jspdf")) return "jspdf";
+          if (id.includes("@tanstack")) return "tanstack";
+          if (id.includes("@radix-ui")) return "radix";
+          if (isReactCore) return "react";
+
+          return;
+        },
+      },
+    },
   },
   server: {
     fs: {

@@ -644,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects", requireAuth, checkProjectLimit, async (req, res) => {
+  app.post("/api/projects", requireAuth, loadUserSubscription, checkProjectLimit, async (req, res) => {
     try {
       console.log("Creating project  Request body: - routes.ts:648", req.body);
       console.log("User session: - routes.ts:649", req.session?.userId ? "authenticated" : "not authenticated");
@@ -1108,46 +1108,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/personas", requireAuth, checkPersonaLimit, async (req, res) => {
-    try {
-      const validatedData = insertPersonaSchema.parse({
-        ...req.body,
-        projectId: req.params.projectId
-      });
-      const persona = await storage.createPersona(validatedData);
-      res.status(201).json(persona);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid persona data" });
-    }
-  });
+  app.post(
+    "/api/projects/:projectId/personas",
+    requireAuth,
+    loadUserSubscription,
+    checkPersonaLimit,
+    async (req, res) => {
+      try {
+        const validatedData = insertPersonaSchema.parse({
+          ...req.body,
+          projectId: req.params.projectId,
+        });
 
-  app.put("/api/personas/:id", requireAuth, async (req, res) => {
-    try {
-      const validatedData = insertPersonaSchema.omit({ projectId: true }).partial().parse(req.body);
-      const persona = await storage.updatePersona(req.params.id, validatedData);
-      if (!persona) {
-        return res.status(404).json({ error: "Persona not found" });
+        const persona = await storage.createPersona(validatedData);
+        res.status(201).json(persona);
+      } catch (error) {
+        res.status(400).json({ error: "Invalid persona data" });
       }
-      res.json(persona);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid persona data" });
     }
-  });
+  );
 
-  app.delete("/api/personas/:id", requireAuth, async (req, res) => {
-    try {
-      const success = await storage.deletePersona(req.params.id);
-      if (!success) {
-        return res.status(404).json({ error: "Persona not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete persona" });
-    }
-  });
-
-  // Phase 1: Empathize - Interviews
-  app.get("/api/projects/:projectId/interviews", requireAuth, async (req, res) => {
+  app.post("/api/projects/:projectId/interviews", requireAuth, loadUserSubscription, async (req, res) => {
     try {
       const interviews = await storage.getInterviews(req.params.projectId);
       res.json(interviews);
@@ -3016,14 +2997,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: get user custom limits (so UI can prefill values)
+  app.get("/api/admin/users/:id/limits", requireAdmin, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({
+        customMaxProjects: user.customMaxProjects ?? null,
+        customMaxDoubleDiamondProjects: user.customMaxDoubleDiamondProjects ?? null,
+        customMaxDoubleDiamondExports: user.customMaxDoubleDiamondExports ?? null,
+        customAiChatLimit: user.customAiChatLimit ?? null,
+        customLimitsTrialEndDate: user.customLimitsTrialEndDate ?? null,
+      });
+    } catch (error) {
+      console.error("Error fetching user limits: - routes.ts:3020", error);
+      res.status(500).json({ error: "Failed to fetch limits" });
+    }
+  });
+
+  // Admin: update user custom limits (matches admin UI endpoint)
+  app.put("/api/admin/users/:id/limits", requireAdmin, async (req, res) => {
+    try {
+      const {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
+        customAiChatLimit,
+        trialDays,
+      } = req.body;
+
+      const trialDaysProvided =
+        req.body && Object.prototype.hasOwnProperty.call(req.body, "trialDays");
+
+      const normalizedTrialDays =
+        typeof trialDays === "number" && Number.isFinite(trialDays) && trialDays > 0
+          ? Math.floor(trialDays)
+          : null;
+
+      const customLimitsTrialEndDate = trialDaysProvided
+        ? normalizedTrialDays
+          ? new Date(Date.now() + normalizedTrialDays * 24 * 60 * 60 * 1000)
+          : null
+        : undefined;
+
+      await storage.updateUserLimits(req.params.id, {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
+        customAiChatLimit,
+        ...(trialDaysProvided ? { customLimitsTrialEndDate } : {}),
+      });
+
+      res.json({ message: "Limites atualizados com sucesso" });
+    } catch (error) {
+      console.error("Error updating user limits: - routes.ts:3047", error);
+      res.status(500).json({ error: "Failed to update limits" });
+    }
+  });
+
   // Update user custom limits (admin only)
   app.put("/api/users/:id/limits", requireAuth, requireAdmin, async (req, res) => {
     try {
-      const { customMaxProjects, customMaxDoubleDiamondProjects, customAiChatLimit } = req.body;
+      const {
+        customMaxProjects,
+        customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
+        customAiChatLimit,
+      } = req.body;
       
       await storage.updateUserLimits(req.params.id, {
         customMaxProjects,
         customMaxDoubleDiamondProjects,
+        customMaxDoubleDiamondExports,
         customAiChatLimit,
       });
       
@@ -3098,9 +3146,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiTurbo,
         collabAdvanced,
         libraryPremium,
+        trialDays,
       } = req.body || {};
 
       const currentAddons = await storage.getUserAddons(userId);
+
+      const trialDaysProvided =
+        req.body && Object.prototype.hasOwnProperty.call(req.body, "trialDays");
+
+      const normalizedTrialDays =
+        typeof trialDays === "number" && Number.isFinite(trialDays) && trialDays > 0
+          ? Math.floor(trialDays)
+          : null;
+
+      const now = new Date();
+      const trialEndDate = normalizedTrialDays
+        ? new Date(now.getTime() + normalizedTrialDays * 24 * 60 * 60 * 1000)
+        : null;
 
       const updateAddon = async (addonKey: string, enabled: boolean | undefined) => {
         if (typeof enabled !== "boolean") return;
@@ -3117,15 +3179,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
               source: "admin",
               billingPeriod: null,
               stripeSubscriptionId: null,
-              currentPeriodStart: new Date(),
-              currentPeriodEnd: null,
+              currentPeriodStart: now,
+              currentPeriodEnd: trialEndDate,
             });
+          } else if (trialDaysProvided) {
+            await Promise.all(
+              activeForKey.map((addon) =>
+                storage.updateUserAddon(addon.id, {
+                  currentPeriodEnd: trialEndDate,
+                })
+              )
+            );
           }
         } else {
           if (activeForKey.length > 0) {
             await Promise.all(
               activeForKey.map((addon) =>
-                storage.updateUserAddon(addon.id, { status: "canceled" })
+                storage.updateUserAddon(addon.id, {
+                  status: "canceled",
+                  currentPeriodEnd: now,
+                })
               )
             );
           }
@@ -5625,7 +5698,7 @@ app.post(
   });
 
   // POST /api/double-diamond/:id/export - Exporta projeto Double Diamond para o sistema principal
-  app.post("/api/double-diamond/:id/export", requireAuth, async (req, res) => {
+  app.post("/api/double-diamond/:id/export", requireAuth, loadUserSubscription, async (req, res) => {
     try {
       const { id } = req.params;
       const { projectName } = req.body;
@@ -5642,15 +5715,14 @@ app.post(
       const isAdmin = user?.role === "admin";
 
       if (!isAdmin) {
-        const plan = user?.subscriptionPlanId ? await storage.getSubscriptionPlan(user.subscriptionPlanId) : null;
-        const maxExports = user?.customMaxDoubleDiamondExports ?? plan?.maxDoubleDiamondExports;
-        
-        if (maxExports !== null && maxExports !== undefined) {
+        const maxExports = req.subscription?.limits?.maxDoubleDiamondExports;
+
+        if (typeof maxExports === "number" && maxExports >= 0) {
           const exportsThisMonth = await storage.getDoubleDiamondExportsByMonth(userId);
           if (exportsThisMonth.length >= maxExports) {
-            return res.status(403).json({ 
-              success: false, 
-              error: `Limite de ${maxExports} exportações mensais atingido. Atualize seu plano para exportar mais projetos.` 
+            return res.status(403).json({
+              success: false,
+              error: `Limite de ${maxExports} exportações mensais atingido. Atualize seu plano para exportar mais projetos.`,
             });
           }
         }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { BpmnDiagram } from "@shared/schema";
-import { BpmnEditor, type BpmnAnalysisResult } from "@/components/bpmn/BpmnEditor";
+import type { BpmnAnalysisResult } from "@/components/bpmn/BpmnEditor";
+
+const BpmnEditor = lazy(() =>
+  import("@/components/bpmn/BpmnEditor").then((m) => ({ default: m.BpmnEditor }))
+);
 
 interface DoubleDiamondProject {
   id: string;
@@ -1242,16 +1246,24 @@ export default function DoubleDiamondProject() {
 
                 <div className="lg:col-span-2">
                   {selectedBpmnDiagramId && bpmnDiagrams.length > 0 ? (
-                    <BpmnEditor
-                      diagramId={selectedBpmnDiagramId}
-                      initialXml={
-                        bpmnDiagrams.find((d) => d.id === selectedBpmnDiagramId)?.bpmnXml || null
+                    <Suspense
+                      fallback={
+                        <div className="flex items-center justify-center h-[400px] border rounded-md text-sm text-muted-foreground">
+                          {t("common.loading")}
+                        </div>
                       }
-                      initialAnalysis={
-                        (bpmnDiagrams.find((d) => d.id === selectedBpmnDiagramId)?.analysis as BpmnAnalysisResult | null) ||
-                        null
-                      }
-                    />
+                    >
+                      <BpmnEditor
+                        diagramId={selectedBpmnDiagramId}
+                        initialXml={
+                          bpmnDiagrams.find((d) => d.id === selectedBpmnDiagramId)?.bpmnXml || null
+                        }
+                        initialAnalysis={
+                          (bpmnDiagrams.find((d) => d.id === selectedBpmnDiagramId)?.analysis as BpmnAnalysisResult | null) ||
+                          null
+                        }
+                      />
+                    </Suspense>
                   ) : (
                     <div className="flex items-center justify-center h-[400px] border rounded-md text-sm text-muted-foreground">
                       {t("dd.project.bpmn.list.emptyDescription")}

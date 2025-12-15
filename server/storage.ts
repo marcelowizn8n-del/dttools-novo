@@ -175,6 +175,14 @@ export interface IStorage {
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
 
+  updateUserLimits(userId: string, limits: {
+    customMaxProjects: number | null;
+    customMaxDoubleDiamondProjects: number | null;
+    customMaxDoubleDiamondExports: number | null;
+    customAiChatLimit: number | null;
+    customLimitsTrialEndDate?: Date | null;
+  }): Promise<void>;
+
   // Articles
   getArticles(): Promise<Article[]>;
   getArticlesByCategory(category: string): Promise<Article[]>;
@@ -1332,10 +1340,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActiveUserAddons(userId: string): Promise<UserAddon[]> {
+    const now = new Date();
     return await db.select().from(userAddons)
       .where(and(
         eq(userAddons.userId, userId),
-        eq(userAddons.status, 'active')
+        eq(userAddons.status, 'active'),
+        sql`(${userAddons.currentPeriodEnd} IS NULL OR ${userAddons.currentPeriodEnd} > ${now})`
       ))
       .orderBy(desc(userAddons.createdAt));
   }
@@ -2255,14 +2265,23 @@ export class DatabaseStorage implements IStorage {
   async updateUserLimits(userId: string, limits: {
     customMaxProjects: number | null;
     customMaxDoubleDiamondProjects: number | null;
+    customMaxDoubleDiamondExports: number | null;
     customAiChatLimit: number | null;
+    customLimitsTrialEndDate?: Date | null;
   }): Promise<void> {
+    const updateData: any = {
+      customMaxProjects: limits.customMaxProjects,
+      customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
+      customMaxDoubleDiamondExports: limits.customMaxDoubleDiamondExports,
+      customAiChatLimit: limits.customAiChatLimit,
+    };
+
+    if (Object.prototype.hasOwnProperty.call(limits, "customLimitsTrialEndDate")) {
+      updateData.customLimitsTrialEndDate = limits.customLimitsTrialEndDate;
+    }
+
     await db.update(users)
-      .set({
-        customMaxProjects: limits.customMaxProjects,
-        customMaxDoubleDiamondProjects: limits.customMaxDoubleDiamondProjects,
-        customAiChatLimit: limits.customAiChatLimit,
-      })
+      .set(updateData)
       .where(eq(users.id, userId));
   }
 
