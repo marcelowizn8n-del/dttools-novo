@@ -30,6 +30,7 @@ export default function VideoTutorials() {
       overview: {
         pt: "Visão Geral",
         en: "Overview",
+        de: "Übersicht",
         es: "Visión General",
         fr: "Vue d'ensemble",
         zh: "概览"
@@ -37,6 +38,7 @@ export default function VideoTutorials() {
       empathize: {
         pt: "Empatizar",
         en: "Empathize",
+        de: "Empathize",
         es: "Empatizar",
         fr: "Empathiser",
         zh: "同理"
@@ -44,6 +46,7 @@ export default function VideoTutorials() {
       define: {
         pt: "Definir",
         en: "Define",
+        de: "Define",
         es: "Definir",
         fr: "Définir",
         zh: "定义"
@@ -51,6 +54,7 @@ export default function VideoTutorials() {
       ideate: {
         pt: "Idear",
         en: "Ideate",
+        de: "Ideate",
         es: "Idear",
         fr: "Idéer",
         zh: "发想"
@@ -58,6 +62,7 @@ export default function VideoTutorials() {
       prototype: {
         pt: "Prototipar",
         en: "Prototype",
+        de: "Prototype",
         es: "Prototipar",
         fr: "Prototyper",
         zh: "原型"
@@ -65,6 +70,7 @@ export default function VideoTutorials() {
       test: {
         pt: "Testar",
         en: "Test",
+        de: "Test",
         es: "Probar",
         fr: "Tester",
         zh: "测试"
@@ -74,8 +80,6 @@ export default function VideoTutorials() {
     const langKey =
       language === "pt-BR"
         ? "pt"
-        : language === "de"
-        ? "en"
         : language;
 
     return labels[phase]?.[langKey] || phase;
@@ -168,6 +172,16 @@ export default function VideoTutorials() {
       comingSoon: "Coming soon! Videos are being produced.",
       expandDetails: "View details",
       collapseDetails: "Hide details"
+    },
+    "de": {
+      title: "Video-Tutorials",
+      subtitle: "Lerne Design Thinking mit Schritt-für-Schritt-Tutorials",
+      noVideos: "In dieser Phase sind noch keine Videos verfügbar.",
+      watchVideo: "Video ansehen",
+      views: "Aufrufe",
+      comingSoon: "Demnächst! Videos werden gerade produziert.",
+      expandDetails: "Details anzeigen",
+      collapseDetails: "Details ausblenden"
     },
     "es": {
       title: "Tutoriales en Video",
@@ -326,14 +340,16 @@ export default function VideoTutorials() {
         <div className="mt-12 p-6 bg-muted/50 rounded-lg">
           <h3 className="font-semibold mb-2">
             {(language.startsWith('pt') || language === 'pt-BR') ? '📹 Vídeos em Produção' :
-             language === 'en' || language === 'de' ? '📹 Videos in Production' :
+             language === 'de' ? '📹 Videos in Produktion' :
+             language === 'en' ? '📹 Videos in Production' :
              language === 'es' ? '📹 Videos en Producción' :
              language === 'zh' ? '📹 视频制作中' :
              '📹 Vidéos en Production'}
           </h3>
           <p className="text-sm text-muted-foreground">
             {(language.startsWith('pt') || language === 'pt-BR') ? 'Os roteiros completos para Google Veo 3.1 estão prontos! Os vídeos serão gravados e adicionados em breve. Enquanto isso, você pode usar todas as ferramentas da plataforma.' :
-             language === 'en' || language === 'de' ? 'Complete scripts for Google Veo 3.1 are ready! Videos will be recorded and added soon. Meanwhile, you can use all platform tools.' :
+             language === 'de' ? 'Die vollständigen Skripte für Google Veo 3.1 sind fertig! Die Videos werden bald aufgenommen und hinzugefügt. In der Zwischenzeit kannst du alle Tools der Plattform nutzen.' :
+             language === 'en' ? 'Complete scripts for Google Veo 3.1 are ready! Videos will be recorded and added soon. Meanwhile, you can use all platform tools.' :
              language === 'es' ? '¡Los guiones completos para Google Veo 3.1 están listos! Los videos se grabarán y agregarán pronto. Mientras tanto, puedes usar todas las herramientas de la plataforma.' :
              language === 'zh' ? 'Google Veo 3.1 的完整脚本已经准备好！视频将很快录制并添加。在此期间，你可以正常使用平台的所有工具。' :
              'Les scripts complets pour Google Veo 3.1 sont prêts ! Les vidéos seront enregistrées et ajoutées bientôt. En attendant, vous pouvez utiliser tous les outils de la plateforme.'}

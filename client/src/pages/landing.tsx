@@ -66,58 +66,6 @@ const phases = [
   }
 ];
 
-const features = [
-  {
-    icon: Zap,
-    title: "Processo Guiado",
-    titleEn: "Guided Process",
-    description: "Siga um processo estruturado através das 5 fases do Design Thinking",
-    descriptionEn: "Follow a structured process through the 5 phases of Design Thinking"
-  },
-  {
-    icon: Users,
-    title: "Colaboração em Tempo Real", 
-    titleEn: "Real-time Collaboration",
-    description: "Trabalhe com sua equipe simultaneamente em projetos complexos",
-    descriptionEn: "Work with your team simultaneously on complex projects"
-  },
-  {
-    icon: BookOpen,
-    title: "Biblioteca de Conhecimento",
-    titleEn: "Knowledge Library", 
-    description: "Acesse centenas de artigos, templates e melhores práticas",
-    descriptionEn: "Access hundreds of articles, templates and best practices"
-  },
-  {
-    icon: TrendingUp,
-    title: "Métricas e Progresso",
-    titleEn: "Metrics & Progress",
-    description: "Acompanhe o progresso dos projetos com dashboards detalhados",
-    descriptionEn: "Track project progress with detailed dashboards"
-  },
-  {
-    icon: Globe,
-    title: "Suporte Multi-idioma",
-    titleEn: "Multi-language Support", 
-    description: "Interface disponível em português, inglês, espanhol e francês",
-    descriptionEn: "Interface available in Portuguese, English, Spanish and French"
-  },
-  {
-    icon: CheckCircle,
-    title: "Exportação Profissional",
-    titleEn: "Professional Export",
-    description: "Exporte seus projetos em PDF, PNG e CSV para apresentações",
-    descriptionEn: "Export your projects in PDF, PNG and CSV for presentations"
-  },
-  {
-    icon: Trello,
-    title: "Sistema Kanban Integrado",
-    titleEn: "Integrated Kanban System",
-    description: "Gerencie suas ideias e atividades com boards Kanban visual e intuitivo",
-    descriptionEn: "Manage your ideas and activities with visual and intuitive Kanban boards"
-  }
-];
-
 // Helper to get translated testimonial text
 function getTranslatedTestimonial(testimonial: Testimonial, language: Language) {
   const langMap: Record<Language, string | null> = {
@@ -147,10 +95,6 @@ export default function LandingPage() {
   const { data: testimonials = [] } = useQuery<Testimonial[]>({
     queryKey: ["/api/testimonials"],
   });
-
-  // For sections that only have Portuguese and English hardcoded,
-  // treat German (de) and Chinese (zh) as "English variant" for now
-  const isEnglish = language === 'en' || language === 'de' || language === 'zh';
 
   const handlePhaseClick = (phaseId: number) => {
     if (isAuthenticated) {

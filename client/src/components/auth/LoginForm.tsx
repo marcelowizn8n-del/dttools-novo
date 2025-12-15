@@ -12,12 +12,10 @@ import { SiGoogle } from "react-icons/si";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const loginSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = {
+  email: string;
+  password: string;
+};
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -29,6 +27,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useLanguage();
+
+  const loginSchema = z.object({
+    email: z.string().email(t("auth.validation.email.invalid")),
+    password: z.string().min(1, t("auth.validation.password.required")),
+  });
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
