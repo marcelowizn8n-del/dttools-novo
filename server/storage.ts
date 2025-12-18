@@ -3133,7 +3133,7 @@ No DTTools, você trabalha em 4 etapas:
 - Em “Desenvolver”, gere alternativas antes de escolher.
 - Em “Entregar”, consolide uma proposta e próximos passos com clareza.
 
-Observação: recursos avançados podem depender de plano/add-on.` ,
+Observação: recursos avançados podem depender de plano/add-on.`,
         tags: ['double diamond', 'framework', 'metodologia'],
         searchKeywords: ['double diamond', 'descobrir', 'definir', 'desenvolver', 'entregar', 'framework'],
         order: 6,
@@ -3181,8 +3181,8 @@ Exemplo de pedido:
 ## Se não funcionar
 
 - Verifique limites do plano/add-ons.
-- Em ambiente local, confirme `GEMINI_API_KEY` configurada.
-- Em produção (Render), confira se `GEMINI_API_KEY` está nas variáveis de ambiente.` ,
+- Em ambiente local, confirme GEMINI_API_KEY configurada.
+- Em produção (Render), confira se GEMINI_API_KEY está nas variáveis de ambiente.`,
         tags: ['ia', 'gemini', 'automação'],
         searchKeywords: ['ia', 'gemini', 'google', 'api key', 'gemi', 'automação'],
         order: 7,
@@ -3212,8 +3212,8 @@ Aqui estão os problemas mais comuns e como resolver.
 
 ## 3) IA não funciona
 
-- Em desenvolvimento, confira `GEMINI_API_KEY`.
-- Em produção (Render), confirme que `GEMINI_API_KEY` está configurada.
+- Em desenvolvimento, confira GEMINI_API_KEY.
+- Em produção (Render), confirme que GEMINI_API_KEY está configurada.
 - Verifique se você não atingiu limites do plano/add-ons.
 
 ## 4) Exportação falha
@@ -3225,7 +3225,7 @@ Aqui estão os problemas mais comuns e como resolver.
 ## 5) Pagamento/assinatura não aparece
 
 - Em ambientes com pagamento, isso depende de:
-  - `STRIPE_SECRET_KEY`
+  - STRIPE_SECRET_KEY
   - webhooks configurados corretamente
 - Se você acabou de pagar, aguarde alguns segundos e recarregue.
 
@@ -3236,7 +3236,7 @@ Tenha em mãos:
 - seu email
 - o que você estava tentando fazer
 - print do erro (se houver)
-- horário aproximado (para localizar logs)` ,
+- horário aproximado (para localizar logs)`,
         tags: ['problemas', 'suporte', 'erro'],
         searchKeywords: ['erro', 'problema', 'login', 'ia', 'gemini', 'stripe', 'assinatura'],
         order: 8,
