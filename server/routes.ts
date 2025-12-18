@@ -61,6 +61,7 @@ import { checkAiProjectLimits, incrementAiProjectsUsed } from "./middleware/chec
 import { checkDoubleDiamondLimit } from "./middleware/checkDoubleDiamondLimit";
 import { designThinkingAI, type ChatMessage, type DesignThinkingContext } from "./aiService";
 import { designThinkingGeminiAI } from "./geminiService";
+import { knowledgeBaseService } from "./knowledgeBaseService";
 import { PPTXService } from "./pptxService";
 import { translateArticle, translateVideo, translateTestimonial } from "./translation";
 import { 
@@ -2136,6 +2137,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/knowledge-base/reindex", requireAdmin, async (_req, res) => {
+    try {
+      const result = await knowledgeBaseService.reindexFromDrive();
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("Error reindexing knowledge base: - routes.ts:2024", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to reindex knowledge base",
+        details: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   // Testimonials routes
   app.get("/api/testimonials", async (_req, res) => {
     try {
@@ -2653,6 +2668,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: userWithoutPassword.role,
         createdAt: userWithoutPassword.createdAt || new Date()
       };
+
+      // Save session before sending response (avoids intermittent 401 right after login)
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error after login: - routes.ts:/api/auth/login", err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
 
       res.json({ user: userWithoutPassword });
     } catch (error) {
@@ -3620,7 +3647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Chat routes
-  app.post("/api/chat", requireAuth, async (req, res) => {
+  app.post("/api/chat", requireAuth, loadUserSubscription, async (req, res) => {
     try {
       const { messages, context }: { messages: ChatMessage[], context: DesignThinkingContext } = req.body;
       
@@ -3634,12 +3661,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use Gemini AI instead of OpenAI for cost efficiency
       const lastMessage = messages[messages.length - 1];
+
+      const canUseKnowledgeBase = req.subscription?.limits?.libraryArticlesCount === null;
+
+      if (canUseKnowledgeBase) {
+        const { citations } = await knowledgeBaseService.retrieve(String(lastMessage.content || ""), 6);
+        const kbSourcesText = citations
+          .map((c) => {
+            const urlPart = c.url ? ` (${c.url})` : "";
+            return `[${c.ref}] ${c.title}${urlPart}: ${c.snippet}`;
+          })
+          .join("\n");
+
+        const response = await designThinkingGeminiAI.chat(lastMessage.content, context, {
+          kbSourcesText,
+        });
+
+        return res.json({ message: response, citations });
+      }
+
       const response = await designThinkingGeminiAI.chat(lastMessage.content, context);
-      res.json({ message: response });
+      return res.json({ message: response, citations: [] });
     } catch (error) {
       console.error("Error in AI chat: - routes.ts:3385", error);
       // Always return 200 with helpful message, since chat() method now handles fallbacks gracefully
-      res.json({ message: "Desculpe, houve um problema temporário. Tente novamente ou continue usando as ferramentas de Design Thinking disponíveis na plataforma." });
+      res.json({ message: "Desculpe, houve um problema temporário. Tente novamente ou continue usando as ferramentas de Design Thinking disponíveis na plataforma.", citations: [] });
     }
   });
 

@@ -110,30 +110,30 @@ A análise DFV (Desirability, Feasibility, Viability) fornece:
 
 ## 🎓 Quem Deve Usar?
 
-### 1. **Designers e UX/UI Designers**
-- Aplicar Design Thinking em projetos
-- Criar personas e mapas de empatia
-- Validar soluções com usuários
+1. Profissionais da área da saúde:
+- Aplicar Design Thinking em projetos;
+- Criar personas e mapas de empatia;
+- Validar soluções com usuários.
 
-### 2. **Product Managers**
-- Definir problemas e oportunidades
-- Priorizar features
-- Validar MVPs
+2. Product Managers:
+- Definir problemas e oportunidades;
+- Priorizar features;
+- Validar MVPs.
 
-### 3. **Empreendedores e Startups**
-- Validar ideias de negócio
-- Criar MVPs rapidamente
-- Analisar viabilidade
+3. Empreendedores e Startups:
+- Validar ideias de negócio;
+- Criar MVPs rapidamente;
+- Analisar viabilidade.
 
-### 4. **Equipes de Inovação**
-- Estruturar processos de inovação
-- Colaborar em projetos
-- Documentar resultados
+4. Equipes de Inovação:
+- Estruturar processos de inovação;
+- Colaborar em projetos;
+- Documentar resultados.
 
-### 5. **Educadores e Estudantes**
-- Ensinar Design Thinking
-- Praticar metodologias
-- Aprender na prática
+5. Educadores e Estudantes:
+- Ensinar construção de projetos através do Design Thinking;
+- Praticar metodologias;
+- Aprender na prática.
 
 ### 6. **Consultores**
 - Acelerar processos com clientes

@@ -1,9 +1,39 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, timestamp, boolean, jsonb, customType, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// AI Automation: Industry Sectors (for AI-guided onboarding)
+const vector256 = customType<{ data: number[]; driverData: string }>({
+  dataType() {
+    return "vector(256)";
+  },
+  toDriver(value) {
+    return `[${value.join(",")}]`;
+  },
+  fromDriver(value) {
+    if (typeof value !== "string") return [];
+    const trimmed = value.trim();
+    const inner = trimmed.startsWith("[") && trimmed.endsWith("]")
+      ? trimmed.slice(1, -1)
+      : trimmed;
+    if (!inner) return [];
+    return inner.split(",").map((v) => Number(v.trim())).filter((n) => Number.isFinite(n));
+  },
+});
+
+export const userSessions = pgTable(
+  "user_sessions",
+  {
+    sid: varchar("sid", { length: 255 }).primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire", { withTimezone: true }).notNull(),
+  },
+  (table) => ({
+    expireIdx: index("IDX_user_sessions_expire").on(table.expire),
+  }),
+);
+
+ // AI Automation: Industry Sectors (for AI-guided onboarding)
 export const industrySectors = pgTable("industry_sectors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(), // English name (canonical)
@@ -19,7 +49,32 @@ export const industrySectors = pgTable("industry_sectors", {
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
 
-// AI Automation: Success Cases (for AI-guided onboarding)
+export const kbDocuments = pgTable("kb_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  source: text("source").notNull().default("google_drive"),
+  driveFileId: text("drive_file_id").notNull().unique(),
+  title: text("title").notNull(),
+  mimeType: text("mime_type").notNull(),
+  md5Checksum: text("md5_checksum"),
+  modifiedTime: timestamp("modified_time"),
+  webViewLink: text("web_view_link"),
+  sizeBytes: integer("size_bytes"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const kbChunks = pgTable("kb_chunks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: varchar("document_id").references(() => kbDocuments.id, { onDelete: "cascade" }).notNull(),
+  chunkIndex: integer("chunk_index").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata").default({}),
+  embedding: vector256("embedding").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+ // AI Automation: Success Cases (for AI-guided onboarding)
 export const successCases = pgTable("success_cases", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(), // Case name (e.g., "Airbnb")
@@ -1157,6 +1212,9 @@ export const insertHelpArticleSchema = createInsertSchema(helpArticles).omit({
 
 export type HelpArticle = typeof helpArticles.$inferSelect;
 export type InsertHelpArticle = z.infer<typeof insertHelpArticleSchema>;
+
+ export type KbDocument = typeof kbDocuments.$inferSelect;
+ export type KbChunk = typeof kbChunks.$inferSelect;
 
 // AI Automation schemas and types
 export const insertIndustrySectorSchema = createInsertSchema(industrySectors).omit({

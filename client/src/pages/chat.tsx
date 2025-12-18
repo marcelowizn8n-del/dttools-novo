@@ -109,9 +109,22 @@ export default function ChatPage() {
       return response.json();
     },
     onSuccess: (data) => {
+      const citations = Array.isArray(data?.citations) ? data.citations : [];
+      const referencesText = citations.length
+        ? `\n\nReferências:\n${citations
+            .map((c: any) => {
+              const ref = String(c?.ref || '').trim();
+              const title = String(c?.title || '').trim();
+              const url = c?.url ? String(c.url).trim() : '';
+              const suffix = url ? ` - ${url}` : '';
+              return `- [${ref}] ${title}${suffix}`;
+            })
+            .join('\n')}`
+        : '';
+
       const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: data.message,
+        content: `${data.message || ''}${referencesText}`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, assistantMessage]);

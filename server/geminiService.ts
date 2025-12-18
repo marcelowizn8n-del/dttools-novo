@@ -87,9 +87,9 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 export class DesignThinkingGeminiAI {
   private readonly model = "gemini-2.5-flash";
 
-  async chat(message: string, context: DesignThinkingContext): Promise<string> {
+  async chat(message: string, context: DesignThinkingContext, opts?: { kbSourcesText?: string }): Promise<string> {
     try {
-      const systemPrompt = this.buildSystemPrompt(context);
+      const systemPrompt = this.buildSystemPrompt(context, opts?.kbSourcesText);
       const prompt = `${systemPrompt}\n\nUser: ${message}\n\nAssistant:`;
 
       const response = await ai.models.generateContent({
@@ -294,7 +294,7 @@ NÃO inclua comentários, markdown ou texto fora do JSON.`;
     }
   }
 
-  private buildSystemPrompt(context: DesignThinkingContext): string {
+  private buildSystemPrompt(context: DesignThinkingContext, kbSourcesText?: string): string {
     const phaseNames: Record<number, string> = {
       1: "Empatizar",
       2: "Definir", 
@@ -305,7 +305,7 @@ NÃO inclua comentários, markdown ou texto fora do JSON.`;
 
     const currentPhase = phaseNames[context.currentPhase] || "Desconhecida";
 
-    return `Você é um especialista em Design Thinking e facilitador de inovação. 
+    const base = `Você é um especialista em Design Thinking e facilitador de inovação. 
 Você está ajudando com um projeto chamado "${context.projectName}" na fase de ${currentPhase}.
 
 Contexto do projeto:
@@ -324,6 +324,12 @@ Diretrizes:
 - Responda em português brasileiro
 - Use uma linguagem acessível e motivadora
 - Limite respostas a 150 palavras quando possível`;
+
+    if (!kbSourcesText || !kbSourcesText.trim()) {
+      return base;
+    }
+
+    return `${base}\n\nFontes (Biblioteca DTTools):\n${kbSourcesText}\n\nRegras de uso das fontes:\n- Use as fontes acima quando forem relevantes\n- Sempre que usar uma informação das fontes, cite usando o marcador [KB1], [KB2], etc.\n- Se a resposta não puder ser sustentada pelas fontes, deixe isso claro e responda apenas com base na metodologia de Design Thinking`;
   }
 
   private buildSuggestionsPrompt(context: DesignThinkingContext): string {

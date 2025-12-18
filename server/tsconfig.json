@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "baseUrl": "..",
+    "paths": {
+      "@shared/*": ["shared/*"]
+    }
+  },
+  "include": ["./**/*", "../shared/**/*"],
+  "exclude": ["../node_modules", "../dist"]
+}
