@@ -225,138 +225,6 @@ app.use((req, res, next) => {
   // 2. OR NODE_ENV is explicitly set to production
   const isProductionBuild = __filename.includes('/dist/index.js') || process.env.NODE_ENV === 'production';
 
-  // CRITICAL: Verify schema BEFORE anything else if database exists
-  if (process.env.DATABASE_URL) {
-    log('🔧 [STARTUP] Ensuring database schema is correct...');
-
-    try {
-      const { db } = await import('./db.js');
-      log('🔍 [STARTUP] Verifying critical schema columns...');
-
-      // Add missing columns if they don't exist (idempotent, safe to run multiple times)
-      await db.execute(`
-        ALTER TABLE IF EXISTS subscription_plans 
-        ADD COLUMN IF NOT EXISTS included_users INTEGER;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS subscription_plans 
-        ADD COLUMN IF NOT EXISTS price_per_additional_user INTEGER;
-      `);
-
-      // Add custom limit columns to users table
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ADD COLUMN IF NOT EXISTS custom_max_projects INTEGER;
-      `);
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ADD COLUMN IF NOT EXISTS custom_max_double_diamond_projects INTEGER;
-      `);
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ADD COLUMN IF NOT EXISTS custom_max_double_diamond_exports INTEGER;
-      `);
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ADD COLUMN IF NOT EXISTS custom_ai_chat_limit INTEGER;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ADD COLUMN IF NOT EXISTS custom_limits_trial_end_date TIMESTAMP;
-      `);
-
-      // Add Double Diamond columns to subscription_plans
-      await db.execute(`
-        ALTER TABLE IF EXISTS subscription_plans 
-        ADD COLUMN IF NOT EXISTS max_double_diamond_projects INTEGER;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS subscription_plans 
-        ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
-      `);
-
-      // Add export limit column to subscription_plans
-      await db.execute(`
-        ALTER TABLE IF EXISTS subscription_plans 
-        ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
-      `);
-
-      // Add OAuth fields to users table
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'local';
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ADD COLUMN IF NOT EXISTS google_id TEXT;
-      `);
-
-      // Make password optional for OAuth users
-      await db.execute(`
-        ALTER TABLE IF EXISTS users 
-        ALTER COLUMN password DROP NOT NULL;
-      `);
-
-      // Add translation columns to video_tutorials (for auto-translation feature)
-      await db.execute(`
-        ALTER TABLE IF EXISTS video_tutorials 
-        ADD COLUMN IF NOT EXISTS title_en TEXT;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS video_tutorials 
-        ADD COLUMN IF NOT EXISTS title_es TEXT;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS video_tutorials 
-        ADD COLUMN IF NOT EXISTS title_fr TEXT;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS video_tutorials 
-        ADD COLUMN IF NOT EXISTS description_en TEXT;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS video_tutorials 
-        ADD COLUMN IF NOT EXISTS description_es TEXT;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS video_tutorials 
-        ADD COLUMN IF NOT EXISTS description_fr TEXT;
-      `);
-
-      await db.execute(`
-        ALTER TABLE IF EXISTS bpmn_diagrams
-        ADD COLUMN IF NOT EXISTS analysis JSONB;
-      `);
-
-      await db.execute(`
-        CREATE TABLE IF NOT EXISTS project_insights (
-          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-          project_id VARCHAR NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-          content TEXT NOT NULL,
-          links JSONB DEFAULT '[]'::jsonb,
-          image_url TEXT,
-          image_meta JSONB,
-          created_at TIMESTAMP DEFAULT now(),
-          updated_at TIMESTAMP DEFAULT now()
-        );
-      `);
-
-      log('✅ [STARTUP] Schema columns verified and ready');
-    } catch (schemaError) {
-      // Log but don't crash - table might not exist yet
-      log('⚠️  [STARTUP] Schema verification skipped (table may not exist yet):', String(schemaError).substring(0, 100));
-    }
-  }
-
   const server = await registerRoutes(app);
 
   // Initialize database and default data in background (after server starts)
@@ -365,6 +233,138 @@ app.use((req, res, next) => {
     // Run database setup asynchronously without blocking server startup
     (async () => {
       let migrationCompleted = false;
+
+      // CRITICAL: Verify schema BEFORE anything else if database exists
+      log('🔧 [STARTUP] Ensuring database schema is correct...');
+      try {
+        const { db } = await import('./db.js');
+        log('🔍 [STARTUP] Verifying critical schema columns...');
+
+        // Add missing columns if they don't exist (idempotent, safe to run multiple times)
+        await db.execute(`
+          ALTER TABLE IF EXISTS subscription_plans 
+          ADD COLUMN IF NOT EXISTS included_users INTEGER;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS subscription_plans 
+          ADD COLUMN IF NOT EXISTS price_per_additional_user INTEGER;
+        `);
+
+        // Add custom limit columns to users table
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS custom_max_projects INTEGER;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS custom_max_double_diamond_projects INTEGER;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS custom_max_double_diamond_exports INTEGER;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS custom_ai_chat_limit INTEGER;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS custom_limits_trial_end_date TIMESTAMP;
+        `);
+
+        // Add Double Diamond columns to subscription_plans
+        await db.execute(`
+          ALTER TABLE IF EXISTS subscription_plans 
+          ADD COLUMN IF NOT EXISTS max_double_diamond_projects INTEGER;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS subscription_plans 
+          ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
+        `);
+
+        // Add export limit column to subscription_plans
+        await db.execute(`
+          ALTER TABLE IF EXISTS subscription_plans 
+          ADD COLUMN IF NOT EXISTS max_double_diamond_exports INTEGER;
+        `);
+
+        // Add OAuth fields to users table
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'local';
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS google_id TEXT;
+        `);
+
+        // Make password optional for OAuth users
+        await db.execute(`
+          ALTER TABLE IF EXISTS users 
+          ALTER COLUMN password DROP NOT NULL;
+        `);
+
+        // Add translation columns to video_tutorials (for auto-translation feature)
+        await db.execute(`
+          ALTER TABLE IF EXISTS video_tutorials 
+          ADD COLUMN IF NOT EXISTS title_en TEXT;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS video_tutorials 
+          ADD COLUMN IF NOT EXISTS title_es TEXT;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS video_tutorials 
+          ADD COLUMN IF NOT EXISTS title_fr TEXT;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS video_tutorials 
+          ADD COLUMN IF NOT EXISTS description_en TEXT;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS video_tutorials 
+          ADD COLUMN IF NOT EXISTS description_es TEXT;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS video_tutorials 
+          ADD COLUMN IF NOT EXISTS description_fr TEXT;
+        `);
+
+        await db.execute(`
+          ALTER TABLE IF EXISTS bpmn_diagrams
+          ADD COLUMN IF NOT EXISTS analysis JSONB;
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS project_insights (
+            id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id VARCHAR NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            content TEXT NOT NULL,
+            links JSONB DEFAULT '[]'::jsonb,
+            image_url TEXT,
+            image_meta JSONB,
+            created_at TIMESTAMP DEFAULT now(),
+            updated_at TIMESTAMP DEFAULT now()
+          );
+        `);
+
+        log('✅ [STARTUP] Schema columns verified and ready');
+      } catch (schemaError) {
+        // Log but don't crash - table might not exist yet
+        log('⚠️  [STARTUP] Schema verification skipped (table may not exist yet):', String(schemaError).substring(0, 100));
+      }
 
       // ONLY run db:push in development, NOT in production (Render)
       // In production, schema should already be applied
@@ -445,7 +445,13 @@ app.use((req, res, next) => {
   if (isDevelopment) {
     log('Setting up Vite development server');
     const { setupVite } = await import('./vite.js');
-    await setupVite(app, server);
+    setupVite(app, server)
+      .then(() => {
+        log('✅ Vite development server ready');
+      })
+      .catch((error: unknown) => {
+        log('⚠️  Vite development server setup error:', String(error).substring(0, 200));
+      });
   } else {
     // In production, serve from Vite's actual build output
     log('Setting up static file serving for production');

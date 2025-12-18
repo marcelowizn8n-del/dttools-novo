@@ -137,8 +137,7 @@ body::before {
 
 /* Force logo refresh styles */
 .site-header img {
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  image-rendering: auto;
 }
 
 /* Mobile layout fixes - SCOPED to avoid conflicts */

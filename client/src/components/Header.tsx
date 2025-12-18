@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { 
   Book, 
+  HelpCircle,
   Settings, 
   CreditCard, 
   Users,
@@ -121,6 +122,18 @@ export default function Header() {
                 <span className="sr-only">{t("nav.videoTutorials") || "Video Tutorials"}</span>
               </Button>
             </Link>
+            <Link href="/help">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                data-testid="nav-help-compact"
+                title={t("nav.help") || "Help"}
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="sr-only">{t("nav.help") || "Help"}</span>
+              </Button>
+            </Link>
             {isAuthenticated && (
               <Link href="/chat">
                 <Button
@@ -224,6 +237,12 @@ export default function Header() {
               <Button variant="ghost" className="text-sm" data-testid="nav-video-tutorials">
                 <Video className="mr-1 h-4 w-4" />
                 {t("nav.videoTutorials") || "Video Tutorials"}
+              </Button>
+            </Link>
+            <Link href="/help">
+              <Button variant="ghost" className="text-sm" data-testid="nav-help">
+                <HelpCircle className="mr-1 h-4 w-4" />
+                {t("nav.help") || "Help"}
               </Button>
             </Link>
             {isAuthenticated && (
@@ -343,6 +362,12 @@ export default function Header() {
                   <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-video-tutorials" onClick={() => setIsMobileMenuOpen(false)}>
                     <Video className="mr-2 h-4 w-4" />
                     {t("nav.videoTutorials") || "Video Tutorials"}
+                  </Button>
+                </Link>
+                <Link href="/help">
+                  <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-help" onClick={() => setIsMobileMenuOpen(false)}>
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    {t("nav.help") || "Help"}
                   </Button>
                 </Link>
                 {isAuthenticated && (

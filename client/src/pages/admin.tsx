@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Eye, Search, Filter, Users, BarChart3, FolderOpen, UserPlus, CreditCard, MessageSquare, Video, Diamond, Globe, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Search, Filter, Users, BarChart3, FolderOpen, UserPlus, CreditCard, MessageSquare, Video, Diamond, Globe, CheckCircle, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,7 +24,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Article, User, Project, SubscriptionPlan, DoubleDiamondProject } from "@shared/schema";
+import { insertHelpArticleSchema, type Article, type HelpArticle, type User, type Project, type SubscriptionPlan, type DoubleDiamondProject } from "@shared/schema";
 
 function ArticlesTab() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -117,6 +118,7 @@ function ArticlesTab() {
   return (
     <div className="space-y-6">
       {/* Header */}
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold" data-testid="articles-title">
@@ -312,6 +314,780 @@ const userFormSchema = z.object({
   role: z.enum(["user", "admin"]).default("user"),
 });
 
+// User Creation Dialog Component
+function UserCreateDialog({
+  isOpen,
+  onClose,
+  onSubmit,
+  isSubmitting,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: z.infer<typeof userFormSchema>) => void;
+  isSubmitting: boolean;
+}) {
+  const { t } = useLanguage();
+
+  const form = useForm<z.infer<typeof userFormSchema>>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      name: "",
+      password: "",
+      role: "user",
+    },
+  });
+
+  const handleSubmit = (data: z.infer<typeof userFormSchema>) => {
+    onSubmit(data);
+    form.reset();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]" data-testid="dialog-create-user">
+        <DialogHeader>
+          <DialogTitle>{t("admin.users.create.title")}</DialogTitle>
+          <DialogDescription>
+            {t("admin.users.create.description")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.create.field.name.label")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder={t("admin.users.create.field.name.placeholder")}
+                      data-testid="input-name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.create.field.email.label")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder={t("admin.users.create.field.email.placeholder")}
+                      data-testid="input-email"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.create.field.username.label")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder={t("admin.users.create.field.username.placeholder")}
+                      data-testid="input-username"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.create.field.password.label")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      {...field}
+                      placeholder={t("admin.users.create.field.password.placeholder")}
+                      data-testid="input-password"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.create.field.role.label")}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-user-role">
+                        <SelectValue
+                          placeholder={t("admin.users.create.field.role.placeholder")}
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="user">
+                        {t("admin.users.create.field.role.option.user")}
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        {t("admin.users.create.field.role.option.admin")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+                data-testid="button-cancel"
+              >
+                {t("admin.users.create.button.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="button-submit"
+              >
+                {isSubmitting
+                  ? t("admin.users.create.button.submitting")
+                  : t("admin.users.create.button.submit")}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+ const helpArticleFormSchema = z.object({
+   title: z.string().min(1, "Título é obrigatório"),
+   slug: z.string().min(1, "Slug é obrigatório"),
+   content: z.string().min(1, "Conteúdo é obrigatório"),
+   category: z.string().min(1, "Categoria é obrigatória"),
+   subcategory: z.string().optional().nullable().default(""),
+   author: z.string().min(1, "Autor é obrigatório"),
+   tags: z.string().optional().default(""),
+   searchKeywords: z.string().optional().default(""),
+   phase: z.string().optional().default(""),
+   order: z.string().optional().default("0"),
+   featured: z.boolean().optional().default(false),
+ });
+
+ type HelpArticleFormData = z.infer<typeof helpArticleFormSchema>;
+
+function HelpCenterTab() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [phaseFilter, setPhaseFilter] = useState("all");
+  const [editingArticle, setEditingArticle] = useState<HelpArticle | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
+
+  const { data: articles = [], isLoading } = useQuery<HelpArticle[]>({
+    queryKey: ["/api/help"],
+  });
+
+  const deleteArticleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/help/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/help"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/help/categories/list"] });
+      toast({
+        title: "Artigo excluído",
+        description: "O artigo da Central de Ajuda foi removido com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir artigo",
+        description: error.message || "Ocorreu um erro ao tentar excluir o artigo.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const categories = Array.from(new Set(articles.map((a) => a.category).filter(Boolean))).sort();
+
+  const filteredArticles = articles.filter((article) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      article.title.toLowerCase().includes(term) ||
+      article.slug.toLowerCase().includes(term) ||
+      (article.author || "").toLowerCase().includes(term);
+
+    const matchesCategory = categoryFilter === "all" || article.category === categoryFilter;
+    const matchesPhase =
+      phaseFilter === "all" ||
+      (typeof article.phase === "number" && String(article.phase) === phaseFilter);
+
+    return matchesSearch && matchesCategory && matchesPhase;
+  });
+
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return "N/A";
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(new Date(date));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold" data-testid="help-center-admin-title">
+            Central de Ajuda
+          </h2>
+          <p className="text-muted-foreground">
+            Gerencie os artigos exibidos em /help
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setEditingArticle(null);
+            setIsCreating(true);
+          }}
+          data-testid="button-create-help-article"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Artigo
+        </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar por título, slug ou autor..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+            data-testid="input-search-help-articles"
+          />
+        </div>
+
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-full sm:w-56" data-testid="select-help-category-filter">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Categoria" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as categorias</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={phaseFilter} onValueChange={setPhaseFilter}>
+          <SelectTrigger className="w-full sm:w-40" data-testid="select-help-phase-filter">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Fase" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            {["1", "2", "3", "4", "5"].map((p) => (
+              <SelectItem key={p} value={p}>
+                Fase {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-4 w-1/5" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Fase</TableHead>
+                  <TableHead>Ordem</TableHead>
+                  <TableHead>Atualizado</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredArticles.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <p className="text-muted-foreground" data-testid="no-help-articles-message">
+                        Nenhum artigo encontrado.
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredArticles
+                    .slice()
+                    .sort((a, b) => (a.order || 0) - (b.order || 0))
+                    .map((article) => (
+                      <TableRow key={article.id} data-testid={`row-help-article-${article.id}`}>
+                        <TableCell className="font-medium max-w-xs">
+                          <div className="truncate" title={article.title}>
+                            {article.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate" title={article.slug}>
+                            {article.slug}
+                          </div>
+                          {article.featured && (
+                            <Badge variant="secondary" className="mt-2">
+                              Destaque
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{article.category}</Badge>
+                        </TableCell>
+                        <TableCell>{article.phase ?? "-"}</TableCell>
+                        <TableCell>{article.order ?? 0}</TableCell>
+                        <TableCell>{formatDate(article.updatedAt || article.createdAt)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(`/help`, "_blank")}
+                              data-testid={`button-view-help-${article.id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingArticle(article)}
+                              data-testid={`button-edit-help-${article.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  data-testid={`button-delete-help-${article.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir o artigo "{article.title}"?
+                                    Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteArticleMutation.mutate(article.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <HelpArticleEditor
+        article={editingArticle}
+        isOpen={!!editingArticle || isCreating}
+        onClose={() => {
+          setEditingArticle(null);
+          setIsCreating(false);
+        }}
+      />
+    </div>
+  );
+}
+
+function HelpArticleEditor({
+  article,
+  isOpen,
+  onClose,
+}: {
+  article: HelpArticle | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+
+  const defaultValues: HelpArticleFormData = {
+    title: "",
+    slug: "",
+    content: "",
+    category: "inicio-rapido",
+    subcategory: "",
+    author: "DTTools Team",
+    tags: "",
+    searchKeywords: "",
+    phase: "",
+    order: "0",
+    featured: false,
+  };
+
+  const form = useForm<HelpArticleFormData>({
+    resolver: zodResolver(helpArticleFormSchema),
+    defaultValues,
+  });
+
+  useEffect(() => {
+    if (!isOpen) {
+      form.reset(defaultValues);
+      return;
+    }
+
+    if (article) {
+      form.reset({
+        title: article.title ?? "",
+        slug: article.slug ?? "",
+        content: article.content ?? "",
+        category: article.category ?? "inicio-rapido",
+        subcategory: article.subcategory ?? "",
+        author: article.author ?? "DTTools Team",
+        tags: Array.isArray(article.tags) ? article.tags.join(", ") : "",
+        searchKeywords: Array.isArray(article.searchKeywords)
+          ? article.searchKeywords.join(", ")
+          : "",
+        phase: typeof article.phase === "number" ? String(article.phase) : "",
+        order: typeof article.order === "number" ? String(article.order) : "0",
+        featured: !!article.featured,
+      });
+    } else {
+      form.reset(defaultValues);
+    }
+  }, [isOpen, article]);
+
+  const upsertMutation = useMutation({
+    mutationFn: async (data: HelpArticleFormData) => {
+      const tagsArray = data.tags
+        ? data.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
+
+      const searchKeywordsArray = data.searchKeywords
+        ? data.searchKeywords
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
+
+      const phaseParsed = data.phase ? parseInt(data.phase) : NaN;
+      const orderParsed = data.order ? parseInt(data.order) : NaN;
+
+      const payload = {
+        title: data.title,
+        slug: data.slug,
+        content: data.content,
+        category: data.category,
+        subcategory: data.subcategory || null,
+        author: data.author,
+        featured: !!data.featured,
+        phase: Number.isFinite(phaseParsed) ? phaseParsed : null,
+        order: Number.isFinite(orderParsed) ? orderParsed : 0,
+        tags: tagsArray,
+        searchKeywords: searchKeywordsArray,
+      };
+
+      if (article?.id) {
+        const res = await apiRequest("PUT", `/api/help/${article.id}`, payload);
+        return res.json();
+      }
+
+      const res = await apiRequest("POST", "/api/help", payload);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/help"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/help/categories/list"] });
+      toast({
+        title: article ? "Artigo atualizado" : "Artigo criado",
+        description: article
+          ? "O artigo da Central de Ajuda foi atualizado com sucesso."
+          : "O artigo da Central de Ajuda foi criado com sucesso.",
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: article ? "Erro ao atualizar artigo" : "Erro ao criar artigo",
+        description: error.message || "Ocorreu um erro ao salvar o artigo.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const isSaving = upsertMutation.isPending;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-4xl max-h-[95vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {article ? "Editar Artigo (Central de Ajuda)" : "Novo Artigo (Central de Ajuda)"}
+          </DialogTitle>
+          <DialogDescription>
+            {article
+              ? "Edite o conteúdo e metadados do artigo exibido em /help."
+              : "Crie um novo artigo para aparecer em /help."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((data) => upsertMutation.mutate(data))}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="help-editor-title" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="help-editor-slug" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="help-editor-category" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="subcategory"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subcategoria</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} data-testid="help-editor-subcategory" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="author"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Autor</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="help-editor-author" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="phase"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fase (1-5)</FormLabel>
+                    <FormControl>
+                      <Input {...field} inputMode="numeric" placeholder="(opcional)" data-testid="help-editor-phase" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="order"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ordem</FormLabel>
+                    <FormControl>
+                      <Input {...field} inputMode="numeric" data-testid="help-editor-order" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="featured"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Destaque</FormLabel>
+                      <div className="text-xs text-muted-foreground">
+                        Exibir como artigo em destaque
+                      </div>
+                    </div>
+                    <FormControl>
+                      <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="tag1, tag2, tag3"
+                        data-testid="help-editor-tags"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="searchKeywords"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Palavras-chave</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="palavra1, palavra2"
+                        data-testid="help-editor-keywords"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Conteúdo (Markdown)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      rows={14}
+                      className="font-mono"
+                      data-testid="help-editor-content"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function UsersTab() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -609,185 +1385,6 @@ function UsersTab() {
   );
 }
 
-// User Creation Dialog Component
-function UserCreateDialog({
-  isOpen,
-  onClose,
-  onSubmit,
-  isSubmitting,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: z.infer<typeof userFormSchema>) => void;
-  isSubmitting: boolean;
-}) {
-  const { t } = useLanguage();
-
-  const form = useForm<z.infer<typeof userFormSchema>>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      name: "",
-      password: "",
-      role: "user",
-    },
-  });
-
-  const handleSubmit = (data: z.infer<typeof userFormSchema>) => {
-    onSubmit(data);
-    form.reset();
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]" data-testid="dialog-create-user">
-        <DialogHeader>
-          <DialogTitle>{t("admin.users.create.title")}</DialogTitle>
-          <DialogDescription>
-            {t("admin.users.create.description")}
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.create.field.name.label")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={t("admin.users.create.field.name.placeholder")}
-                      data-testid="input-name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.create.field.email.label")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="email"
-                      placeholder={t("admin.users.create.field.email.placeholder")}
-                      data-testid="input-email"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.create.field.username.label")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={t("admin.users.create.field.username.placeholder")}
-                      data-testid="input-username"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.create.field.password.label")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      {...field}
-                      placeholder={t("admin.users.create.field.password.placeholder")}
-                      data-testid="input-password"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.create.field.role.label")}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-user-role">
-                        <SelectValue
-                          placeholder={t("admin.users.create.field.role.placeholder")}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="user">
-                        {t("admin.users.create.field.role.option.user")}
-                      </SelectItem>
-                      <SelectItem value="admin">
-                        {t("admin.users.create.field.role.option.admin")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isSubmitting}
-                data-testid="button-cancel"
-              >
-                {t("admin.users.create.button.cancel")}
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                data-testid="button-submit"
-              >
-                {isSubmitting
-                  ? t("admin.users.create.button.submitting")
-                  : t("admin.users.create.button.submit")}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-type UserAddonState = {
-  doubleDiamondPro: boolean;
-  exportPro: boolean;
-  aiTurbo: boolean;
-  collabAdvanced: boolean;
-  libraryPremium: boolean;
-};
-
 function UserLimitsDialog({
   user,
   isOpen,
@@ -1003,6 +1600,14 @@ function UserLimitsDialog({
     </Dialog>
   );
 }
+
+ type UserAddonState = {
+   doubleDiamondPro: boolean;
+   exportPro: boolean;
+   aiTurbo: boolean;
+   collabAdvanced: boolean;
+   libraryPremium: boolean;
+ };
 
 function UserAddonsDialog({
   user,
@@ -3083,7 +3688,7 @@ export default function AdminPage() {
 
           <Tabs defaultValue="dashboard" className="space-y-6">
             <div className="-mx-4 overflow-x-auto pb-1 sm:mx-0">
-              <TabsList className="flex min-w-max gap-2 sm:min-w-0 sm:w-full sm:grid sm:grid-cols-8">
+              <TabsList className="flex min-w-max gap-2 sm:min-w-0 sm:w-full sm:grid sm:grid-cols-9">
                 <TabsTrigger
                   value="dashboard"
                   data-testid="tab-dashboard"
@@ -3123,6 +3728,14 @@ export default function AdminPage() {
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   {t("admin.tab.articles")}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="help-center"
+                  data-testid="tab-help-center"
+                  className="whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                >
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  {t("admin.tab.helpCenter")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="videos"
@@ -3169,6 +3782,10 @@ export default function AdminPage() {
 
             <TabsContent value="articles">
               <ArticlesTab />
+            </TabsContent>
+
+            <TabsContent value="help-center">
+              <HelpCenterTab />
             </TabsContent>
 
             <TabsContent value="videos">

@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue)]()
 [![License](https://img.shields.io/badge/license-proprietary-red)]()
 
-**Plataforma SaaS completa de Design Thinking** que guia usuários pelas 5 fases do processo com ferramentas específicas, IA integrada e sistema de progresso gamificado.
+**Plataforma SaaS de Design Thinking** que guia usuários pelas 5 fases do processo e pelo **Double Diamond**, com ferramentas específicas, **IA com Google Gemini** e sistema de progresso.
 
 🌐 **Site:** [https://www.designthinkingtools.com](https://www.designthinkingtools.com)
 
@@ -15,7 +15,8 @@
 DTTools digitaliza completamente o processo de Design Thinking, oferecendo:
 
 - ✅ **5 Fases Estruturadas**: Empatizar, Definir, Idear, Prototipar, Testar
-- 🤖 **IA Integrada**: Análise automática de insights e sugestões contextuais
+- 💎 **Double Diamond**: Descobrir, Definir, Desenvolver, Entregar (com geração guiada)
+- 🤖 **IA Integrada (Google Gemini)**: geração assistida, sugestões e automações (dependendo do plano/limites)
 - 🎮 **Gamificação**: Sistema de badges, pontos e progresso visual
 - 📊 **Benchmarking**: Compare sua evolução com o mercado
 - 📤 **Exportação**: PDF, PowerPoint e Markdown com templates profissionais
@@ -39,9 +40,8 @@ DTTools digitaliza completamente o processo de Design Thinking, oferecendo:
 - Sessões com **express-session**
 
 ### Integrações
-- **OpenAI** para análise com IA
-- **Stripe** para pagamentos
-- **Notion** para sincronização de dados
+- **Google Gemini** para recursos de IA
+- **Stripe** para pagamentos (quando configurado)
 
 ---
 
@@ -74,10 +74,10 @@ dttools-app/
 Localizada em [`docs/`](./docs/):
 
 - **[DOCUMENTACAO_TECNICA_COMPLETA.md](./docs/DOCUMENTACAO_TECNICA_COMPLETA.md)** - Arquitetura completa do sistema (4.080 linhas)
-- **[MANUAL_USUARIO_DTTOOLS.md](./docs/MANUAL_USUARIO_DTTOOLS.md)** - Guia do usuário
-- **[MANUAL_ADMIN_DTTOOLS.md](./docs/MANUAL_ADMIN_DTTOOLS.md)** - Guia do administrador
-- **[PLANO_DE_NEGOCIOS_DTTOOLS_2025.md](./docs/PLANO_DE_NEGOCIOS_DTTOOLS_2025.md)** - Plano de negócios detalhado
-- **[dttools_pitch_deck.md](./docs/dttools_pitch_deck.md)** - Apresentação para investidores
+- **[guia-usuario.md](./docs/guia-usuario.md)** - Manual de uso (Guia do usuário)
+- **[O_QUE_E_DTTOOLS.md](./docs/O_QUE_E_DTTOOLS.md)** - Visão geral detalhada do produto
+- **[BENCHMARK_DTTOOLS.md](./docs/BENCHMARK_DTTOOLS.md)** - Notas e referências de benchmarking
+- **[dttools_pitch_deck.md](./docs/dttools_pitch_deck.md)** - Apresentação
 - **[RENDER_DEPLOY.md](./docs/RENDER_DEPLOY.md)** - Guia de deploy no Render
 
 ### 📢 Material de Marketing
@@ -160,23 +160,9 @@ Consulte [`docs/RENDER_DEPLOY.md`](./docs/RENDER_DEPLOY.md) para mais detalhes.
 
 ## 💰 Planos de Assinatura
 
-### 🆓 Gratuito
-- 3 projetos
-- Ferramentas básicas
-- Suporte por email
+Os planos, limites e add-ons podem variar ao longo do tempo.
 
-### 💼 Pro - R$ 40/mês
-- Projetos ilimitados
-- Todas as ferramentas
-- Análise com IA
-- Suporte prioritário
-
-### 🏢 Enterprise - R$ 299/mês
-- Tudo do Pro
-- 10 usuários inclusos
-- Usuários adicionais: R$ 29,90/usuário
-- Suporte dedicado
-- Treinamentos
+Consulte a página **/pricing** dentro do app para ver valores e o que está incluído em cada plano.
 
 ---
 

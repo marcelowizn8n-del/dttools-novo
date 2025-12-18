@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, BookOpen, HelpCircle, ThumbsUp, Eye, Lightbulb, Users, FileText } from "lucide-react";
+import { Search, BookOpen, HelpCircle, ThumbsUp, Eye, Lightbulb, Users, FileText, Diamond, Bot, AlertTriangle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import type { HelpArticle } from "@shared/schema";
 
@@ -16,6 +16,21 @@ const categoryInfo: Record<string, { icon: any; label: string; description: stri
   "fases": { icon: FileText, label: "Fases do DT", description: "Design Thinking passo a passo" },
   "colaboracao": { icon: Users, label: "Colaboração", description: "Trabalhe em equipe" },
   "exportacao": { icon: FileText, label: "Exportação", description: "Compartilhe seus projetos" },
+  "double-diamond": { icon: Diamond, label: "Double Diamond", description: "Framework e fluxo guiado" },
+  "ia": { icon: Bot, label: "IA", description: "Recursos assistidos por Gemini" },
+  "problemas": { icon: AlertTriangle, label: "Problemas", description: "Solução de problemas e dicas" },
+  "getting-started": { icon: Lightbulb, label: "Início Rápido", description: "Comece a usar o DTTools" },
+  "collaboration": { icon: Users, label: "Colaboração", description: "Trabalhe em equipe" },
+  "features": { icon: FileText, label: "Exportação", description: "Compartilhe seus projetos" },
+};
+
+const categoryAliases: Record<string, string[]> = {
+  "inicio-rapido": ["inicio-rapido", "getting-started"],
+  "getting-started": ["getting-started", "inicio-rapido"],
+  "colaboracao": ["colaboracao", "collaboration"],
+  "collaboration": ["collaboration", "colaboracao"],
+  "exportacao": ["exportacao", "features"],
+  "features": ["features", "exportacao"],
 };
 
 export default function HelpCenter() {
@@ -38,7 +53,10 @@ export default function HelpCenter() {
 
   const filteredArticles = selectedCategory === "all"
     ? displayArticles
-    : displayArticles.filter(a => a.category === selectedCategory);
+    : displayArticles.filter((a) => {
+        const accepted = categoryAliases[selectedCategory] ?? [selectedCategory];
+        return accepted.includes(a.category);
+      });
 
   const featuredArticles = articles.filter(a => a.featured);
 
