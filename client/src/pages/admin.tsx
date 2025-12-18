@@ -535,6 +535,28 @@ function HelpCenterTab() {
     },
   });
 
+  const applyDefaultsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/help/apply-defaults");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/help"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/help/categories/list"] });
+      toast({
+        title: "Conteúdo aplicado",
+        description: "Os conteúdos padrão da Central de Ajuda foram reaplicados com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao aplicar conteúdo",
+        description: error.message || "Não foi possível reaplicar os conteúdos padrão.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const categories = Array.from(new Set(articles.map((a) => a.category).filter(Boolean))).sort();
 
   const filteredArticles = articles.filter((article) => {
@@ -572,16 +594,28 @@ function HelpCenterTab() {
             Gerencie os artigos exibidos em /help
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingArticle(null);
-            setIsCreating(true);
-          }}
-          data-testid="button-create-help-article"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Artigo
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => applyDefaultsMutation.mutate()}
+            disabled={applyDefaultsMutation.isPending}
+            data-testid="button-apply-help-defaults"
+          >
+            {applyDefaultsMutation.isPending ? "Aplicando..." : "Aplicar Conteúdo Padrão"}
+          </Button>
+
+          <Button
+            onClick={() => {
+              setEditingArticle(null);
+              setIsCreating(true);
+            }}
+            data-testid="button-create-help-article"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Artigo
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">

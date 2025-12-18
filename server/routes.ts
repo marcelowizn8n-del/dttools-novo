@@ -5,7 +5,7 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import passport from "./passport-config";
-import { storage } from "./storage";
+import { storage, initializeDefaultData } from "./storage";
 import { 
   insertProjectSchema,
   insertEmpathyMapSchema,
@@ -4683,6 +4683,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting help article: - routes.ts:4429", error);
       res.status(500).json({ error: "Failed to delete help article" });
+    }
+  });
+
+  // POST /api/help/apply-defaults - Apply default help articles content (Admin only)
+  app.post("/api/help/apply-defaults", requireAdmin, async (_req, res) => {
+    try {
+      await initializeDefaultData();
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error applying default help articles: - routes.ts:4450", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to apply default help articles",
+        details: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 
