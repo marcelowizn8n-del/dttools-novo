@@ -2455,7 +2455,77 @@ export async function initializeDefaultData() {
         title: 'Como começar a usar o DTTools',
         slug: 'como-comecar',
         category: 'inicio-rapido',
-        content: '# Como começar\n\nBem-vindo ao **DTTools**! Este guia te ajuda a dar os primeiros passos:\n\n## Passo 1 — Crie ou acesse sua conta\n- Faça login e acesse o **Dashboard**.\n\n## Passo 2 — Crie um projeto\n- Vá em **Projetos** e clique em **Criar novo projeto**.\n- Dê um nome e uma descrição curta.\n\n## Passo 3 — Siga o fluxo guiado\n- Use as ferramentas da fase atual e avance conforme for completando.\n\n## Onde buscar ajuda\n- Abra a **Central de Ajuda** em `/help` (ou `/ajuda`).\n- Use a busca para encontrar artigos por fase/tema.',
+        author: 'DTTools Team',
+        content: `# Como começar a usar o DTTools
+
+Bem-vindo ao **DTTools**. A plataforma te ajuda a organizar seu processo de **Design Thinking** (e também projetos no **Double Diamond**) de um jeito prático, com ferramentas, templates e um fluxo guiado.
+
+## 1) Faça login e entenda o que você vai ver
+
+Ao entrar, você normalmente terá acesso a:
+
+- **Dashboard**: um resumo do que está acontecendo.
+- **Projetos**: onde você cria e gerencia seus projetos de Design Thinking.
+- **Biblioteca**: conteúdos e referências para apoiar as decisões.
+- **Central de Ajuda**: artigos para te orientar (esta área).
+
+## 2) Crie seu primeiro projeto
+
+1. Vá em **Projetos**
+2. Clique em **Criar novo projeto**
+3. Defina:
+   - **Nome**: curto e específico
+   - **Descrição**: 2–5 linhas (qual o desafio, contexto e objetivo)
+
+## 3) Trabalhe fase a fase (Design Thinking)
+
+O DTTools estrutura o trabalho em fases:
+
+1. **Empatizar**
+2. **Definir**
+3. **Idear**
+4. **Prototipar**
+5. **Testar**
+
+Em cada fase, foque em:
+
+- Preencher os campos com **evidências e decisões** (não só texto “bonito”).
+- Registrar aprendizados e hipóteses.
+- Avançar quando houver material suficiente para sustentar a próxima etapa.
+
+## 4) Use a IA (se estiver habilitada)
+
+Quando disponível, a IA pode ajudar a:
+
+- rascunhar textos
+- sugerir alternativas
+- sintetizar informações
+
+Boas práticas:
+
+- Dê contexto (público, problema, restrições).
+- Revise o resultado: use como **assistente**, não como “verdade final”.
+
+## 5) Onde buscar ajuda (e como encontrar rápido)
+
+- Acesse a **Central de Ajuda** em `/help`.
+- Use a busca por palavras-chave (ex.: “persona”, “HMW”, “teste”, “exportar”).
+- Navegue pelas categorias:
+  - **Início rápido**
+  - **Fases**
+  - **Colaboração**
+  - **Exportação**
+  - **Double Diamond**
+  - **IA**
+  - **Problemas**
+
+## Checklist de configuração (2 minutos)
+
+- Você consegue entrar no **Dashboard**
+- Você consegue criar um projeto
+- Você consegue abrir `/help` e ver artigos
+
+Se quiser, siga para o próximo artigo: **“Criando seu primeiro projeto”**.` ,
         tags: ['iniciante', 'tutorial', 'primeiros-passos'],
         searchKeywords: ['começar', 'iniciar', 'primeiro projeto', 'dashboard', 'ajuda'],
         order: 1,
@@ -2465,7 +2535,64 @@ export async function initializeDefaultData() {
         title: 'Criando seu primeiro projeto',
         slug: 'primeiro-projeto',
         category: 'inicio-rapido',
-        content: '# Criando seu primeiro projeto\n\n## 1) Acesse a área de Projetos\n- Vá em **Projetos**.\n\n## 2) Crie um novo projeto\n- Clique em **Criar novo projeto**.\n- Preencha **Nome** e **Descrição** (uma descrição boa facilita o trabalho nas fases e recursos assistidos).\n\n## 3) Trabalhe fase a fase\n- Preencha os entregáveis da fase atual (Empatizar → Definir → Idear → Prototipar → Testar).\n\n## Dica\nSe estiver em dúvida sobre o que preencher, procure artigos na categoria **Fases do DT**.',
+        author: 'DTTools Team',
+        content: `# Criando seu primeiro projeto
+
+Este guia te ajuda a criar um projeto bem configurado para você ganhar velocidade (e evitar retrabalho nas fases).
+
+## 1) Acesse Projetos
+
+No menu principal, clique em **Projetos**.
+
+## 2) Clique em “Criar novo projeto”
+
+Você vai preencher os campos iniciais. Sugestão prática:
+
+- **Nome**: use o formato “Público + objetivo + contexto”
+  - Ex.: “Onboarding — novos usuários — reduzir abandono no cadastro”
+- **Descrição**: responda em 2–5 linhas
+  - Qual é o desafio?
+  - Quem é afetado?
+  - O que significa “dar certo”?
+
+## 3) Defina o escopo mínimo
+
+Antes de aprofundar, vale alinhar:
+
+- **Público-alvo** (quem)
+- **Contexto** (onde/quando)
+- **Resultado esperado** (métrica ou evidência)
+- **Restrições** (prazo, tecnologia, orçamento)
+
+Isso deixa suas fases muito mais objetivas.
+
+## 4) Trabalhe fase a fase
+
+O DTTools te guia pelas fases. Uma sequência recomendada:
+
+1. **Empatizar**: pesquisa, entrevistas, observações, personas.
+2. **Definir**: síntese, POV, HMW, recorte do problema.
+3. **Idear**: volume de ideias + priorização.
+4. **Prototipar**: protótipos simples e hipóteses.
+5. **Testar**: roteiro, público, evidências, ajustes.
+
+## 5) Como saber se você pode avançar
+
+Avance quando você tiver:
+
+- evidências (dados/insights) suficientes
+- uma decisão clara do que será testado
+- um próximo passo definido
+
+Se você “travou” em alguma fase, procure os artigos específicos em **Fases**.
+
+## Dicas de organização
+
+- Evite textos longos sem estrutura: prefira bullet points e seções.
+- Escreva hipóteses como: “Acreditamos que… se… então…”.
+- Registre links e referências na Biblioteca.
+
+Próximo passo recomendado: **“Entendendo as 5 fases do Design Thinking”**.` ,
         tags: ['projeto', 'tutorial', 'iniciante'],
         searchKeywords: ['criar projeto', 'novo projeto', 'iniciar projeto', 'projeto'],
         order: 2,
@@ -2475,7 +2602,84 @@ export async function initializeDefaultData() {
         title: 'Entendendo as 5 fases do Design Thinking',
         slug: 'cinco-fases',
         category: 'fases',
-        content: '# As 5 fases do Design Thinking\n\nO DTTools organiza seu projeto em 5 fases:\n\n1. **Empatizar**: entender usuários, contexto e necessidades.\n2. **Definir**: sintetizar insights e formular o problema.\n3. **Idear**: gerar e priorizar ideias.\n4. **Prototipar**: tornar ideias tangíveis rapidamente.\n5. **Testar**: validar com usuários e iterar.\n\n## Como usar no DTTools\n- Em cada fase, crie os entregáveis (personas, entrevistas, POV, HMW, ideias, protótipos, planos de teste).\n- Avance quando tiver dados suficientes para sustentar a próxima etapa.',
+        author: 'DTTools Team',
+        content: `# Entendendo as 5 fases do Design Thinking
+
+O **Design Thinking** é um processo iterativo para entender problemas reais, explorar soluções e validar rapidamente.
+
+No DTTools, você trabalha em 5 fases:
+
+1. **Empatizar**: entender usuários, contexto e necessidades.
+2. **Definir**: sintetizar insights e formular o problema.
+3. **Idear**: gerar e priorizar ideias.
+4. **Prototipar**: tornar ideias tangíveis rapidamente.
+5. **Testar**: validar com usuários e iterar.
+
+## Como o DTTools te ajuda
+
+Em cada fase você vai:
+
+- registrar **evidências** (o que você viu/mediu)
+- consolidar **insights** (o que isso significa)
+- tomar **decisões** (o que vai fazer a seguir)
+
+O objetivo é reduzir decisões baseadas em achismo.
+
+## O que sai de cada fase (entregáveis sugeridos)
+
+### Empatizar
+
+- personas (ou perfis)
+- mapa de empatia
+- lista de necessidades e dores
+- principais evidências (quotes, observações, dados)
+
+### Definir
+
+- insights priorizados
+- POV (Point of View)
+- perguntas HMW (How Might We)
+- recorte do problema (o que entra e o que não entra)
+
+### Idear
+
+- muitas ideias (divergência)
+- agrupamentos por tema
+- priorização (impacto x esforço, etc.)
+- shortlist (1–3 ideias para prototipar)
+
+### Prototipar
+
+- protótipo(s) de baixa/média fidelidade
+- hipóteses (o que você quer aprender)
+- critérios de sucesso
+
+### Testar
+
+- plano de teste (público, roteiro, tarefas)
+- evidências (o que aconteceu)
+- aprendizado (o que muda)
+- próximos passos (iterar, pivotar, escalar)
+
+## Erros comuns (e como evitar)
+
+- **Pular a pesquisa**: sem Empatizar, o problema costuma estar errado.
+- **Definir “solução” como problema**: o POV deve focar no usuário e necessidade.
+- **Idear com pouca divergência**: gerar 10 ideias quase iguais não é divergência.
+- **Prototipar “produto final”**: protótipo é para aprender, não para entregar.
+- **Testar opinião em vez de comportamento**: prefira tarefas e observação.
+
+## Dica importante: o processo é iterativo
+
+Você pode (e deve) voltar fases quando necessário. O DTTools facilita esse ciclo registrando o histórico e os aprendizados.
+
+Se quiser aprofundar, leia os guias por fase:
+
+- **Fase 1 — Empatizar**
+- **Fase 2 — Definir**
+- **Fase 3 — Idear**
+- **Fase 4 — Prototipar**
+- **Fase 5 — Testar**` ,
         tags: ['fases', 'metodologia', 'design thinking'],
         searchKeywords: ['fases', 'empatizar', 'definir', 'idear', 'prototipar', 'testar', 'metodologia'],
         order: 3,
@@ -2487,7 +2691,56 @@ export async function initializeDefaultData() {
         category: 'fases',
         subcategory: 'Empatizar',
         phase: 1,
-        content: '# Fase 1 — Empatizar\n\nObjetivo: **entender profundamente** o usuário e o contexto antes de propor soluções.\n\n## O que fazer no DTTools\n- Organize **pesquisas** e evidências\n- Crie **Personas** e registre aprendizados\n- Consolide observações e padrões\n\n## Dicas\n- Escreva o contexto com exemplos reais\n- Prefira insights verificáveis (dados, quotes, observações)\n\n## Próximo passo\nQuando tiver padrões claros, avance para a Fase 2 (Definir).',
+        author: 'DTTools Team',
+        content: `# Fase 1 — Empatizar
+
+Objetivo: **entender profundamente** quem é o usuário, em que contexto ele está e quais necessidades reais existem antes de pensar em solução.
+
+## O que fazer nesta fase
+
+Você está tentando responder perguntas como:
+
+- Quem é a pessoa (ou grupo) que vive o problema?
+- Quais tarefas ela tenta concluir?
+- O que ela sente, pensa e faz?
+- Onde estão as fricções, dores e oportunidades?
+
+## Como conduzir no DTTools
+
+Sugestão de fluxo prático:
+
+1. **Defina o objetivo da pesquisa**
+2. **Colete evidências** (entrevistas, observação, dados existentes)
+3. **Organize padrões** (temas, comportamentos, necessidades)
+4. **Crie personas** (ou perfis) e registre insights
+
+## Métodos recomendados
+
+Você pode usar (não precisa usar todos):
+
+- **Entrevistas** (sem vender ideia; foque em histórias reais)
+- **Observação** (como a pessoa realmente faz)
+- **Diário de uso** (quando o problema se estende por dias)
+- **Pesquisa rápida** (para validar volume/tendências)
+
+## Como escrever boas evidências
+
+- Prefira:
+  - quotes (“Eu desisti porque…”)
+  - fatos (“levou 7 minutos para…”) 
+  - comportamento (“clicou 3 vezes e voltou…”) 
+- Evite:
+  - interpretações sem evidência (“o usuário é preguiçoso”)
+
+## Checklist antes de avançar
+
+- Você tem evidências suficientes (não só opinião)?
+- Existem 3–7 padrões claros (temas)?
+- Você consegue descrever necessidades e dores com clareza?
+
+## Próximo passo
+
+Quando tiver padrões claros, avance para a **Fase 2 — Definir** para transformar dados em um problema bem formulado.` ,
         tags: ['fases', 'empatizar', 'pesquisa', 'personas'],
         searchKeywords: ['fase 1', 'empatizar', 'pesquisa', 'entrevistas', 'persona', 'insights'],
         order: 9,
@@ -2499,7 +2752,57 @@ export async function initializeDefaultData() {
         category: 'fases',
         subcategory: 'Definir',
         phase: 2,
-        content: '# Fase 2 — Definir\n\nObjetivo: transformar dados da pesquisa em um **problema bem definido**.\n\n## O que fazer no DTTools\n- Sintetize os aprendizados (insights)\n- Crie **POV (Point of View)**\n- Gere **HMW (How Might We)** para abrir oportunidades\n\n## Boas práticas\n- Um bom POV é específico e centrado no usuário\n- HMWs devem ser acionáveis e sem solução embutida\n\n## Próximo passo\nCom o foco definido, avance para Idear.',
+        author: 'DTTools Team',
+        content: `# Fase 2 — Definir
+
+Objetivo: transformar os dados da pesquisa em um **problema bem definido** e um foco claro para a ideação.
+
+## O que você precisa sair desta fase
+
+- um recorte de problema que faça sentido
+- uma descrição centrada no usuário (não na solução)
+- oportunidades de exploração (perguntas HMW)
+
+## Como fazer no DTTools
+
+1. **Sistematize os insights**
+   - selecione os achados mais relevantes
+   - agrupe por tema
+2. **Formule um POV (Point of View)**
+3. **Gere HMW (How Might We)**
+
+## Template de POV (recomendado)
+
+Um bom POV costuma seguir esta lógica:
+
+> Um(a) [usuário/persona] precisa de [necessidade] porque [insight]
+
+Exemplo:
+
+> Um novo usuário precisa entender rapidamente o valor do produto porque se sente inseguro(a) e abandona o cadastro quando não vê benefício imediato.
+
+## Como escrever bons HMW
+
+Boas práticas:
+
+- HMW deve abrir possibilidades, não fechar em uma solução.
+- Evite “Como podemos criar um app…”. Prefira “Como podemos ajudar…”.
+
+Exemplos:
+
+- “Como podemos reduzir a insegurança no primeiro acesso?”
+- “Como podemos tornar o próximo passo óbvio?”
+
+## Checklist antes de avançar
+
+- Seu problema não contém solução embutida?
+- Está claro quem é o usuário e qual necessidade?
+- Você consegue explicar o foco em 1–2 frases?
+- Você tem pelo menos 5 HMWs bons para explorar?
+
+## Próximo passo
+
+Com o foco definido, avance para a **Fase 3 — Idear** para gerar e priorizar ideias.` ,
         tags: ['fases', 'definir', 'pov', 'hmw'],
         searchKeywords: ['fase 2', 'definir', 'pov', 'how might we', 'hmw', 'problema'],
         order: 10,
@@ -2511,7 +2814,53 @@ export async function initializeDefaultData() {
         category: 'fases',
         subcategory: 'Idear',
         phase: 3,
-        content: '# Fase 3 — Idear\n\nObjetivo: gerar **muitas ideias** e selecionar as mais promissoras.\n\n## O que fazer no DTTools\n- Crie e organize ideias\n- Agrupe por tema e identifique padrões\n- Priorize as opções com maior potencial\n\n## Dicas\n- Comece divergindo (quantidade), depois converja (qualidade)\n- Use critérios claros (impacto, esforço, risco)\n\n## Próximo passo\nEscolha 1–3 ideias para prototipar.',
+        author: 'DTTools Team',
+        content: `# Fase 3 — Idear
+
+Objetivo: gerar **muitas ideias** (divergir) e então selecionar as melhores (convergir) com critérios claros.
+
+## Antes de idear
+
+Você deve ter:
+
+- um POV bem escrito
+- perguntas HMW acionáveis
+
+Se não tiver, volte para a fase **Definir**.
+
+## Como idear no DTTools
+
+Sugestão de fluxo:
+
+1. **Divergir**: gere o máximo de ideias sem julgar
+2. **Agrupar**: organize por tema/abordagem
+3. **Avaliar**: aplique critérios
+4. **Selecionar**: escolha 1–3 ideias para prototipar
+
+## Técnicas úteis
+
+- Brainwriting (cada pessoa escreve em silêncio antes de discutir)
+- Crazy 8’s (8 ideias em 8 minutos)
+- SCAMPER (substituir, combinar, adaptar, modificar…)
+- Analogias (como outras indústrias resolvem isso?)
+
+## Critérios de priorização
+
+Você pode usar:
+
+- **Impacto x esforço**
+- **Valor para o usuário x viabilidade**
+- **Risco x aprendizado** (ótimo para protótipo)
+
+## Checklist antes de avançar
+
+- Existe diversidade de ideias (não só variações do mesmo)?
+- Você tem critérios explícitos de escolha?
+- Você escolheu ideias que permitem aprendizado rápido?
+
+## Próximo passo
+
+Escolha 1–3 ideias e avance para a **Fase 4 — Prototipar**.` ,
         tags: ['fases', 'idear', 'brainstorm', 'priorização'],
         searchKeywords: ['fase 3', 'idear', 'ideias', 'brainstorm', 'priorizar', 'priorização'],
         order: 11,
@@ -2523,7 +2872,48 @@ export async function initializeDefaultData() {
         category: 'fases',
         subcategory: 'Prototipar',
         phase: 4,
-        content: '# Fase 4 — Prototipar\n\nObjetivo: criar versões simples para **aprender rápido** e reduzir incertezas.\n\n## O que fazer no DTTools\n- Registre o conceito e o que será testado\n- Crie protótipos (baixa a média fidelidade)\n- Documente hipóteses e critérios de sucesso\n\n## Dicas\n- Protótipo não é produto final: foque em aprendizado\n- Teste o mínimo necessário para validar a hipótese\n\n## Próximo passo\nPrepare um plano de teste e avance para Testar.',
+        author: 'DTTools Team',
+        content: `# Fase 4 — Prototipar
+
+Objetivo: criar uma versão simples da solução para **aprender rápido** e reduzir incertezas.
+
+## O que é (e o que não é)
+
+- Protótipo é **ferramenta de aprendizado**.
+- Não precisa estar “bonito”. Precisa ser **testável**.
+
+## Como prototipar no DTTools
+
+1. **Escolha a ideia** (ou combinação de ideias) priorizada na fase anterior
+2. **Defina hipóteses**
+3. **Defina o que será prototipado** (o mínimo necessário)
+4. **Produza o protótipo** (baixa ou média fidelidade)
+
+## Tipos de protótipo
+
+- **Papel** (rápido e barato)
+- **Wireframe** (fluxos e estrutura)
+- **Clique** (Figma/Protótipo navegável)
+- **Fake door** (botão/fluxo para medir interesse)
+- **Wizard of Oz** (simulação manual por trás)
+
+## Template de hipótese
+
+> Acreditamos que [mudança] para [público] vai resultar em [efeito] porque [motivação].
+
+Exemplo:
+
+> Acreditamos que um onboarding com exemplo pronto para novos usuários vai reduzir abandono porque elimina o “medo da tela em branco”.
+
+## Checklist antes de avançar
+
+- Seu protótipo responde a uma hipótese clara?
+- Está claro o que você quer aprender?
+- Você consegue testar isso em até 30–60 minutos com um usuário?
+
+## Próximo passo
+
+Prepare um plano de teste e avance para a **Fase 5 — Testar**.` ,
         tags: ['fases', 'prototipar', 'mvp', 'hipóteses'],
         searchKeywords: ['fase 4', 'prototipar', 'protótipo', 'mvp', 'hipótese', 'fidelidade'],
         order: 12,
@@ -2535,7 +2925,49 @@ export async function initializeDefaultData() {
         category: 'fases',
         subcategory: 'Testar',
         phase: 5,
-        content: '# Fase 5 — Testar\n\nObjetivo: validar com usuários, aprender e **iterar**.\n\n## O que fazer no DTTools\n- Crie um **plano de teste** (objetivo, público, roteiro)\n- Registre resultados e evidências\n- Transforme feedback em melhorias e próximos passos\n\n## Dicas\n- Teste comportamento (o que fazem), não só opinião\n- Volte fases quando necessário: DT é iterativo\n\n## Próximo passo\nConsolide aprendizados e planeje a próxima iteração do produto.',
+        author: 'DTTools Team',
+        content: `# Fase 5 — Testar
+
+Objetivo: validar com usuários, aprender e **iterar**. O teste não é “aprovação”; é um instrumento para reduzir risco.
+
+## O que testar
+
+- Compreensão (a pessoa entende?)
+- Fluxo (a pessoa consegue concluir?)
+- Confiança (a pessoa se sente segura?)
+- Resultado (o comportamento muda?)
+
+## Como testar no DTTools
+
+1. **Defina objetivo do teste**
+2. **Escolha público** (perfil mais próximo da persona)
+3. **Crie roteiro**
+4. **Execute e registre evidências**
+5. **Sistematize achados**
+6. **Decida próximos passos** (iterar, pivotar, escalar)
+
+## Roteiro mínimo (sugestão)
+
+- Contexto (2 min): “quero entender como você faria…”
+- Tarefas (15–30 min): cenários reais
+- Perguntas finais (5 min): “o que foi mais difícil?”, “o que você esperava?”
+
+## O que registrar (evidências)
+
+- O que a pessoa fez (passo a passo)
+- Onde hesitou
+- Onde errou
+- O que falou (quotes)
+
+## Checklist antes de encerrar
+
+- Você identificou 3–5 problemas prioritários?
+- Você sabe o que muda na próxima iteração?
+- Você sabe o que permanece igual?
+
+## Próximo passo
+
+Consolide aprendizados e planeje a próxima iteração do produto. Se necessário, volte para **Definir** ou **Idear**.` ,
         tags: ['fases', 'testar', 'validação', 'feedback'],
         searchKeywords: ['fase 5', 'testar', 'teste', 'validação', 'feedback', 'iterar'],
         order: 13,
@@ -2545,7 +2977,37 @@ export async function initializeDefaultData() {
         title: 'Biblioteca: como usar conteúdos e recursos',
         slug: 'biblioteca-como-usar',
         category: 'inicio-rapido',
-        content: '# Biblioteca\n\nA **Biblioteca** reúne conteúdos e recursos para apoiar suas fases e decisões.\n\n## Como usar\n- Busque por tema/palavra-chave\n- Salve referências úteis para o seu projeto\n- Combine com a Central de Ajuda para acelerar o trabalho\n\nObservação: alguns conteúdos podem depender do seu plano/add-on.',
+        author: 'DTTools Team',
+        content: `# Biblioteca: como usar conteúdos e recursos
+
+A **Biblioteca** reúne conteúdos e recursos para apoiar suas fases e decisões. Pense nela como um “repositório de referência” para o time.
+
+## O que você encontra na Biblioteca
+
+- artigos e guias
+- templates e exemplos
+- referências por tema
+
+## Como usar bem
+
+1. **Busque por palavra-chave**
+   - use termos do seu problema (ex.: “onboarding”, “retenção”, “entrevista”)
+2. **Filtre por tema**
+3. **Salve/guarde referências** (quando disponível)
+4. **Conecte com sua fase atual**
+
+## Biblioteca x Central de Ajuda
+
+- **Central de Ajuda**: foco em “como usar o DTTools” e orientação de processo.
+- **Biblioteca**: conteúdos mais amplos e referências.
+
+Se você quer saber “onde clicar” e “como preencher”, comece na Central de Ajuda.
+
+## Dica prática
+
+Ao avançar fase a fase, mantenha 1–3 referências essenciais por fase. Isso evita dispersão e mantém o time alinhado.
+
+Observação: alguns conteúdos podem depender do seu plano/add-on.` ,
         tags: ['biblioteca', 'conteúdos', 'recursos'],
         searchKeywords: ['biblioteca', 'conteudo', 'conteúdo', 'artigos', 'recursos', 'referências'],
         order: 14,
@@ -2555,7 +3017,39 @@ export async function initializeDefaultData() {
         title: 'Colaboração: trabalhando em equipe',
         slug: 'trabalho-equipe',
         category: 'colaboracao',
-        content: '# Colaboração\n\nQuando habilitado no seu plano/add-on, o DTTools permite colaboração no projeto.\n\n## O que você pode fazer\n- Compartilhar projetos com outras pessoas\n- Definir permissões (ex.: owner/editor/viewer)\n- Trabalhar com histórico e feedback\n\n## Se estiver bloqueado\nSe você não conseguir convidar/colaborar, isso pode indicar **limites do plano** ou necessidade de **add-on**.',
+        author: 'DTTools Team',
+        content: `# Colaboração: trabalhando em equipe
+
+Quando habilitada no seu plano/add-on, a colaboração permite que várias pessoas trabalhem no mesmo projeto com visibilidade e consistência.
+
+## Casos de uso comuns
+
+- workshop com stakeholders
+- time multidisciplinar (produto, design, pesquisa, engenharia)
+- revisão e feedback assíncrono
+
+## Boas práticas
+
+- Defina um “owner” do projeto (responsável por decisões e alinhamento).
+- Combine padrões de escrita (ex.: usar bullet points e evidências).
+- Registre decisões importantes (o que foi escolhido e por quê).
+
+## Permissões (conceito)
+
+Dependendo da configuração do seu ambiente, você pode ter perfis como:
+
+- **Owner/Admin**: gerencia acesso e configurações
+- **Editor**: edita conteúdo do projeto
+- **Viewer**: apenas visualiza
+
+## Se estiver bloqueado
+
+Se você não conseguir convidar/colaborar, isso pode indicar:
+
+- limites do seu **plano**
+- necessidade de **add-on**
+
+Se precisar, verifique também a sessão de **Planos/Assinatura** no seu ambiente.` ,
         tags: ['equipe', 'colaboração', 'compartilhamento'],
         searchKeywords: ['equipe', 'time', 'colaborar', 'compartilhar', 'permissão', 'workspace'],
         order: 4,
@@ -2565,7 +3059,38 @@ export async function initializeDefaultData() {
         title: 'Exportação: como baixar seu projeto',
         slug: 'exportar-dados',
         category: 'exportacao',
-        content: '# Exportação\n\nVocê pode exportar seu projeto para compartilhar com stakeholders.\n\n## Formatos comuns\n- **PDF**\n- **PPTX**\n- **Markdown/CSV/PNG** (quando habilitado)\n\n## Se uma exportação estiver bloqueada\nAlguns formatos podem depender do seu plano ou de add-ons (ex.: exportações avançadas).',
+        author: 'DTTools Team',
+        content: `# Exportação: como baixar seu projeto
+
+Você pode exportar seu projeto para compartilhar com stakeholders, apresentar resultados e manter documentação.
+
+## Quando exportar
+
+- para alinhar decisões com liderança
+- para registrar aprendizados e evidências
+- para apresentar resultados do ciclo
+
+## Formatos comuns
+
+- **PDF** (relatório)
+- **PPTX** (apresentação)
+- **Markdown/CSV/PNG** (quando habilitado)
+
+## Dicas para uma exportação melhor
+
+- Use títulos claros e objetivos.
+- Mantenha evidências (quotes/dados) próximas das decisões.
+- Evite blocos enormes de texto: prefira estrutura.
+
+## Se uma exportação estiver bloqueada
+
+Alguns formatos podem depender do seu **plano** ou de **add-ons** (ex.: exportações avançadas).
+
+Se estiver com erro:
+
+- tente novamente após recarregar
+- verifique se o projeto tem conteúdo mínimo
+- confirme se sua assinatura/plano está ativo` ,
         tags: ['exportar', 'pdf', 'download'],
         searchKeywords: ['exportar', 'download', 'pdf', 'pptx', 'markdown', 'csv', 'png'],
         order: 5,
@@ -2575,7 +3100,40 @@ export async function initializeDefaultData() {
         title: 'Double Diamond: como funciona no DTTools',
         slug: 'double-diamond-como-funciona',
         category: 'double-diamond',
-        content: '# Double Diamond\n\nO **Double Diamond** estrutura o trabalho em 4 etapas:\n\n1. **Descobrir** (divergir): explorar o problema e levantar evidências\n2. **Definir** (convergir): recortar e priorizar o foco\n3. **Desenvolver** (divergir): explorar soluções\n4. **Entregar** (convergir): consolidar proposta e próximos passos\n\n## Como usar no DTTools\n- Acesse **Double Diamond** e crie um projeto.\n- Preencha o contexto do desafio (problema, público, setor/vertical).\n- Avance pelas etapas e revise os entregáveis gerados.\n\nObservação: recursos avançados podem depender de plano/add-on.',
+        author: 'DTTools Team',
+        content: `# Double Diamond: como funciona no DTTools
+
+O **Double Diamond** é um framework que combina divergência e convergência em dois “diamantes”: um para o problema e outro para a solução.
+
+No DTTools, você trabalha em 4 etapas:
+
+1. **Descobrir** (divergir): explorar o problema e levantar evidências
+2. **Definir** (convergir): recortar e priorizar o foco
+3. **Desenvolver** (divergir): explorar soluções
+4. **Entregar** (convergir): consolidar proposta e próximos passos
+
+## Quando usar Double Diamond
+
+- quando o problema ainda é amplo e precisa de descoberta
+- quando você quer estruturar uma entrega com clareza de decisão
+
+## Como usar no DTTools
+
+1. Acesse **Double Diamond** e crie um projeto.
+2. Preencha o contexto do desafio:
+   - problema
+   - público
+   - setor/vertical
+3. Avance etapa por etapa, registrando evidências, decisões e outputs.
+
+## Dicas
+
+- Use “Descobrir” para abrir possibilidades e evitar soluções prematuras.
+- Use “Definir” para escolher um foco que você consegue atacar.
+- Em “Desenvolver”, gere alternativas antes de escolher.
+- Em “Entregar”, consolide uma proposta e próximos passos com clareza.
+
+Observação: recursos avançados podem depender de plano/add-on.` ,
         tags: ['double diamond', 'framework', 'metodologia'],
         searchKeywords: ['double diamond', 'descobrir', 'definir', 'desenvolver', 'entregar', 'framework'],
         order: 6,
@@ -2585,7 +3143,46 @@ export async function initializeDefaultData() {
         title: 'Recursos de IA (Google Gemini): quando e como usar',
         slug: 'ia-gemini-como-usar',
         category: 'ia',
-        content: '# IA no DTTools (Google Gemini)\n\nO DTTools pode oferecer recursos assistidos por **Google Gemini** em partes do fluxo (dependendo do plano/limites).\n\n## Boas práticas\n- Forneça descrições claras do problema e do público\n- Revise o que foi gerado: IA acelera, mas você valida\n- Use a IA para rascunhos, alternativas e sínteses\n\n## Se não funcionar\n- Verifique limites do plano\n- Em ambiente local, confirme `GEMINI_API_KEY` configurada',
+        author: 'DTTools Team',
+        content: `# Recursos de IA (Google Gemini): quando e como usar
+
+O DTTools pode oferecer recursos assistidos por **Google Gemini** em partes do fluxo (dependendo do plano/limites).
+
+## Quando usar IA
+
+- para rascunhar textos (personas, insights, hipóteses)
+- para gerar alternativas (ideias, perguntas HMW)
+- para sintetizar informações (resumos e padrões)
+
+## Quando NÃO usar IA (ou usar com cuidado)
+
+- quando você não tem dados reais (a IA tende a “inventar”)
+- quando precisa de decisão final sem validação
+
+## Como pedir (prompt) de forma eficaz
+
+Inclua:
+
+- contexto do problema
+- público-alvo
+- restrições
+- formato de saída (lista, tabela, tópicos)
+
+Exemplo de pedido:
+
+“Com base neste contexto [cole], gere 10 perguntas HMW curtas e acionáveis. Evite sugerir soluções específicas.”
+
+## Boas práticas
+
+- Revise e adapte: IA acelera, você valida.
+- Use como copiloto, não como autor final.
+- Prefira evidências do seu projeto (pesquisa) em vez de generalidades.
+
+## Se não funcionar
+
+- Verifique limites do plano/add-ons.
+- Em ambiente local, confirme `GEMINI_API_KEY` configurada.
+- Em produção (Render), confira se `GEMINI_API_KEY` está nas variáveis de ambiente.` ,
         tags: ['ia', 'gemini', 'automação'],
         searchKeywords: ['ia', 'gemini', 'google', 'api key', 'gemi', 'automação'],
         order: 7,
@@ -2595,7 +3192,51 @@ export async function initializeDefaultData() {
         title: 'Solução de problemas (Troubleshooting)',
         slug: 'troubleshooting',
         category: 'problemas',
-        content: '# Solução de problemas\n\n## Não consigo logar\n- Verifique email/senha\n- Confirme se cookies não estão bloqueados\n\n## IA não funciona\n- Em desenvolvimento, confira `GEMINI_API_KEY`\n- Em produção, verifique limites do plano/add-ons\n\n## Pagamento/assinatura não aparece\n- Funcionalidades de pagamento dependem de `STRIPE_SECRET_KEY` (quando configurado no ambiente)',
+        author: 'DTTools Team',
+        content: `# Solução de problemas (Troubleshooting)
+
+Aqui estão os problemas mais comuns e como resolver.
+
+## 1) Não consigo logar
+
+- Confirme email e senha.
+- Verifique se o navegador não está bloqueando **cookies**.
+- Tente em uma janela anônima.
+- Se você usa SSO/Google, tente sair e entrar novamente.
+
+## 2) Página não carrega / dá erro 500
+
+- Recarregue a página.
+- Se estiver em produção, pode ser deploy em andamento.
+- Se persistir, verifique logs no Render.
+
+## 3) IA não funciona
+
+- Em desenvolvimento, confira `GEMINI_API_KEY`.
+- Em produção (Render), confirme que `GEMINI_API_KEY` está configurada.
+- Verifique se você não atingiu limites do plano/add-ons.
+
+## 4) Exportação falha
+
+- Confirme que o projeto tem conteúdo mínimo.
+- Tente novamente após recarregar.
+- Se o formato estiver bloqueado, pode ser plano/add-on.
+
+## 5) Pagamento/assinatura não aparece
+
+- Em ambientes com pagamento, isso depende de:
+  - `STRIPE_SECRET_KEY`
+  - webhooks configurados corretamente
+- Se você acabou de pagar, aguarde alguns segundos e recarregue.
+
+## Se precisar de suporte
+
+Tenha em mãos:
+
+- seu email
+- o que você estava tentando fazer
+- print do erro (se houver)
+- horário aproximado (para localizar logs)` ,
         tags: ['problemas', 'suporte', 'erro'],
         searchKeywords: ['erro', 'problema', 'login', 'ia', 'gemini', 'stripe', 'assinatura'],
         order: 8,
@@ -2603,20 +3244,45 @@ export async function initializeDefaultData() {
       }
     ];
 
-    const existingSlugs = new Set(
-      (existingHelpArticles || []).map((a: any) => String(a?.slug || '').trim()).filter(Boolean),
+    const existingBySlug = new Map(
+      (existingHelpArticles || [])
+        .map((a: any) => [String(a?.slug || '').trim(), a] as const)
+        .filter(([slug]) => Boolean(slug)),
     );
 
     let insertedCount = 0;
+    let updatedCount = 0;
     for (const helpArticle of defaultHelpArticles) {
-      if (!existingSlugs.has(helpArticle.slug)) {
+      const existing = existingBySlug.get(helpArticle.slug);
+      if (!existing) {
         await storage.createHelpArticle(helpArticle as any);
         insertedCount++;
+        continue;
+      }
+
+      const existingContent = String(existing?.content || '');
+      const shouldUpdateContent = existingContent.length < 600;
+
+      if (shouldUpdateContent) {
+        await storage.updateHelpArticle(String(existing.id), {
+          title: helpArticle.title,
+          slug: helpArticle.slug,
+          category: helpArticle.category,
+          subcategory: (helpArticle as any).subcategory ?? null,
+          phase: (helpArticle as any).phase ?? null,
+          content: helpArticle.content,
+          tags: helpArticle.tags,
+          searchKeywords: helpArticle.searchKeywords,
+          featured: helpArticle.featured,
+          author: helpArticle.author,
+          order: helpArticle.order,
+        } as any);
+        updatedCount++;
       }
     }
 
-    if (insertedCount > 0) {
-      console.log(`✅ Default help articles created: ${insertedCount}`);
+    if (insertedCount > 0 || updatedCount > 0) {
+      console.log(`✅ Default help articles applied: inserted=${insertedCount}, updated=${updatedCount}`);
     }
   } catch (error) {
     console.error('❌ Error initializing default data:', error);
