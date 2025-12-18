@@ -540,12 +540,15 @@ function HelpCenterTab() {
       const response = await apiRequest("POST", "/api/help/apply-defaults");
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/help"] });
       queryClient.invalidateQueries({ queryKey: ["/api/help/categories/list"] });
+      const insertedCount = Number(data?.insertedCount ?? 0);
+      const updatedCount = Number(data?.updatedCount ?? 0);
+      const errorCount = Number(data?.errorCount ?? 0);
       toast({
         title: "Conteúdo aplicado",
-        description: "Os conteúdos padrão da Central de Ajuda foram reaplicados com sucesso.",
+        description: `Inseridos: ${insertedCount} | Atualizados: ${updatedCount} | Erros: ${errorCount}`,
       });
     },
     onError: (error: Error) => {

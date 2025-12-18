@@ -4689,8 +4689,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/help/apply-defaults - Apply default help articles content (Admin only)
   app.post("/api/help/apply-defaults", requireAdmin, async (_req, res) => {
     try {
-      await initializeDefaultData();
-      res.json({ success: true });
+      const result = await initializeDefaultData();
+      res.json({ success: true, ...result });
     } catch (error) {
       console.error("Error applying default help articles: - routes.ts:4450", error);
       res.status(500).json({

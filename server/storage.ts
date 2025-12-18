@@ -2508,7 +2508,7 @@ Boas práticas:
 
 ## 5) Onde buscar ajuda (e como encontrar rápido)
 
-- Acesse a **Central de Ajuda** em `/help`.
+- Acesse a **Central de Ajuda** em /help.
 - Use a busca por palavras-chave (ex.: “persona”, “HMW”, “teste”, “exportar”).
 - Navegue pelas categorias:
   - **Início rápido**
@@ -2523,7 +2523,7 @@ Boas práticas:
 
 - Você consegue entrar no **Dashboard**
 - Você consegue criar um projeto
-- Você consegue abrir `/help` e ver artigos
+- Você consegue abrir /help e ver artigos
 
 Se quiser, siga para o próximo artigo: **“Criando seu primeiro projeto”**.` ,
         tags: ['iniciante', 'tutorial', 'primeiros-passos'],
@@ -3252,39 +3252,60 @@ Tenha em mãos:
 
     let insertedCount = 0;
     let updatedCount = 0;
+    const errors: Array<{ slug: string; action: 'insert' | 'update'; message: string }> = [];
     for (const helpArticle of defaultHelpArticles) {
-      const existing = existingBySlug.get(helpArticle.slug);
-      if (!existing) {
-        await storage.createHelpArticle(helpArticle as any);
-        insertedCount++;
-        continue;
-      }
+      try {
+        const existing = existingBySlug.get(helpArticle.slug);
+        if (!existing) {
+          await storage.createHelpArticle(helpArticle as any);
+          insertedCount++;
+          continue;
+        }
 
-      const existingContent = String(existing?.content || '');
-      const shouldUpdateContent = existingContent.length < 600;
+        const existingContent = String(existing?.content || '');
+        const shouldUpdateContent = existingContent.length < String(helpArticle.content || '').length;
 
-      if (shouldUpdateContent) {
-        await storage.updateHelpArticle(String(existing.id), {
-          title: helpArticle.title,
-          slug: helpArticle.slug,
-          category: helpArticle.category,
-          subcategory: (helpArticle as any).subcategory ?? null,
-          phase: (helpArticle as any).phase ?? null,
-          content: helpArticle.content,
-          tags: helpArticle.tags,
-          searchKeywords: helpArticle.searchKeywords,
-          featured: helpArticle.featured,
-          author: helpArticle.author,
-          order: helpArticle.order,
-        } as any);
-        updatedCount++;
+        if (shouldUpdateContent) {
+          await storage.updateHelpArticle(String(existing.id), {
+            title: helpArticle.title,
+            slug: helpArticle.slug,
+            category: helpArticle.category,
+            subcategory: (helpArticle as any).subcategory ?? null,
+            phase: (helpArticle as any).phase ?? null,
+            content: helpArticle.content,
+            tags: helpArticle.tags,
+            searchKeywords: helpArticle.searchKeywords,
+            featured: helpArticle.featured,
+            author: helpArticle.author,
+            order: helpArticle.order,
+          } as any);
+          updatedCount++;
+        }
+      } catch (error) {
+        const existing = existingBySlug.get(helpArticle.slug);
+        const action: 'insert' | 'update' = existing ? 'update' : 'insert';
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push({ slug: helpArticle.slug, action, message });
+        console.error(`❌ Failed to ${action} help article (slug=${helpArticle.slug}):`, message);
       }
     }
 
     if (insertedCount > 0 || updatedCount > 0) {
       console.log(`✅ Default help articles applied: inserted=${insertedCount}, updated=${updatedCount}`);
     }
+
+    if (errors.length > 0) {
+      console.error(`❌ Default help articles errors: count=${errors.length}`);
+    }
+
+    return { insertedCount, updatedCount, errorCount: errors.length, errors };
   } catch (error) {
     console.error('❌ Error initializing default data:', error);
+    return {
+      insertedCount: 0,
+      updatedCount: 0,
+      errorCount: 1,
+      errors: [{ slug: 'initializeDefaultData', action: 'update', message: error instanceof Error ? error.message : String(error) }],
+    };
   }
 }
