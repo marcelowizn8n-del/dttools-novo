@@ -27,6 +27,34 @@ function normalizeWhitespace(text: string): string {
   return text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").replace(/\s+/g, " ").trim();
 }
 
+function normalizeCitationTitle(input: string): string {
+  let title = String(input ?? "").trim();
+  if (!title) return title;
+
+  title = title.replace(/\.(pdf)$/i, "");
+  title = title.replace(/_+/g, " ");
+  title = title.replace(/\s+/g, " ").trim();
+
+  const parts = title
+    .split(/\s+--\s+/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    if (/^[a-f0-9]{16,}$/i.test(parts[1])) {
+      title = parts[0];
+    } else {
+      title = `${parts[0]} — ${parts[1]}`;
+    }
+  }
+
+  if (title.length > 120) {
+    title = `${title.slice(0, 117)}...`;
+  }
+
+  return title;
+}
+
 function chunkText(text: string, opts?: { maxChars?: number; overlapChars?: number }): string[] {
   const maxChars = opts?.maxChars ?? 1500;
   const overlapChars = opts?.overlapChars ?? 200;
@@ -313,12 +341,14 @@ export class KnowledgeBaseService {
     const seenDocs = new Set<string>();
     const citations: KnowledgeBaseCitation[] = [];
     for (const r of filteredRows) {
-      const title = String((r as any).docTitle ?? "").trim();
+      const rawTitle = String((r as any).docTitle ?? "").trim();
       const urlRaw = (r as any).docUrl;
       const url = urlRaw ? String(urlRaw) : undefined;
-      const docKey = `${title}|${url ?? ""}`;
+      const docKey = `${rawTitle}|${url ?? ""}`;
       if (seenDocs.has(docKey)) continue;
       seenDocs.add(docKey);
+
+      const title = normalizeCitationTitle(rawTitle);
 
       const content = String((r as any).chunkContent ?? "");
       const snippet = content.length > 350 ? `${content.slice(0, 350)}...` : content;
