@@ -323,13 +323,18 @@ Diretrizes:
 - Mantenha o foco no usuário final
 - Responda em português brasileiro
 - Use uma linguagem acessível e motivadora
-- Limite respostas a 150 palavras quando possível`;
+- Limite respostas a 150 palavras quando possível
+
+Regras sobre referências:
+- NÃO crie uma seção "Fontes"/"Referências" no final da resposta.
+- Não mencione links/URLs.
+- Se o usuário pedir para citar fontes e você não tiver fontes da Biblioteca DTTools disponíveis, diga explicitamente que não há fontes da Biblioteca DTTools para citar e responda sem citar fontes.`;
 
     if (!kbSourcesText || !kbSourcesText.trim()) {
       return base;
     }
 
-    return `${base}\n\nFontes (Biblioteca DTTools):\n${kbSourcesText}\n\nRegras de uso das fontes:\n- Use as fontes acima quando forem relevantes\n- Sempre que usar uma informação das fontes, cite usando o marcador [KB1], [KB2], etc.\n- Se a resposta não puder ser sustentada pelas fontes, deixe isso claro e responda apenas com base na metodologia de Design Thinking`;
+    return `${base}\n\nFontes (Biblioteca DTTools):\n${kbSourcesText}\n\nRegras de uso das fontes:\n- Use APENAS as fontes acima (Biblioteca DTTools).\n- Sempre que usar uma informação das fontes, cite usando SOMENTE o marcador [KB1], [KB2], etc.\n- NÃO invente marcadores [KBx] e NÃO cite outras fontes externas (ex.: Design Council, Wikipedia etc.).\n- NÃO crie uma seção "Fontes"/"Referências" no final; apenas use marcadores [KBx] no corpo do texto quando aplicável.\n- Se a resposta não puder ser sustentada pelas fontes acima, deixe isso claro e responda apenas com base na metodologia de Design Thinking (sem citar fontes).`;
   }
 
   private buildSuggestionsPrompt(context: DesignThinkingContext): string {
