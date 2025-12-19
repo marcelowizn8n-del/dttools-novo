@@ -274,6 +274,8 @@ export class KnowledgeBaseService {
   }
 
   async retrieve(query: string, topK = 6): Promise<{ citations: KnowledgeBaseCitation[] }> {
+    const maxDistance = 0.35;
+    const minResults = 2;
     const [queryEmbedding] = await this.embedTexts([query]);
     if (!queryEmbedding || queryEmbedding.length !== 256) {
       return { citations: [] };
@@ -295,22 +297,40 @@ export class KnowledgeBaseService {
       .orderBy(distanceSql)
       .limit(topK);
 
-    const citations: KnowledgeBaseCitation[] = rows
-      .map((r, idx) => {
-        const title = String((r as any).docTitle ?? "");
-        const urlRaw = (r as any).docUrl;
-        const url = urlRaw ? String(urlRaw) : undefined;
-        const content = String((r as any).chunkContent ?? "");
-        const snippet = content.length > 350 ? `${content.slice(0, 350)}...` : content;
-        return {
-          ref: `KB${idx + 1}`,
-          title,
-          url,
-          snippet,
-          chunkId: String((r as any).chunkId),
-        };
-      })
-      .filter((c) => c.title && c.snippet);
+    const filteredRows = rows.filter((r) => {
+      const distance = Number((r as any).distance);
+      if (!Number.isFinite(distance)) return false;
+      if (distance > maxDistance) return false;
+      const title = String((r as any).docTitle ?? "").trim();
+      const snippet = String((r as any).chunkContent ?? "").trim();
+      return !!title && !!snippet;
+    });
+
+    if (filteredRows.length < minResults) {
+      return { citations: [] };
+    }
+
+    const seenDocs = new Set<string>();
+    const citations: KnowledgeBaseCitation[] = [];
+    for (const r of filteredRows) {
+      const title = String((r as any).docTitle ?? "").trim();
+      const urlRaw = (r as any).docUrl;
+      const url = urlRaw ? String(urlRaw) : undefined;
+      const docKey = `${title}|${url ?? ""}`;
+      if (seenDocs.has(docKey)) continue;
+      seenDocs.add(docKey);
+
+      const content = String((r as any).chunkContent ?? "");
+      const snippet = content.length > 350 ? `${content.slice(0, 350)}...` : content;
+
+      citations.push({
+        ref: `KB${citations.length + 1}`,
+        title,
+        url,
+        snippet,
+        chunkId: String((r as any).chunkId),
+      });
+    }
 
     return { citations };
   }
