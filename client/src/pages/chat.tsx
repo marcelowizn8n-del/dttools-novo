@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import type { Project } from "@shared/schema";
 
 interface ChatMessage {
@@ -437,6 +438,11 @@ export default function ChatPage() {
                 <Separator className="my-2 sm:my-4" />
 
                 {/* Input */}
+                <div className="mb-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                  Ao usar o chat, sua mensagem e partes do contexto do projeto (ex.: nome/descrição e fase) podem ser processados por provedores de IA para gerar respostas. Não compartilhe senhas, dados bancários ou informações sensíveis. Ao continuar, você concorda com nossos{" "}
+                  <Link href="/termos" className="underline">Termos</Link> e{" "}
+                  <Link href="/privacidade" className="underline">Política de Privacidade</Link>.
+                </div>
                 <div className="flex gap-2 pt-2 pb-2">
                   <Input
                     value={inputValue}

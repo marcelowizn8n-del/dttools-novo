@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Link } from "wouter";
 import { queryClient } from "./lib/queryClient";
 
 // Force new bundle hash - v1760549203
@@ -288,7 +288,17 @@ function Router() {
           <PrivacyPolicy />
         </Suspense>
       </Route>
+      <Route path="/privacidade">
+        <Suspense fallback={<RouteFallback />}>
+          <PrivacyPolicy />
+        </Suspense>
+      </Route>
       <Route path="/terms">
+        <Suspense fallback={<RouteFallback />}>
+          <Terms />
+        </Suspense>
+      </Route>
+      <Route path="/termos">
         <Suspense fallback={<RouteFallback />}>
           <Terms />
         </Suspense>
@@ -320,11 +330,20 @@ function App() {
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
-              <div className="bg-background min-h-screen">
+              <div className="bg-background min-h-screen flex flex-col">
                 <Header />
-                <main>
+                <main className="flex-1">
                   <Router />
                 </main>
+                <footer className="border-t border-border">
+                  <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 text-sm text-muted-foreground flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center sm:justify-between">
+                    <div>© {new Date().getFullYear()} DTTools</div>
+                    <div className="flex gap-4">
+                      <Link href="/termos" className="hover:underline">Termos de Uso</Link>
+                      <Link href="/privacidade" className="hover:underline">Política de Privacidade</Link>
+                    </div>
+                  </div>
+                </footer>
               </div>
               <Toaster />
             </AuthProvider>

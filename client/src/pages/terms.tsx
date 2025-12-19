@@ -144,7 +144,10 @@ export default function Terms() {
                 7. Privacidade e Dados
               </h2>
               <p>
-                Seu uso do Serviço também é regido por nossa <Link href="/privacy-policy" className="text-blue-600 hover:underline">Política de Privacidade</Link>. Ao usar o Serviço, você consente com a coleta e uso de informações conforme descrito nessa política.
+                Seu uso do Serviço também é regido por nossa <Link href="/privacidade" className="text-blue-600 hover:underline">Política de Privacidade</Link>. Ao usar o Serviço, você consente com a coleta e uso de informações conforme descrito nessa política.
+              </p>
+              <p className="mt-3">
+                Em funcionalidades que utilizam Inteligência Artificial (por exemplo, o chat), sua mensagem e partes do contexto do projeto podem ser processados por provedores de IA para gerar respostas. Você concorda em não inserir no chat informações sensíveis (como senhas, dados bancários, documentos pessoais ou segredos comerciais) e entende que a DTTools não se responsabiliza por informações sensíveis inseridas voluntariamente por você nessas funcionalidades.
               </p>
             </section>
 

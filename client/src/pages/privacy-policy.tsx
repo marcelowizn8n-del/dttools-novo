@@ -90,6 +90,20 @@ export default function PrivacyPolicy() {
 
             <section>
               <h2 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-white">
+                4.1 Uso de Inteligência Artificial (Chat)
+              </h2>
+              <p className="mb-3">
+                Para oferecer funcionalidades de chat com orientação e sugestões, a DTTools pode processar sua mensagem e partes do contexto do seu projeto com provedores de IA.
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>Podemos enviar o texto da sua mensagem e informações necessárias para responder (por exemplo: fase atual, nome/descrição do projeto quando você estiver usando o chat dentro de um projeto).</li>
+                <li>Não temos intenção de enviar dados como senhas, dados bancários ou documentos pessoais. Por isso, pedimos que você NÃO compartilhe informações sensíveis no chat.</li>
+                <li>O processamento ocorre com a finalidade de gerar a resposta e melhorar a experiência do usuário.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-white">
                 5. Segurança dos Dados
               </h2>
               <p>
