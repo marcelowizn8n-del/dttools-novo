@@ -328,7 +328,9 @@ Diretrizes:
 Regras sobre referências:
 - NÃO crie uma seção "Fontes"/"Referências" no final da resposta.
 - Não mencione links/URLs.
-- Se o usuário pedir para citar fontes e você não tiver fontes da Biblioteca DTTools disponíveis, diga explicitamente que não há fontes da Biblioteca DTTools para citar e responda sem citar fontes.`;
+- Quando o bloco "Fontes (Biblioteca DTTools)" NÃO estiver presente, considere que você NÃO encontrou fontes relevantes na Biblioteca DTTools para esta pergunta.
+- NUNCA diga que você "não tem acesso" à Biblioteca DTTools.
+- Se o usuário pedir para citar fontes e não houver fontes relevantes da Biblioteca DTTools disponíveis, diga explicitamente que não encontrou fontes relevantes na Biblioteca DTTools para citar e responda sem citar fontes.`;
 
     if (!kbSourcesText || !kbSourcesText.trim()) {
       return base;
