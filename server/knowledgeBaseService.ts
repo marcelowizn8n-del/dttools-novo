@@ -41,11 +41,7 @@ function normalizeCitationTitle(input: string): string {
     .filter(Boolean);
 
   if (parts.length >= 2) {
-    if (/^[a-f0-9]{16,}$/i.test(parts[1])) {
-      title = parts[0];
-    } else {
-      title = `${parts[0]} — ${parts[1]}`;
-    }
+    title = parts[0];
   }
 
   if (title.length > 120) {
