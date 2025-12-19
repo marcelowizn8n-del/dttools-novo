@@ -6,6 +6,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { initializeDefaultData } from "./storage";
+import { pool } from "./db";
 import passport from "./passport-config";
 import { setupPassport } from "./passport-config";
 import fs from "fs/promises";
@@ -152,10 +153,10 @@ if (!process.env.SESSION_SECRET) {
 }
 
 // Session configuration
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 const sessionStore = isProduction && process.env.DATABASE_URL ?
   new PgStore({
-    conString: process.env.DATABASE_URL,
+    pool,
     createTableIfMissing: true,
     tableName: 'user_sessions'
   }) :
