@@ -8,9 +8,19 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+const rawDatabaseUrl = process.env.DATABASE_URL;
+let isLocalhost = false;
+try {
+  const parsed = new URL(rawDatabaseUrl);
+  const host = parsed.hostname;
+  isLocalhost = host === 'localhost' || host === '127.0.0.1';
+} catch {
+  isLocalhost = false;
+}
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false),
+  connectionString: rawDatabaseUrl,
+  ssl: isLocalhost ? false : { rejectUnauthorized: false },
 
   // Performance optimizations for production
   max: 50, // Maximum 50 connections in pool (up from default 10)
