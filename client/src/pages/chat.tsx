@@ -115,9 +115,7 @@ export default function ChatPage() {
             .map((c: any) => {
               const ref = String(c?.ref || '').trim();
               const title = String(c?.title || '').trim();
-              const url = c?.url ? String(c.url).trim() : '';
-              const suffix = url ? ` - ${url}` : '';
-              return `- [${ref}] ${title}${suffix}`;
+              return `- [${ref}] ${title}`;
             })
             .join('\n')}`
         : '';

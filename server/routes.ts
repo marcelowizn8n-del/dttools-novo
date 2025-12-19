@@ -3668,8 +3668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { citations } = await knowledgeBaseService.retrieve(String(lastMessage.content || ""), 6);
         const kbSourcesText = citations
           .map((c) => {
-            const urlPart = c.url ? ` (${c.url})` : "";
-            return `[${c.ref}] ${c.title}${urlPart}: ${c.snippet}`;
+            return `[${c.ref}] ${c.title}: ${c.snippet}`;
           })
           .join("\n");
 
@@ -3677,7 +3676,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           kbSourcesText,
         });
 
-        return res.json({ message: response, citations });
+        const sanitizedCitations = citations.map(({ url: _url, ...rest }) => rest);
+        return res.json({ message: response, citations: sanitizedCitations });
       }
 
       const response = await designThinkingGeminiAI.chat(lastMessage.content, context);
