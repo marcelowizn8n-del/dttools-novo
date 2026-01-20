@@ -3046,6 +3046,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/users/export-data", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const {
+        password: _password,
+        googleId: _googleId,
+        stripeCustomerId: _stripeCustomerId,
+        stripeSubscriptionId: _stripeSubscriptionId,
+        ...userProfile
+      } = currentUser;
+
+      const [projects, doubleDiamondProjects, userAddons] = await Promise.all([
+        storage.getProjects(currentUser.id),
+        storage.getDoubleDiamondProjects(currentUser.id),
+        storage.getUserAddons(currentUser.id),
+      ]);
+
+      const exportPayload = {
+        exportedAt: new Date().toISOString(),
+        user: userProfile,
+        projects,
+        doubleDiamondProjects,
+        userAddons,
+      };
+
+      const stamp = new Date().toISOString().slice(0, 10);
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="dttools-data-export-${stamp}.json"`,
+      );
+
+      res.send(JSON.stringify(exportPayload, null, 2));
+    } catch (error) {
+      console.error("[Export Data] Error: - routes.ts", error);
+      res.status(500).json({ error: "Failed to export user data" });
+    }
+  });
+
   // User management routes (admin only)
   app.get("/api/users", requireAdmin, async (_req, res) => {
     try {

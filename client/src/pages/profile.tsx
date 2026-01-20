@@ -34,6 +34,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { openCookiePreferences } from "@/lib/cookieConsent";
 import { updateProfileSchema } from "@shared/schema";
 import type { UpdateProfile, User as UserType } from "@shared/schema";
 import { z } from "zod";
@@ -72,6 +74,7 @@ type ProfileFormData = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading, refreshUser, logout } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,6 +118,43 @@ export default function ProfilePage() {
       interests: [],
       profilePicture: "",
       dtExperienceLevel: "",
+    },
+  });
+
+  const exportDataMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/users/export-data", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const text = (await res.text()) || res.statusText;
+        throw new Error(`${res.status}: ${text}`);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `dttools-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    },
+    onSuccess: () => {
+      toast({
+        title: t("privacy.export.toast.success.title"),
+        description: t("privacy.export.toast.success.description"),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t("privacy.export.toast.error.title"),
+        description: t("privacy.export.toast.error.description"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -832,6 +872,37 @@ export default function ProfilePage() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {t("privacy.section.title")}
+                  </CardTitle>
+                  <CardDescription>{t("privacy.section.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => exportDataMutation.mutate()}
+                      disabled={exportDataMutation.isPending}
+                      data-testid="button-export-my-data"
+                    >
+                      {t("privacy.export.button")}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => openCookiePreferences()}
+                      data-testid="button-cookie-preferences"
+                    >
+                      {t("privacy.cookies.manage")}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </form>

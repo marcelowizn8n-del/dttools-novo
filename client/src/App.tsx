@@ -11,6 +11,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Header from "@/components/Header";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 const LandingPage = lazy(() => import("@/pages/landing"));
 const ProjectsPage = lazy(() => import("@/pages/projects"));
 const ProjectsMarketingPage = lazy(() => import("@/pages/projects-marketing"));
@@ -335,6 +336,7 @@ function App() {
                 <main className="flex-1">
                   <Router />
                 </main>
+                <CookieConsentBanner />
                 <footer className="border-t border-border">
                   <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 text-sm text-muted-foreground flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center sm:justify-between">
                     <div>© {new Date().getFullYear()} DTTools</div>
