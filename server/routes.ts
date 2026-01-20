@@ -2965,6 +2965,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+ 
+  app.get("/api/users/delete-account-info", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ requiresPassword: !!currentUser.password });
+    } catch (error) {
+      console.error("[Delete Account Info] Error: - routes.ts", error);
+      res.status(500).json({ error: "Failed to fetch delete account info" });
+    }
+  });
+
+  app.post("/api/users/delete-account", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { password } = (req.body ?? {}) as { password?: unknown };
+      if (currentUser.password) {
+        if (typeof password !== "string" || password.length === 0) {
+          return res.status(400).json({ error: "Password is required" });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, currentUser.password);
+        if (!isValidPassword) {
+          return res.status(401).json({ error: "Invalid password" });
+        }
+      }
+
+      try {
+        if (stripe) {
+          if (currentUser.stripeSubscriptionId) {
+            await stripe.subscriptions.cancel(currentUser.stripeSubscriptionId);
+          }
+
+          const activeAddons = await storage.getActiveUserAddons(currentUser.id);
+          const addonSubIds = Array.from(
+            new Set(
+              activeAddons
+                .map((a) => a.stripeSubscriptionId)
+                .filter((id): id is string => typeof id === "string" && id.length > 0)
+            )
+          );
+
+          await Promise.all(addonSubIds.map((subId) => stripe.subscriptions.cancel(subId)));
+        }
+      } catch (error) {
+        console.error("[Delete Account] Stripe cancellation error: - routes.ts", error);
+      }
+
+      const success = await storage.deleteUser(currentUser.id);
+      if (!success) {
+        return res.status(500).json({ error: "Failed to delete user" });
+      }
+
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("[Delete Account] Session destroy error: - routes.ts", err);
+        }
+        res.clearCookie("dttools.session");
+        return res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("[Delete Account] Error: - routes.ts", error);
+      res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
   // User management routes (admin only)
   app.get("/api/users", requireAdmin, async (_req, res) => {
     try {

@@ -37,6 +37,17 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { updateProfileSchema } from "@shared/schema";
 import type { UpdateProfile, User as UserType } from "@shared/schema";
 import { z } from "zod";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Create form validation schema that matches UpdateProfile requirements
 const profileFormSchema = z.object({
@@ -60,11 +71,18 @@ const profileFormSchema = z.object({
 type ProfileFormData = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, refreshUser, logout } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profilePicture, setProfilePicture] = useState<string>("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState<string>("");
+  const [deletePassword, setDeletePassword] = useState<string>("");
+
+  const { data: deleteAccountInfo } = useQuery<{ requiresPassword: boolean }>({
+    queryKey: ["/api/users/delete-account-info"],
+    enabled: !!user,
+  });
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -307,6 +325,31 @@ export default function ProfilePage() {
     
     updateProfileMutation.mutate(submitData);
   };
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/users/delete-account", {
+        password: deleteAccountInfo?.requiresPassword ? deletePassword : undefined,
+      });
+      return response.json();
+    },
+    onSuccess: async () => {
+      toast({
+        title: "Conta excluída",
+        description: "Sua conta foi excluída com sucesso.",
+      });
+
+      queryClient.clear();
+      await logout();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir conta",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const getUserInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -711,6 +754,86 @@ export default function ProfilePage() {
                   )}
                 </Button>
               </div>
+
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    Zona de Perigo
+                  </CardTitle>
+                  <CardDescription>
+                    Excluir sua conta é uma ação permanente.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    Ao excluir sua conta, seus projetos e dados associados serão removidos.
+                  </div>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={deleteAccountMutation.isPending}
+                        data-testid="button-delete-account"
+                      >
+                        Excluir minha conta
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão da conta</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. Para confirmar, digite <strong>DELETE</strong>.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+
+                      <div className="space-y-3">
+                        <Input
+                          value={deleteConfirmation}
+                          onChange={(e) => setDeleteConfirmation(e.target.value)}
+                          placeholder="Digite DELETE"
+                          data-testid="input-delete-confirmation"
+                        />
+
+                        {deleteAccountInfo?.requiresPassword ? (
+                          <Input
+                            type="password"
+                            value={deletePassword}
+                            onChange={(e) => setDeletePassword(e.target.value)}
+                            placeholder="Digite sua senha"
+                            data-testid="input-delete-password"
+                          />
+                        ) : null}
+                      </div>
+
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          type="button"
+                          onClick={() => {
+                            setDeleteConfirmation("");
+                            setDeletePassword("");
+                          }}
+                        >
+                          Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          type="button"
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() => deleteAccountMutation.mutate()}
+                          disabled={
+                            deleteAccountMutation.isPending ||
+                            deleteConfirmation.trim().toUpperCase() !== "DELETE" ||
+                            (deleteAccountInfo?.requiresPassword && deletePassword.length === 0)
+                          }
+                        >
+                          {deleteAccountMutation.isPending ? "Excluindo..." : "Excluir definitivamente"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </CardContent>
+              </Card>
             </form>
           </Form>
         </div>
