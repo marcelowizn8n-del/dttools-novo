@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfilePhotoCropDialog from "@/components/ProfilePhotoCropDialog";
 import { 
   Form, 
   FormControl, 
@@ -79,6 +80,8 @@ export default function ProfilePage() {
   const [_, navigate] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profilePicture, setProfilePicture] = useState<string>("");
+  const [cropOpen, setCropOpen] = useState(false);
+  const [pendingCropSrc, setPendingCropSrc] = useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<string>("");
   const [deletePassword, setDeletePassword] = useState<string>("");
 
@@ -190,6 +193,14 @@ export default function ProfilePage() {
       setProfilePicture(profilePic);
     }
   }, [profile, form]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingCropSrc) {
+        URL.revokeObjectURL(pendingCropSrc);
+      }
+    };
+  }, [pendingCropSrc]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfile) => {
@@ -336,20 +347,17 @@ export default function ProfilePage() {
       }
 
       try {
-        // Show loading
-        toast({
-          title: "Processando imagem...",
-          description: "Comprimindo e otimizando sua foto",
-        });
+        if (pendingCropSrc) {
+          URL.revokeObjectURL(pendingCropSrc);
+        }
 
-        // Compress the image
-        const compressedImage = await compressImage(file);
-        setProfilePicture(compressedImage);
-        form.setValue("profilePicture", compressedImage);
+        const objectUrl = URL.createObjectURL(file);
+        setPendingCropSrc(objectUrl);
+        setCropOpen(true);
 
         toast({
-          title: "Foto carregada!",
-          description: "Sua foto foi otimizada e está pronta para salvar",
+          title: "Ajuste o enquadramento",
+          description: "Arraste e use o zoom para enquadrar sua foto",
         });
       } catch (error) {
         toast({
@@ -358,6 +366,8 @@ export default function ProfilePage() {
           variant: "destructive",
         });
       }
+
+      event.target.value = "";
     }
   };
 
@@ -419,6 +429,25 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <ProfilePhotoCropDialog
+        open={cropOpen}
+        onOpenChange={(open) => {
+          setCropOpen(open);
+          if (!open && pendingCropSrc) {
+            URL.revokeObjectURL(pendingCropSrc);
+            setPendingCropSrc(null);
+          }
+        }}
+        imageSrc={pendingCropSrc}
+        onConfirm={(base64) => {
+          setProfilePicture(base64);
+          form.setValue("profilePicture", base64);
+          toast({
+            title: "Foto pronta!",
+            description: "Sua foto foi ajustada e está pronta para salvar",
+          });
+        }}
+      />
       <div className="container mx-auto px-6 py-8 pb-32">
         <div className="max-w-4xl mx-auto">
           {/* Header */}

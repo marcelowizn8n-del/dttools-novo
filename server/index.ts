@@ -23,19 +23,6 @@ const log = (...args: any[]) => {
 // Build version v8.0.0-AUTO-SYNC - Production asset sync implemented
 const BUILD_VERSION = "v8.0.0-AUTO-SYNC";
 
-// Extend session data type
-declare module 'express-session' {
-  interface SessionData {
-    userId?: string;
-    user?: {
-      id: string;
-      username: string;
-      role: string;
-      createdAt: Date;
-    };
-  }
-}
-
 // Create session store - use PostgreSQL in production, memory in development
 const MemStore = MemoryStore(session);
 const PgStore = ConnectPgSimple(session);
@@ -485,6 +472,11 @@ app.use((req, res, next) => {
 
     // SPA fallback - only for non-file requests
     app.use("*", (req, res) => {
+      if (req.originalUrl.startsWith('/api/')) {
+        res.status(404).json({ error: 'API route not found' });
+        return;
+      }
+
       // Only serve index.html if the request doesn't have a file extension
       // This prevents intercepting asset requests
       if (req.originalUrl.includes('.')) {
