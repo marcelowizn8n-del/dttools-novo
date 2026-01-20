@@ -133,6 +133,12 @@ export default function ProfilePage() {
         throw new Error(`${res.status}: ${text}`);
       }
 
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await res.text();
+        throw new Error(`Unexpected content-type: ${contentType}. Body: ${text.slice(0, 200)}`);
+      }
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
