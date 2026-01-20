@@ -8,7 +8,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
+import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Header from "@/components/Header";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
@@ -331,28 +331,36 @@ function App() {
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
-              <div className="bg-background min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  <Router />
-                </main>
-                <CookieConsentBanner />
-                <footer className="border-t border-border">
-                  <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 text-sm text-muted-foreground flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center sm:justify-between">
-                    <div>© {new Date().getFullYear()} DTTools</div>
-                    <div className="flex gap-4">
-                      <Link href="/termos" className="hover:underline">Termos de Uso</Link>
-                      <Link href="/privacidade" className="hover:underline">Política de Privacidade</Link>
-                    </div>
-                  </div>
-                </footer>
-              </div>
+              <AppLayout />
               <Toaster />
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
+  );
+}
+
+function AppLayout() {
+  const { t } = useLanguage();
+
+  return (
+    <div className="bg-background min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1">
+        <Router />
+      </main>
+      <CookieConsentBanner />
+      <footer className="border-t border-border">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 text-sm text-muted-foreground flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center sm:justify-between">
+          <div>© {new Date().getFullYear()} DTTools</div>
+          <div className="flex gap-4">
+            <Link href="/termos" className="hover:underline">{t("footer.terms")}</Link>
+            <Link href="/privacidade" className="hover:underline">{t("footer.privacy")}</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
 

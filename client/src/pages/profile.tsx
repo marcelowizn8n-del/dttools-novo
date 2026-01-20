@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,7 +37,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { openCookiePreferences } from "@/lib/cookieConsent";
-import { updateProfileSchema } from "@shared/schema";
 import type { UpdateProfile, User as UserType } from "@shared/schema";
 import { z } from "zod";
 import {
@@ -52,26 +51,34 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Create form validation schema that matches UpdateProfile requirements
-const profileFormSchema = z.object({
-  name: z.string().default(""),
-  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-  bio: z.string().default(""),
-  company: z.string().default(""),
-  jobRole: z.string().default(""),
-  industry: z.string().default(""),
-  experience: z.string().default(""),
-  country: z.string().default(""),
-  state: z.string().default(""),
-  city: z.string().default(""),
-  zipCode: z.string().default(""),
-  phone: z.string().default(""),
-  interests: z.array(z.string()).default([]),
-  profilePicture: z.string().default(""),
-  dtExperienceLevel: z.string().default(""),
-});
+function createProfileFormSchema(
+  t: (key: string, params?: Record<string, string>) => string
+) {
+  // Create form validation schema that matches UpdateProfile requirements
+  return z.object({
+    name: z.string().default(""),
+    email: z
+      .string()
+      .email(t("profile.validation.email.invalid"))
+      .min(1, t("profile.validation.email.required")),
+    bio: z.string().default(""),
+    company: z.string().default(""),
+    jobRole: z.string().default(""),
+    industry: z.string().default(""),
+    experience: z.string().default(""),
+    country: z.string().default(""),
+    state: z.string().default(""),
+    city: z.string().default(""),
+    zipCode: z.string().default(""),
+    phone: z.string().default(""),
+    interests: z.array(z.string()).default([]),
+    profilePicture: z.string().default(""),
+    dtExperienceLevel: z.string().default(""),
+  });
+}
 
-type ProfileFormData = z.infer<typeof profileFormSchema>;
+// Create form validation schema that matches UpdateProfile requirements
+type ProfileFormData = z.infer<ReturnType<typeof createProfileFormSchema>>;
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading, refreshUser, logout } = useAuth();
@@ -102,6 +109,8 @@ export default function ProfilePage() {
     queryKey: ["/api/users/profile"],
     enabled: !!user,
   });
+
+  const profileFormSchema = useMemo(() => createProfileFormSchema(t), [t]);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),
@@ -207,7 +216,7 @@ export default function ProfilePage() {
       const response = await apiRequest("PUT", "/api/users/profile", data);
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Erro ao atualizar perfil");
+        throw new Error(error.error || t("profile.toast.update.error.title"));
       }
       return response.json();
     },
@@ -229,8 +238,8 @@ export default function ProfilePage() {
       await refreshUser();
       
       toast({
-        title: "Perfil atualizado!",
-        description: "Suas informações foram salvas com sucesso.",
+        title: t("profile.toast.update.success.title"),
+        description: t("profile.toast.update.success.description"),
       });
     },
     onError: (error: Error) => {
@@ -238,13 +247,13 @@ export default function ProfilePage() {
       
       // Handle specific error cases
       if (error.message.includes('413') || error.message.includes('too large')) {
-        errorMessage = "Foto muito grande. Tente uma imagem menor ou use o botão para compressar automaticamente.";
+        errorMessage = t("profile.error.photoTooLarge");
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
-        errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+        errorMessage = t("profile.error.network");
       }
       
       toast({
-        title: "Erro ao atualizar perfil",
+        title: t("profile.toast.update.error.title"),
         description: errorMessage,
         variant: "destructive",
       });
@@ -329,8 +338,8 @@ export default function ProfilePage() {
       // Check if it's an image
       if (!file.type.startsWith('image/')) {
         toast({
-          title: "Arquivo inválido",
-          description: "Por favor, selecione uma imagem (JPG, PNG, etc.)",
+          title: t("profile.toast.invalidFile.title"),
+          description: t("profile.toast.invalidFile.description"),
           variant: "destructive",
         });
         return;
@@ -339,8 +348,10 @@ export default function ProfilePage() {
       // Increased limit to 5MB (more conservative for base64)
       if (file.size > 5 * 1024 * 1024) {
         toast({
-          title: "Arquivo muito grande",
-          description: `A imagem deve ter no máximo 5MB. Sua foto tem ${(file.size / (1024 * 1024)).toFixed(1)}MB`,
+          title: t("profile.toast.fileTooLarge.title"),
+          description: t("profile.toast.fileTooLarge.description", {
+            size: (file.size / (1024 * 1024)).toFixed(1),
+          }),
           variant: "destructive",
         });
         return;
@@ -356,13 +367,13 @@ export default function ProfilePage() {
         setCropOpen(true);
 
         toast({
-          title: "Ajuste o enquadramento",
-          description: "Arraste e use o zoom para enquadrar sua foto",
+          title: t("profile.toast.crop.title"),
+          description: t("profile.toast.crop.description"),
         });
       } catch (error) {
         toast({
-          title: "Erro ao processar imagem",
-          description: "Não foi possível processar sua foto. Tente outra imagem.",
+          title: t("profile.toast.imageProcessError.title"),
+          description: t("profile.toast.imageProcessError.description"),
           variant: "destructive",
         });
       }
@@ -391,8 +402,8 @@ export default function ProfilePage() {
     },
     onSuccess: async () => {
       toast({
-        title: "Conta excluída",
-        description: "Sua conta foi excluída com sucesso.",
+        title: t("profile.toast.delete.success.title"),
+        description: t("profile.toast.delete.success.description"),
       });
 
       queryClient.clear();
@@ -400,7 +411,7 @@ export default function ProfilePage() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao excluir conta",
+        title: t("profile.toast.delete.error.title"),
         description: error.message,
         variant: "destructive",
       });
@@ -416,7 +427,7 @@ export default function ProfilePage() {
       <div className="min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Carregando perfil...</p>
+          <p className="text-gray-600">{t("profile.loading")}</p>
         </div>
       </div>
     );
@@ -443,8 +454,8 @@ export default function ProfilePage() {
           setProfilePicture(base64);
           form.setValue("profilePicture", base64);
           toast({
-            title: "Foto pronta!",
-            description: "Sua foto foi ajustada e está pronta para salvar",
+            title: t("profile.toast.photoReady.title"),
+            description: t("profile.toast.photoReady.description"),
           });
         }}
       />
@@ -453,10 +464,10 @@ export default function ProfilePage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Meu Perfil
+              {t("profile.title")}
             </h1>
             <p className="text-gray-600">
-              Gerencie suas informações pessoais e preferências
+              {t("profile.subtitle")}
             </p>
           </div>
 
@@ -467,10 +478,10 @@ export default function ProfilePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Camera className="w-5 h-5 text-blue-600" />
-                    Foto do Perfil
+                    {t("profile.photo.title")}
                   </CardTitle>
                   <CardDescription>
-                    Escolha uma foto para personalizar seu perfil
+                    {t("profile.photo.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -478,7 +489,7 @@ export default function ProfilePage() {
                     <div className="relative">
                       <Avatar className="w-24 h-24">
                         {profilePicture ? (
-                          <AvatarImage src={profilePicture} alt="Profile" />
+                          <AvatarImage src={profilePicture} alt={t("profile.photo.alt")} />
                         ) : (
                           <AvatarFallback className="bg-blue-600 text-white text-xl">
                             {profile?.name ? getUserInitials(profile.name) : "U"}
@@ -503,10 +514,10 @@ export default function ProfilePage() {
                         data-testid="button-change-photo"
                       >
                         <Camera className="w-4 h-4 mr-2" />
-                        Alterar Foto
+                        {t("profile.photo.change")}
                       </Button>
                       <p className="text-sm text-gray-500 mt-2">
-                        JPG, PNG ou GIF. Máximo 10MB.
+                        {t("profile.photo.hint")}
                       </p>
                     </div>
                     <input
@@ -526,10 +537,10 @@ export default function ProfilePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="w-5 h-5 text-blue-600" />
-                    Informações Pessoais
+                    {t("profile.section.personal.title")}
                   </CardTitle>
                   <CardDescription>
-                    Informações básicas sobre você
+                    {t("profile.section.personal.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -540,10 +551,10 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <User className="w-4 h-4" />
-                          Nome Completo
+                          {t("profile.field.name.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Seu nome completo" {...field} data-testid="input-name" />
+                          <Input placeholder={t("profile.field.name.placeholder")} {...field} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -557,12 +568,12 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Mail className="w-4 h-4" />
-                          Email
+                          {t("profile.field.email.label")}
                         </FormLabel>
                         <FormControl>
                           <Input 
                             type="email" 
-                            placeholder="seu@email.com" 
+                            placeholder={t("profile.field.email.placeholder")} 
                             {...field} 
                             data-testid="input-email"
                           />
@@ -579,10 +590,10 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Phone className="w-4 h-4" />
-                          Telefone
+                          {t("profile.field.phone.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="(11) 99999-9999" {...field} data-testid="input-phone" />
+                          <Input placeholder={t("profile.field.phone.placeholder")} {...field} data-testid="input-phone" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -597,11 +608,11 @@ export default function ProfilePage() {
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
                             <FileText className="w-4 h-4" />
-                            Bio
+                            {t("profile.field.bio.label")}
                           </FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Conte um pouco sobre você..."
+                              placeholder={t("profile.field.bio.placeholder")}
                               className="resize-none"
                               rows={3}
                               {...field}
@@ -621,10 +632,10 @@ export default function ProfilePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Briefcase className="w-5 h-5 text-blue-600" />
-                    Informações Profissionais
+                    {t("profile.section.professional.title")}
                   </CardTitle>
                   <CardDescription>
-                    Detalhes sobre sua carreira e experiência
+                    {t("profile.section.professional.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -635,10 +646,10 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Briefcase className="w-4 h-4" />
-                          Cargo
+                          {t("profile.field.jobRole.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Designer, Desenvolvedor, etc." {...field} data-testid="input-job-role" />
+                          <Input placeholder={t("profile.field.jobRole.placeholder")} {...field} data-testid="input-job-role" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -652,10 +663,10 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Building className="w-4 h-4" />
-                          Empresa
+                          {t("profile.field.company.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Nome da empresa" {...field} data-testid="input-company" />
+                          <Input placeholder={t("profile.field.company.placeholder")} {...field} data-testid="input-company" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -669,10 +680,10 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Globe className="w-4 h-4" />
-                          Setor
+                          {t("profile.field.industry.label")}
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Tecnologia, Design, etc." {...field} data-testid="input-industry" />
+                          <Input placeholder={t("profile.field.industry.placeholder")} {...field} data-testid="input-industry" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -684,9 +695,9 @@ export default function ProfilePage() {
                     name="experience"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Experiência</FormLabel>
+                        <FormLabel>{t("profile.field.experience.label")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Júnior, Pleno, Sênior, etc." {...field} data-testid="input-experience" />
+                          <Input placeholder={t("profile.field.experience.placeholder")} {...field} data-testid="input-experience" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -699,10 +710,10 @@ export default function ProfilePage() {
               <Card className="shadow-lg border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    Nível de experiência em Design Thinking
+                    {t("profile.section.dtExperience.title")}
                   </CardTitle>
                   <CardDescription>
-                    Nos ajude a adaptar a linguagem, exemplos e passos do DTTOOLS para o seu nível atual.
+                    {t("profile.section.dtExperience.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -711,21 +722,21 @@ export default function ProfilePage() {
                     name="dtExperienceLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nível atual</FormLabel>
+                        <FormLabel>{t("profile.field.dtExperienceLevel.label")}</FormLabel>
                         <FormControl>
                           <Select
                             onValueChange={field.onChange}
                             value={field.value || ""}
                           >
                             <SelectTrigger data-testid="select-dt-experience-level">
-                              <SelectValue placeholder="Selecione seu nível" />
+                              <SelectValue placeholder={t("profile.field.dtExperienceLevel.placeholder")} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="beginner">
-                                Estou começando em Design Thinking
+                                {t("profile.field.dtExperienceLevel.beginner")}
                               </SelectItem>
                               <SelectItem value="advanced">
-                                Já trabalho com Design Thinking no dia a dia
+                                {t("profile.field.dtExperienceLevel.advanced")}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -742,10 +753,10 @@ export default function ProfilePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-blue-600" />
-                    Localização
+                    {t("profile.section.location.title")}
                   </CardTitle>
                   <CardDescription>
-                    Onde você está localizado
+                    {t("profile.section.location.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -754,9 +765,9 @@ export default function ProfilePage() {
                     name="country"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>País</FormLabel>
+                        <FormLabel>{t("profile.field.country.label")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Brasil" {...field} data-testid="input-country" />
+                          <Input placeholder={t("profile.field.country.placeholder")} {...field} data-testid="input-country" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -768,9 +779,9 @@ export default function ProfilePage() {
                     name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Estado</FormLabel>
+                        <FormLabel>{t("profile.field.state.label")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="São Paulo" {...field} data-testid="input-state" />
+                          <Input placeholder={t("profile.field.state.placeholder")} {...field} data-testid="input-state" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -782,9 +793,9 @@ export default function ProfilePage() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cidade</FormLabel>
+                        <FormLabel>{t("profile.field.city.label")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="São Paulo" {...field} data-testid="input-city" />
+                          <Input placeholder={t("profile.field.city.placeholder")} {...field} data-testid="input-city" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -796,9 +807,9 @@ export default function ProfilePage() {
                     name="zipCode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>CEP</FormLabel>
+                        <FormLabel>{t("profile.field.zipCode.label")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="00000-000" {...field} data-testid="input-zip-code" />
+                          <Input placeholder={t("profile.field.zipCode.placeholder")} {...field} data-testid="input-zip-code" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -819,12 +830,12 @@ export default function ProfilePage() {
                   {updateProfileMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Salvando...
+                      {t("profile.saving")}
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Salvar Alterações
+                      {t("profile.save")}
                     </>
                   )}
                 </Button>
@@ -833,15 +844,15 @@ export default function ProfilePage() {
               <Card className="shadow-lg border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-destructive">
-                    Zona de Perigo
+                    {t("profile.dangerZone.title")}
                   </CardTitle>
                   <CardDescription>
-                    Excluir sua conta é uma ação permanente.
+                    {t("profile.dangerZone.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-sm text-muted-foreground">
-                    Ao excluir sua conta, seus projetos e dados associados serão removidos.
+                    {t("profile.dangerZone.warning")}
                   </div>
 
                   <AlertDialog>
@@ -852,14 +863,14 @@ export default function ProfilePage() {
                         disabled={deleteAccountMutation.isPending}
                         data-testid="button-delete-account"
                       >
-                        Excluir minha conta
+                        {t("profile.dangerZone.deleteButton")}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar exclusão da conta</AlertDialogTitle>
+                        <AlertDialogTitle>{t("profile.dangerZone.dialog.title")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta ação não pode ser desfeita. Para confirmar, digite <strong>DELETE</strong>.
+                          {t("profile.dangerZone.dialog.description")}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
 
@@ -867,7 +878,7 @@ export default function ProfilePage() {
                         <Input
                           value={deleteConfirmation}
                           onChange={(e) => setDeleteConfirmation(e.target.value)}
-                          placeholder="Digite DELETE"
+                          placeholder={t("profile.dangerZone.dialog.placeholder")}
                           data-testid="input-delete-confirmation"
                         />
 
@@ -876,7 +887,7 @@ export default function ProfilePage() {
                             type="password"
                             value={deletePassword}
                             onChange={(e) => setDeletePassword(e.target.value)}
-                            placeholder="Digite sua senha"
+                            placeholder={t("profile.dangerZone.dialog.passwordPlaceholder")}
                             data-testid="input-delete-password"
                           />
                         ) : null}
@@ -890,7 +901,7 @@ export default function ProfilePage() {
                             setDeletePassword("");
                           }}
                         >
-                          Cancelar
+                          {t("profile.dangerZone.dialog.cancel")}
                         </AlertDialogCancel>
                         <AlertDialogAction
                           type="button"
@@ -902,7 +913,7 @@ export default function ProfilePage() {
                             (deleteAccountInfo?.requiresPassword && deletePassword.length === 0)
                           }
                         >
-                          {deleteAccountMutation.isPending ? "Excluindo..." : "Excluir definitivamente"}
+                          {deleteAccountMutation.isPending ? t("profile.dangerZone.dialog.deleting") : t("profile.dangerZone.dialog.confirm")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
