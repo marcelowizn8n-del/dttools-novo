@@ -1,0 +1,9 @@
+{
+  "appId": "com.designthinkingtools.dttools",
+  "appName": "Design Thinking Tools",
+  "webDir": "www",
+  "server": {
+    "url": "https://www.dttools.app",
+    "cleartext": false
+  }
+}

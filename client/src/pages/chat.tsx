@@ -439,9 +439,11 @@ export default function ChatPage() {
 
                 {/* Input */}
                 <div className="mb-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                  Ao usar o chat, sua mensagem e partes do contexto do projeto (ex.: nome/descrição e fase) podem ser processados por provedores de IA para gerar respostas. Não compartilhe senhas, dados bancários ou informações sensíveis. Ao continuar, você concorda com nossos{" "}
-                  <Link href="/termos" className="underline">Termos</Link> e{" "}
-                  <Link href="/privacidade" className="underline">Política de Privacidade</Link>.
+                  {t("chat.legalNotice.before")}
+                  <Link href="/termos" className="underline">{t("chat.legalNotice.terms")}</Link>
+                  {t("chat.legalNotice.middle")}
+                  <Link href="/privacidade" className="underline">{t("chat.legalNotice.privacy")}</Link>
+                  {t("chat.legalNotice.after")}
                 </div>
                 <div className="flex gap-2 pt-2 pb-2">
                   <Input

@@ -27,6 +27,7 @@ export default function CookieConsentBanner() {
 
   const [analytics, setAnalytics] = useState<boolean>(existing?.analytics ?? false);
   const [marketing, setMarketing] = useState<boolean>(existing?.marketing ?? false);
+  const [errorReporting, setErrorReporting] = useState<boolean>(existing?.errorReporting ?? true);
 
   useEffect(() => {
     const consent = getCookieConsent();
@@ -38,6 +39,7 @@ export default function CookieConsentBanner() {
       const current = getCookieConsent();
       setAnalytics(current?.analytics ?? false);
       setMarketing(current?.marketing ?? false);
+      setErrorReporting(current?.errorReporting ?? true);
       setPreferencesOpen(true);
     });
 
@@ -45,17 +47,17 @@ export default function CookieConsentBanner() {
   }, []);
 
   const acceptAll = () => {
-    setCookieConsent({ essential: true, analytics: true, marketing: true });
+    setCookieConsent({ essential: true, analytics: true, marketing: true, errorReporting: true });
     setVisible(false);
   };
 
   const rejectNonEssential = () => {
-    setCookieConsent({ essential: true, analytics: false, marketing: false });
+    setCookieConsent({ essential: true, analytics: false, marketing: false, errorReporting: true });
     setVisible(false);
   };
 
   const savePreferences = () => {
-    setCookieConsent({ essential: true, analytics, marketing });
+    setCookieConsent({ essential: true, analytics, marketing, errorReporting });
     setVisible(false);
     setPreferencesOpen(false);
   };
@@ -139,6 +141,18 @@ export default function CookieConsentBanner() {
                 </div>
               </div>
               <Switch checked={marketing} onCheckedChange={setMarketing} />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>{t("privacy.cookies.categories.errorReporting")}</Label>
+                <div className="text-sm text-muted-foreground">
+                  {t("privacy.cookies.categories.errorReporting.desc")}
+                </div>
+              </div>
+              <Switch checked={errorReporting} onCheckedChange={setErrorReporting} />
             </div>
           </div>
 

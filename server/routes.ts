@@ -3062,6 +3062,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         googleId: _googleId,
         stripeCustomerId: _stripeCustomerId,
         stripeSubscriptionId: _stripeSubscriptionId,
+        subscriptionPlanId: _subscriptionPlanId,
+        subscriptionStatus: _subscriptionStatus,
+        subscriptionEndDate: _subscriptionEndDate,
         ...userProfile
       } = currentUser;
 
@@ -3071,16 +3074,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getUserAddons(currentUser.id),
       ]);
 
+      const sanitizedUserAddons = userAddons.map(
+        ({
+          id: _id,
+          userId: _userId,
+          stripeSubscriptionId: _addonStripeSubscriptionId,
+          ...addon
+        }) => addon,
+      );
+
       const exportPayload = {
         exportedAt: new Date().toISOString(),
         user: userProfile,
         projects,
         doubleDiamondProjects,
-        userAddons,
+        userAddons: sanitizedUserAddons,
       };
 
       const stamp = new Date().toISOString().slice(0, 10);
       res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="dttools-data-export-${stamp}.json"`,

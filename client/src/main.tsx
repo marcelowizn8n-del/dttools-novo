@@ -3,6 +3,155 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import ScreenshotGenerator from "./utils/screenshot-generator";
+import {
+  isAnalyticsAllowed,
+  isErrorReportingAllowed,
+  onCookieConsentUpdated,
+} from "./lib/cookieConsent";
+
+declare global {
+  interface Window {
+    dataLayer?: any[];
+    gtag?: (...args: any[]) => void;
+    Sentry?: any;
+    __dttoolsGaLoaded?: boolean;
+    __dttoolsSentryLoaded?: boolean;
+  }
+}
+
+function loadScript(src: string, id: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById(id) as HTMLScriptElement | null;
+    if (existing) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = id;
+    script.async = true;
+    script.src = src;
+    script.crossOrigin = "anonymous";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function getEnv(name: string): string | undefined {
+  return (import.meta.env as any)?.[name] as string | undefined;
+}
+
+function ensureGaLoaded() {
+  const measurementId = getEnv("VITE_GA4_MEASUREMENT_ID");
+  if (!measurementId) return;
+  if (window.__dttoolsGaLoaded) return;
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function gtag() {
+    window.dataLayer!.push(arguments);
+  };
+
+  window.__dttoolsGaLoaded = true;
+
+  loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`, "dttools-ga4")
+    .then(() => {
+      if (!window.gtag) return;
+      window.gtag("js", new Date());
+      window.gtag("config", measurementId, {
+        anonymize_ip: true,
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false,
+      });
+    })
+    .catch((err) => {
+      console.warn("GA4 load failed:", err);
+    });
+}
+
+function enableGa() {
+  const measurementId = getEnv("VITE_GA4_MEASUREMENT_ID");
+  if (!measurementId) return;
+
+  (window as any)[`ga-disable-${measurementId}`] = false;
+  ensureGaLoaded();
+
+  if (window.__dttoolsGaLoaded && window.gtag) {
+    window.gtag("config", measurementId, {
+      anonymize_ip: true,
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+    });
+  }
+}
+
+function disableGa() {
+  const measurementId = getEnv("VITE_GA4_MEASUREMENT_ID");
+  if (!measurementId) return;
+  (window as any)[`ga-disable-${measurementId}`] = true;
+}
+
+function ensureSentryLoaded() {
+  const dsn = getEnv("VITE_SENTRY_DSN");
+  if (!dsn) return;
+  if (window.__dttoolsSentryLoaded) return;
+
+  window.__dttoolsSentryLoaded = true;
+
+  loadScript("https://browser.sentry-cdn.com/7.120.0/bundle.tracing.min.js", "dttools-sentry")
+    .then(() => {
+      const Sentry = window.Sentry;
+      if (!Sentry?.init) return;
+
+      const environment = getEnv("VITE_SENTRY_ENVIRONMENT") || (import.meta.env.PROD ? "production" : "development");
+      const release = getEnv("VITE_SENTRY_RELEASE");
+
+      Sentry.init({
+        dsn,
+        environment,
+        release,
+        sendDefaultPii: false,
+        tracesSampleRate: 0.05,
+        beforeSend(event: any) {
+          if (event?.user) delete event.user;
+          return event;
+        },
+      });
+    })
+    .catch((err) => {
+      console.warn("Sentry load failed:", err);
+    });
+}
+
+function disableSentry() {
+  try {
+    const Sentry = window.Sentry;
+    if (Sentry?.close) {
+      Sentry.close(0);
+    }
+  } catch {
+    // ignore
+  }
+
+  window.__dttoolsSentryLoaded = false;
+}
+
+function syncTelemetryWithConsent() {
+  if (isAnalyticsAllowed()) {
+    enableGa();
+  } else {
+    disableGa();
+  }
+
+  if (isErrorReportingAllowed()) {
+    ensureSentryLoaded();
+  } else {
+    disableSentry();
+  }
+}
+
+syncTelemetryWithConsent();
+onCookieConsentUpdated(() => syncTelemetryWithConsent());
 
 // Global error handling
 window.onerror = (message, source, lineno, colno, error) => {
@@ -15,7 +164,7 @@ window.onerror = (message, source, lineno, colno, error) => {
   });
   
   // Log to monitoring service in production
-  if (import.meta.env.PROD) {
+  if (import.meta.env.PROD && isErrorReportingAllowed()) {
     // Send to analytics/monitoring service
     console.warn("Error logged for monitoring:", message);
   }
@@ -31,7 +180,7 @@ window.addEventListener('unhandledrejection', (event) => {
   });
   
   // Log to monitoring service in production
-  if (import.meta.env.PROD) {
+  if (import.meta.env.PROD && isErrorReportingAllowed()) {
     console.warn("Promise rejection logged for monitoring:", event.reason);
   }
   
