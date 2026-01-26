@@ -5579,6 +5579,67 @@ app.post(
     }
   }
 );
+
+  // POST /api/double-diamond/:id/generate/discover - Gera Fase 1: Discover com IA
+  app.post("/api/double-diamond/:id/generate/discover", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const project = await storage.getDoubleDiamondProject(req.params.id, userId);
+      if (!project) {
+        return res.status(404).json({ error: "Double Diamond project not found" });
+      }
+
+      if (!project.targetAudience || !project.problemStatement) {
+        return res.status(400).json({ error: "Project briefing must be completed first" });
+      }
+
+      // Get language from request body or default to pt-BR
+      const language = req.body.language || "pt-BR";
+
+      // Buscar setor
+      let sectorName = "General";
+      if (project.sectorId) {
+        const sector = await storage.getIndustrySector(project.sectorId);
+        if (sector) sectorName = sector.name;
+      }
+
+      // Buscar case de sucesso
+      let successCaseName: string | undefined;
+      if (project.customSuccessCase && project.customSuccessCase.trim() !== "") {
+        successCaseName = project.customSuccessCase.trim();
+      } else if (project.successCaseId) {
+        const successCase = await storage.getSuccessCase(project.successCaseId);
+        if (successCase) {
+          successCaseName = successCase.name;
+        }
+      }
+
+      const result = await generateDiscoverPhase({
+        sector: sectorName,
+        successCase: successCaseName,
+        targetAudience: project.targetAudience,
+        problemStatement: project.problemStatement,
+        language,
+      });
+
+      const updated = await storage.updateDoubleDiamondProject(project.id, userId, {
+        discoverPainPoints: result.painPoints as any,
+        discoverInsights: result.insights as any,
+        discoverUserNeeds: result.userNeeds as any,
+        discoverEmpathyMap: result.empathyMap as any,
+        discoverStatus: "completed",
+        currentPhase: "define",
+        completionPercentage: 25,
+        generationCount: (project.generationCount || 0) + 1,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error generating Discover phase: - routes.ts", error);
+      res.status(500).json({ error: "Failed to generate Discover phase" });
+    }
+  });
+
   app.post("/api/double-diamond/:id/generate/define", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
