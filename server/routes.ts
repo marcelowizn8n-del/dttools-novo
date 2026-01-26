@@ -4,6 +4,8 @@ import multer from "multer";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
+import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import passport from "./passport-config";
 import { storage, initializeDefaultData } from "./storage";
 import { 
@@ -227,6 +229,179 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error('Apenas arquivos de imagem são permitidos'));
+    }
+  },
+});
+
+function normalizeImportKey(k: unknown) {
+  return String(k ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function extractEmailFromBio(bio: unknown) {
+  const s = String(bio ?? "");
+  const m = s.match(/email\s*:\s*([^|\n\r]+)/i);
+  const email = (m?.[1] ?? "").trim();
+  return email || null;
+}
+
+function toGoogleSheetsCsvUrl(inputUrl: string) {
+  const url = String(inputUrl || "").trim();
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes("docs.google.com")) return null;
+    if (!u.pathname.includes("/spreadsheets/")) return null;
+    const m = u.pathname.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    const id = m?.[1];
+    if (!id) return null;
+    const gid = u.hash?.match(/gid=(\d+)/)?.[1] || u.searchParams.get("gid");
+    const exportUrl = new URL(`https://docs.google.com/spreadsheets/d/${id}/export`);
+    exportUrl.searchParams.set("format", "csv");
+    if (gid) exportUrl.searchParams.set("gid", gid);
+    return exportUrl.toString();
+  } catch {
+    return null;
+  }
+}
+
+function extractValueFromRow(row: any, keys: string[]) {
+  if (!row || typeof row !== "object") return "";
+  const entries = Object.entries(row);
+  for (const k of keys) {
+    const found = entries.find(([rk]) => normalizeImportKey(rk) === k);
+    if (found) {
+      const v = found[1];
+      const s = String(v ?? "").trim();
+      if (s) return s;
+    }
+  }
+  return "";
+}
+
+async function upsertPersonasFromRows(args: {
+  projectId: string;
+  rows: any[];
+  maxPersonas: number | null | undefined;
+}) {
+  const { projectId, rows, maxPersonas } = args;
+
+  const nameKeys = ["nome", "name", "fullname", "contato", "contact", "person"].map(normalizeImportKey);
+  const emailKeys = ["email", "e-mail", "mail"].map(normalizeImportKey);
+  const companyKeys = ["empresa", "company", "organizacao", "organization"].map(normalizeImportKey);
+  const roleKeys = ["cargo", "role", "jobtitle", "title", "posicao", "position"].map(normalizeImportKey);
+  const countryKeys = ["pais", "country"].map(normalizeImportKey);
+  const stateKeys = ["estado", "state", "uf", "provincia", "province"].map(normalizeImportKey);
+  const cityKeys = ["cidade", "city", "municipio", "town"].map(normalizeImportKey);
+
+  let imported = 0;
+  let updated = 0;
+  let skipped = 0;
+  const created: any[] = [];
+
+  const existingPersonas = await storage.getPersonas(projectId);
+  const byName = new Map<string, any>();
+  const byEmail = new Map<string, any>();
+
+  for (const p of existingPersonas) {
+    const nk = String(p.name || "").trim().toLowerCase();
+    if (nk) byName.set(nk, p);
+    const em = extractEmailFromBio(p.bio);
+    if (em) byEmail.set(em.toLowerCase(), p);
+  }
+
+  for (const row of rows) {
+    const name = extractValueFromRow(row, nameKeys);
+    const email = extractValueFromRow(row, emailKeys);
+    const company = extractValueFromRow(row, companyKeys);
+    const role = extractValueFromRow(row, roleKeys);
+    const country = extractValueFromRow(row, countryKeys);
+    const state = extractValueFromRow(row, stateKeys);
+    const city = extractValueFromRow(row, cityKeys);
+
+    if (!name && !email) {
+      skipped++;
+      continue;
+    }
+
+    const occupation = role || "";
+    const locationParts = [city, state, country].filter((p) => String(p || "").trim() !== "");
+    const bioParts = [
+      company ? `Empresa: ${company}` : "",
+      locationParts.length ? `Local: ${locationParts.join(", ")}` : "",
+      email ? `Email: ${email}` : "",
+    ].filter((p) => p !== "");
+    const bio = bioParts.join(" | ");
+
+    const existing = (email ? byEmail.get(email.trim().toLowerCase()) : null) || (name ? byName.get(name.trim().toLowerCase()) : null);
+    if (existing) {
+      const updatePayload: any = {};
+      if (name && name.trim() && name.trim() !== existing.name) updatePayload.name = name.trim();
+      if (occupation && occupation.trim()) updatePayload.occupation = occupation.trim();
+      if (bio && bio.trim()) updatePayload.bio = bio.trim();
+      if (Object.keys(updatePayload).length > 0) {
+        await storage.updatePersona(existing.id, updatePayload);
+      }
+      updated++;
+      continue;
+    }
+
+    if (typeof maxPersonas === "number") {
+      const currentCount = existingPersonas.length + created.length;
+      if (currentCount >= maxPersonas) {
+        break;
+      }
+    }
+
+    if (!name) {
+      skipped++;
+      continue;
+    }
+
+    const personaPayload = insertPersonaSchema.parse({
+      projectId,
+      name: name.trim(),
+      age: undefined,
+      occupation: occupation.trim() || undefined,
+      bio: bio || undefined,
+      goals: [],
+      frustrations: [],
+      motivations: [],
+      techSavviness: undefined,
+      avatar: undefined,
+    });
+
+    const persona = await storage.createPersona(personaPayload);
+    created.push(persona);
+    imported++;
+    const nk = String(persona.name || "").trim().toLowerCase();
+    if (nk) byName.set(nk, persona);
+    if (email) byEmail.set(email.trim().toLowerCase(), persona);
+  }
+
+  return { imported, updated, skipped, personas: created };
+}
+
+const uploadSpreadsheet = multer({
+  storage: storage_config,
+  limits: {
+    fileSize: 50 * 1024 * 1024,
+  },
+  fileFilter: (req: any, file: any, cb: any) => {
+    const mime = String(file.mimetype || "").toLowerCase();
+    const name = String(file.originalname || "").toLowerCase();
+    const isCsv = mime === "text/csv" || name.endsWith(".csv");
+    const isXlsx = mime === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || name.endsWith(".xlsx");
+    const isXls = mime === "application/vnd.ms-excel" || name.endsWith(".xls");
+
+    if (isCsv || isXlsx || isXls) {
+      cb(null, true);
+    } else {
+      cb(new Error("Formato inválido. Envie CSV ou XLSX."));
     }
   },
 });
@@ -515,6 +690,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Error processing webhook: - routes.ts:514", error);
         res.status(500).json({ error: "Webhook processing failed" });
+      }
+    }
+  );
+
+  app.post(
+    "/api/projects/:projectId/personas/import",
+    requireAuth,
+    loadUserSubscription,
+    uploadSpreadsheet.single("file"),
+    async (req: any, res) => {
+      try {
+        const projectId = req.params.projectId as string;
+
+        if (!req.file) {
+          return res.status(400).json({ error: "Nenhum arquivo enviado" });
+        }
+
+        const parseRows = (): any[] => {
+          const mime = String(req.file.mimetype || "").toLowerCase();
+          const name = String(req.file.originalname || "").toLowerCase();
+          const isCsv = mime === "text/csv" || name.endsWith(".csv");
+
+          if (isCsv) {
+            const text = Buffer.from(req.file.buffer).toString("utf8");
+            const parsed = Papa.parse(text, {
+              header: true,
+              skipEmptyLines: true,
+              dynamicTyping: false,
+            });
+            if (parsed.errors && parsed.errors.length > 0) {
+              throw new Error(parsed.errors[0]?.message || "Falha ao ler CSV");
+            }
+            return (parsed.data as any[]) || [];
+          }
+
+          const wb = XLSX.read(req.file.buffer, { type: "buffer" });
+          const firstSheetName = wb.SheetNames?.[0];
+          if (!firstSheetName) return [];
+          const sheet = wb.Sheets[firstSheetName];
+          return (XLSX.utils.sheet_to_json(sheet, { defval: "" }) as any[]) || [];
+        };
+
+        const rows = parseRows();
+        if (!Array.isArray(rows) || rows.length === 0) {
+          return res.status(400).json({ error: "A planilha está vazia ou sem cabeçalho" });
+        }
+
+        const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas });
+        res.json({ ...result, projectId });
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao importar contatos", details: msg });
+      }
+    }
+  );
+
+  app.post(
+    "/api/projects/:projectId/personas/import-from-sheets",
+    requireAuth,
+    loadUserSubscription,
+    async (req: any, res) => {
+      try {
+        const projectId = req.params.projectId as string;
+        const url = String(req.body?.url || req.body?.sheetUrl || "").trim();
+        if (!url) {
+          return res.status(400).json({ error: "Link do Google Sheets é obrigatório" });
+        }
+
+        const csvUrl = toGoogleSheetsCsvUrl(url);
+        if (!csvUrl) {
+          return res.status(400).json({ error: "Link inválido do Google Sheets" });
+        }
+
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+          const text = await response.text().catch(() => "");
+          return res.status(400).json({
+            error: "Não foi possível baixar a planilha",
+            details: text || `HTTP ${response.status}`,
+          });
+        }
+
+        const csvText = await response.text();
+        const parsed = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: false,
+        });
+        if (parsed.errors && parsed.errors.length > 0) {
+          throw new Error(parsed.errors[0]?.message || "Falha ao ler CSV do Google Sheets");
+        }
+
+        const rows = (parsed.data as any[]) || [];
+        if (!Array.isArray(rows) || rows.length === 0) {
+          return res.status(400).json({ error: "A planilha está vazia ou sem cabeçalho" });
+        }
+
+        const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas });
+        res.json({ ...result, projectId });
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao importar contatos", details: msg });
       }
     }
   );
@@ -5963,6 +6242,175 @@ app.post(
     }
   });
 
+  app.post(
+    "/api/double-diamond/:id/personas/import",
+    requireAuth,
+    loadUserSubscription,
+    uploadSpreadsheet.single("file"),
+    async (req: any, res) => {
+      try {
+        const userId = req.session.userId!;
+        const ddId = req.params.id as string;
+
+        const ddProject = await storage.getDoubleDiamondProject(ddId, userId);
+        if (!ddProject) {
+          return res.status(404).json({ error: "Double Diamond project not found" });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ error: "Nenhum arquivo enviado" });
+        }
+
+        let mainProjectId = (ddProject as any).projectId as string | null | undefined;
+        if (mainProjectId) {
+          const existing = await storage.getProject(mainProjectId, userId);
+          if (!existing) mainProjectId = null;
+        }
+
+        if (!mainProjectId) {
+          const created = await storage.createProject({
+            name: `${ddProject.name} (Continuação)`,
+            description: ddProject.description || `Projeto exportado do Double Diamond: ${ddProject.name}`,
+            status: "in_progress",
+            currentPhase: 1,
+            completionRate: 0,
+            sectorId: (ddProject as any).sectorId || null,
+            successCaseId: (ddProject as any).successCaseId || null,
+            userProblemDescription: (ddProject as any).problemStatement || null,
+            aiGenerated: true,
+            generationTimestamp: new Date(),
+            businessModelBase: null,
+            userId,
+          } as any);
+
+          mainProjectId = created.id;
+          await storage.updateDoubleDiamondProject(ddId, userId, { projectId: mainProjectId } as any);
+        }
+
+        const mime = String(req.file.mimetype || "").toLowerCase();
+        const name = String(req.file.originalname || "").toLowerCase();
+        const isCsv = mime === "text/csv" || name.endsWith(".csv");
+
+        let rows: any[] = [];
+        if (isCsv) {
+          const text = Buffer.from(req.file.buffer).toString("utf8");
+          const parsed = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: false,
+          });
+          if (parsed.errors && parsed.errors.length > 0) {
+            throw new Error(parsed.errors[0]?.message || "Falha ao ler CSV");
+          }
+          rows = (parsed.data as any[]) || [];
+        } else {
+          const wb = XLSX.read(req.file.buffer, { type: "buffer" });
+          const firstSheetName = wb.SheetNames?.[0];
+          if (!firstSheetName) rows = [];
+          else {
+            const sheet = wb.Sheets[firstSheetName];
+            rows = (XLSX.utils.sheet_to_json(sheet, { defval: "" }) as any[]) || [];
+          }
+        }
+
+        if (!Array.isArray(rows) || rows.length === 0) {
+          return res.status(400).json({ error: "A planilha está vazia ou sem cabeçalho" });
+        }
+
+        const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas });
+        res.json({ ...result, projectId: mainProjectId });
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao importar contatos", details: msg });
+      }
+    }
+  );
+
+  app.post(
+    "/api/double-diamond/:id/personas/import-from-sheets",
+    requireAuth,
+    loadUserSubscription,
+    async (req: any, res) => {
+      try {
+        const userId = req.session.userId!;
+        const ddId = req.params.id as string;
+
+        const ddProject = await storage.getDoubleDiamondProject(ddId, userId);
+        if (!ddProject) {
+          return res.status(404).json({ error: "Double Diamond project not found" });
+        }
+
+        const url = String(req.body?.url || req.body?.sheetUrl || "").trim();
+        if (!url) {
+          return res.status(400).json({ error: "Link do Google Sheets é obrigatório" });
+        }
+
+        const csvUrl = toGoogleSheetsCsvUrl(url);
+        if (!csvUrl) {
+          return res.status(400).json({ error: "Link inválido do Google Sheets" });
+        }
+
+        let mainProjectId = (ddProject as any).projectId as string | null | undefined;
+        if (mainProjectId) {
+          const existing = await storage.getProject(mainProjectId, userId);
+          if (!existing) mainProjectId = null;
+        }
+
+        if (!mainProjectId) {
+          const created = await storage.createProject({
+            name: `${ddProject.name} (Continuação)`,
+            description: ddProject.description || `Projeto exportado do Double Diamond: ${ddProject.name}`,
+            status: "in_progress",
+            currentPhase: 1,
+            completionRate: 0,
+            sectorId: (ddProject as any).sectorId || null,
+            successCaseId: (ddProject as any).successCaseId || null,
+            userProblemDescription: (ddProject as any).problemStatement || null,
+            aiGenerated: true,
+            generationTimestamp: new Date(),
+            businessModelBase: null,
+            userId,
+          } as any);
+
+          mainProjectId = created.id;
+          await storage.updateDoubleDiamondProject(ddId, userId, { projectId: mainProjectId } as any);
+        }
+
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+          const text = await response.text().catch(() => "");
+          return res.status(400).json({
+            error: "Não foi possível baixar a planilha",
+            details: text || `HTTP ${response.status}`,
+          });
+        }
+
+        const csvText = await response.text();
+        const parsed = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: false,
+        });
+        if (parsed.errors && parsed.errors.length > 0) {
+          throw new Error(parsed.errors[0]?.message || "Falha ao ler CSV do Google Sheets");
+        }
+
+        const rows = (parsed.data as any[]) || [];
+        if (!Array.isArray(rows) || rows.length === 0) {
+          return res.status(400).json({ error: "A planilha está vazia ou sem cabeçalho" });
+        }
+
+        const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas });
+        res.json({ ...result, projectId: mainProjectId });
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao importar contatos", details: msg });
+      }
+    }
+  );
+
   // POST /api/double-diamond/:id/export - Exporta projeto Double Diamond para o sistema principal
   app.post("/api/double-diamond/:id/export", requireAuth, loadUserSubscription, async (req, res) => {
     try {
@@ -5994,27 +6442,42 @@ app.post(
         }
       }
 
-      // 3. Converter o projeto Double Diamond para um projeto principal
-      const newProject = {
-        name: projectName || `${project.name} (Exportado)`,
-        description: project.description || `Projeto exportado do Double Diamond: ${project.name}`,
-        status: "in_progress",
-        currentPhase: 1,
-        completionRate: 0,
-        sectorId: project.sectorId || null,
-        successCaseId: project.successCaseId || null,
-        userProblemDescription: project.problemStatement || null,
-        aiGenerated: true,
-        generationTimestamp: new Date(),
-        businessModelBase: null,
-        userId: userId
-      };
+      let createdProject: any | null = null;
+      let didCreateProject = false;
 
-      // 4. Salvar o novo projeto
-      const createdProject = await storage.createProject(newProject);
+      const linkedProjectId = (project as any).projectId as string | null | undefined;
+      if (linkedProjectId) {
+        const existing = await storage.getProject(linkedProjectId, userId);
+        if (existing) createdProject = existing;
+      }
+
+      if (!createdProject) {
+        const newProject = {
+          name: projectName || `${project.name} (Exportado)`,
+          description: project.description || `Projeto exportado do Double Diamond: ${project.name}`,
+          status: "in_progress",
+          currentPhase: 1,
+          completionRate: 0,
+          sectorId: project.sectorId || null,
+          successCaseId: project.successCaseId || null,
+          userProblemDescription: project.problemStatement || null,
+          aiGenerated: true,
+          generationTimestamp: new Date(),
+          businessModelBase: null,
+          userId: userId
+        };
+
+        createdProject = await storage.createProject(newProject);
+        didCreateProject = true;
+        await storage.updateDoubleDiamondProject(id, userId, { projectId: createdProject.id } as any);
+      }
 
       // 4.1 Mapear dados do Double Diamond para as 5 fases do projeto principal (best-effort)
       try {
+        if (!didCreateProject) {
+          // avoid duplicating entities if project was previously created
+          throw new Error("skip_mapping_existing_project");
+        }
         // Fase 1: Empatizar - Mapa de Empatia a partir do Discover
         if (project.discoverEmpathyMap) {
           const em = project.discoverEmpathyMap as any;
@@ -6116,11 +6579,16 @@ app.post(
           });
         }
       } catch (phaseError) {
-        console.error("Erro ao mapear dados do Double Diamond para projeto principal: - routes.ts:5599", phaseError);
+        if (!(phaseError instanceof Error) || phaseError.message !== "skip_mapping_existing_project") {
+          console.error("Erro ao mapear dados do Double Diamond para projeto principal: - routes.ts:5599", phaseError);
+        }
       }
 
       // 4.2 Criar registro DVF vinculado ao projeto principal (best-effort)
       try {
+        if (!didCreateProject) {
+          throw new Error("skip_dfv_existing_project");
+        }
         if (
           project.dfvDesirabilityScore != null &&
           project.dfvFeasibilityScore != null &&
@@ -6171,7 +6639,9 @@ app.post(
           } as any);
         }
       } catch (dfvError) {
-        console.error("Erro ao criar avaliação DVF para projeto principal: - routes.ts:5654", dfvError);
+        if (!(dfvError instanceof Error) || dfvError.message !== "skip_dfv_existing_project") {
+          console.error("Erro ao criar avaliação DVF para projeto principal: - routes.ts:5654", dfvError);
+        }
       }
 
       // 5. Registrar a exportação

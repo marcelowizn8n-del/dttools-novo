@@ -21,6 +21,122 @@ interface PersonaToolProps {
   projectId: string;
 }
 
+function ImportPersonasDialog({ projectId }: { projectId: string }) {
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [sheetUrl, setSheetUrl] = useState<string>("");
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      if (!file && !sheetUrl.trim()) {
+        throw new Error("Envie um arquivo ou informe um link do Google Sheets");
+      }
+
+      let response: Response;
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        response = await fetch(`/api/projects/${projectId}/personas/import`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+      } else {
+        response = await fetch(`/api/projects/${projectId}/personas/import-from-sheets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sheetUrl.trim() }),
+          credentials: "include",
+        });
+      }
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Falha ao importar");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "personas"] });
+      toast({
+        title: "Importação concluída",
+        description: `Importadas: ${data?.imported ?? 0} | Atualizadas: ${data?.updated ?? 0} | Ignoradas: ${data?.skipped ?? 0}`,
+      });
+      setIsOpen(false);
+      setFile(null);
+      setSheetUrl("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível importar os contatos.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" data-testid="button-import-personas">
+          <Upload className="w-4 h-4 mr-2" />
+          Importar contatos
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>Importar contatos</DialogTitle>
+          <DialogDescription>
+            Envie um arquivo CSV ou XLSX (exportado do Google Sheets/Excel) para criar personas.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <Input
+            type="url"
+            placeholder="Link do Google Sheets (compartilhado como público ou com acesso)"
+            value={sheetUrl}
+            onChange={(e) => setSheetUrl(e.target.value)}
+            data-testid="input-import-sheets-url"
+          />
+          <Input
+            type="file"
+            accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            data-testid="input-import-file"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsOpen(false);
+                setFile(null);
+                setSheetUrl("");
+              }}
+              disabled={importMutation.isPending}
+              data-testid="button-import-cancel"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => importMutation.mutate()}
+              disabled={(!file && !sheetUrl.trim()) || importMutation.isPending}
+              data-testid="button-import-submit"
+            >
+              {importMutation.isPending ? "Importando..." : "Importar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PersonaCard({ persona, projectId }: { persona: Persona; projectId: string }) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -663,7 +779,10 @@ export default function PersonaTool({ projectId }: PersonaToolProps) {
             Crie perfis detalhados dos seus usuários-alvo
           </p>
         </div>
-        <CreatePersonaDialog projectId={projectId} />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <ImportPersonasDialog projectId={projectId} />
+          <CreatePersonaDialog projectId={projectId} />
+        </div>
       </div>
 
       {/* Personas List */}

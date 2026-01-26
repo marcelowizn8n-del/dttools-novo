@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Sparkles, Loader2, CheckCircle2, Circle, Download, Trash2, Pencil, Copy } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, CheckCircle2, Circle, Download, Trash2, Pencil, Copy, Upload } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -64,6 +64,116 @@ interface DoubleDiamondProject {
   dfvViabilityScore?: number;
   dfvAnalysis?: any;
   dfvFeedback?: string;
+}
+
+function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [sheetUrl, setSheetUrl] = useState<string>("");
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      if (!file && !sheetUrl.trim()) {
+        throw new Error("Envie um arquivo ou informe um link do Google Sheets");
+      }
+
+      let response: Response;
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+      } else {
+        response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import-from-sheets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sheetUrl.trim() }),
+          credentials: "include",
+        });
+      }
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Falha ao importar");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/double-diamond", doubleDiamondId] });
+      toast({
+        title: "Importação concluída",
+        description: `Importadas: ${data?.imported ?? 0} | Atualizadas: ${data?.updated ?? 0} | Ignoradas: ${data?.skipped ?? 0}`,
+      });
+      setIsOpen(false);
+      setFile(null);
+      setSheetUrl("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível importar os contatos.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)} data-testid="button-import-personas-dd">
+        <Upload className="mr-2 h-4 w-4" />
+        Importar contatos
+      </Button>
+      <DialogContent className="sm:max-w-[560px]">
+        <DialogHeader>
+          <DialogTitle>Importar contatos</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            type="url"
+            placeholder="Link do Google Sheets (compartilhado como público ou com acesso)"
+            value={sheetUrl}
+            onChange={(e) => setSheetUrl(e.target.value)}
+            data-testid="input-import-sheets-url-dd"
+          />
+          <Input
+            type="file"
+            accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            data-testid="input-import-file-dd"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsOpen(false);
+                setFile(null);
+                setSheetUrl("");
+              }}
+              disabled={importMutation.isPending}
+              data-testid="button-import-cancel-dd"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => importMutation.mutate()}
+              disabled={(!file && !sheetUrl.trim()) || importMutation.isPending}
+              data-testid="button-import-submit-dd"
+            >
+              {importMutation.isPending ? "Importando..." : "Importar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 type InitialBriefingFormData = {
@@ -756,6 +866,7 @@ export default function DoubleDiamondProject() {
               })}
             </Badge>
             <div className="flex flex-col gap-2">
+              {id && <ImportPersonasDialogDD doubleDiamondId={id} />}
               <Button
                 variant="outline"
                 size="sm"
