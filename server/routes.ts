@@ -249,6 +249,40 @@ function extractEmailFromBio(bio: unknown) {
   return email || null;
 }
 
+type PersonaImportFields = {
+  email: boolean;
+  linkedin: boolean;
+  company: boolean;
+  role: boolean;
+  location: boolean;
+};
+
+function parseImportFields(input: unknown): PersonaImportFields {
+  const defaults: PersonaImportFields = {
+    email: true,
+    linkedin: true,
+    company: true,
+    role: true,
+    location: true,
+  };
+
+  if (!input) return defaults;
+
+  try {
+    const raw = typeof input === "string" ? JSON.parse(input) : input;
+    const obj = (raw && typeof raw === "object") ? (raw as any) : {};
+    return {
+      email: typeof obj.email === "boolean" ? obj.email : defaults.email,
+      linkedin: typeof obj.linkedin === "boolean" ? obj.linkedin : defaults.linkedin,
+      company: typeof obj.company === "boolean" ? obj.company : defaults.company,
+      role: typeof obj.role === "boolean" ? obj.role : defaults.role,
+      location: typeof obj.location === "boolean" ? obj.location : defaults.location,
+    };
+  } catch {
+    return defaults;
+  }
+}
+
 function toGoogleSheetsCsvUrl(inputUrl: string) {
   const url = String(inputUrl || "").trim();
   if (!url) return null;
@@ -287,13 +321,30 @@ async function upsertPersonasFromRows(args: {
   projectId: string;
   rows: any[];
   maxPersonas: number | null | undefined;
+  fields?: PersonaImportFields;
 }) {
   const { projectId, rows, maxPersonas } = args;
+  const fields = args.fields ?? {
+    email: true,
+    linkedin: true,
+    company: true,
+    role: true,
+    location: true,
+  };
 
   const nameKeys = ["nome", "name", "fullname", "contato", "contact", "person"].map(normalizeImportKey);
   const emailKeys = ["email", "e-mail", "mail"].map(normalizeImportKey);
   const companyKeys = ["empresa", "company", "organizacao", "organization"].map(normalizeImportKey);
   const roleKeys = ["cargo", "role", "jobtitle", "title", "posicao", "position"].map(normalizeImportKey);
+  const linkedinKeys = [
+    "linkedin",
+    "linkedinurl",
+    "linkedinprofile",
+    "perfillinkedin",
+    "urllinkedin",
+    "linkedIn",
+  ].map(normalizeImportKey);
+  const locationKeys = ["localizacao", "localização", "location", "cidadeestado", "cidade/estado"].map(normalizeImportKey);
   const countryKeys = ["pais", "country"].map(normalizeImportKey);
   const stateKeys = ["estado", "state", "uf", "provincia", "province"].map(normalizeImportKey);
   const cityKeys = ["cidade", "city", "municipio", "town"].map(normalizeImportKey);
@@ -319,29 +370,36 @@ async function upsertPersonasFromRows(args: {
     const email = extractValueFromRow(row, emailKeys);
     const company = extractValueFromRow(row, companyKeys);
     const role = extractValueFromRow(row, roleKeys);
+    const linkedin = extractValueFromRow(row, linkedinKeys);
+    const directLocation = extractValueFromRow(row, locationKeys);
     const country = extractValueFromRow(row, countryKeys);
     const state = extractValueFromRow(row, stateKeys);
     const city = extractValueFromRow(row, cityKeys);
+
+    const locationParts = [city, state, country].filter((p) => String(p || "").trim() !== "");
+    const location = directLocation || (locationParts.length ? locationParts.join(", ") : "");
 
     if (!name && !email) {
       skipped++;
       continue;
     }
 
-    const occupation = role || "";
-    const locationParts = [city, state, country].filter((p) => String(p || "").trim() !== "");
-    const bioParts = [
-      company ? `Empresa: ${company}` : "",
-      locationParts.length ? `Local: ${locationParts.join(", ")}` : "",
-      email ? `Email: ${email}` : "",
+    const occupation = fields.role ? (role || "") : "";
+
+    const bioLines = [
+      fields.company && company ? `Empresa: ${company}` : "",
+      fields.role && role ? `Cargo: ${role}` : "",
+      fields.location && location ? `Localização: ${location}` : "",
+      fields.email && email ? `Email: ${email}` : "",
+      fields.linkedin && linkedin ? `LinkedIn: ${linkedin}` : "",
     ].filter((p) => p !== "");
-    const bio = bioParts.join(" | ");
+    const bio = bioLines.join("\n");
 
     const existing = (email ? byEmail.get(email.trim().toLowerCase()) : null) || (name ? byName.get(name.trim().toLowerCase()) : null);
     if (existing) {
       const updatePayload: any = {};
       if (name && name.trim() && name.trim() !== existing.name) updatePayload.name = name.trim();
-      if (occupation && occupation.trim()) updatePayload.occupation = occupation.trim();
+      if (fields.role && occupation && occupation.trim()) updatePayload.occupation = occupation.trim();
       if (bio && bio.trim()) updatePayload.bio = bio.trim();
       if (Object.keys(updatePayload).length > 0) {
         await storage.updatePersona(existing.id, updatePayload);
@@ -366,7 +424,7 @@ async function upsertPersonasFromRows(args: {
       projectId,
       name: name.trim(),
       age: undefined,
-      occupation: occupation.trim() || undefined,
+      occupation: (fields.role ? (occupation.trim() || undefined) : undefined),
       bio: bio || undefined,
       goals: [],
       frustrations: [],
@@ -738,7 +796,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
-        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas });
+        const importFields = parseImportFields(req.body?.fields);
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields });
         res.json({ ...result, projectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -789,7 +848,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
-        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas });
+        const importFields = parseImportFields(req.body?.fields);
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields });
         res.json({ ...result, projectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -6318,7 +6378,8 @@ app.post(
         }
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
-        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas });
+        const importFields = parseImportFields(req.body?.fields);
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields });
         res.json({ ...result, projectId: mainProjectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -6402,7 +6463,8 @@ app.post(
         }
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
-        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas });
+        const importFields = parseImportFields(req.body?.fields);
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields });
         res.json({ ...result, projectId: mainProjectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);

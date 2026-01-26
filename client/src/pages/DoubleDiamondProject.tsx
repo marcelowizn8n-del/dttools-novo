@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -72,6 +73,13 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
   const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [sheetUrl, setSheetUrl] = useState<string>("");
+  const [fields, setFields] = useState({
+    email: true,
+    linkedin: true,
+    company: true,
+    role: true,
+    location: true,
+  });
 
   const importMutation = useMutation({
     mutationFn: async () => {
@@ -83,6 +91,7 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("fields", JSON.stringify(fields));
         response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import`, {
           method: "POST",
           body: formData,
@@ -92,7 +101,7 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
         response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import-from-sheets`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: sheetUrl.trim() }),
+          body: JSON.stringify({ url: sheetUrl.trim(), fields }),
           credentials: "include",
         });
       }
@@ -113,6 +122,13 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
       setIsOpen(false);
       setFile(null);
       setSheetUrl("");
+      setFields({
+        email: true,
+        linkedin: true,
+        company: true,
+        role: true,
+        location: true,
+      });
     },
     onError: (error: any) => {
       toast({
@@ -134,6 +150,31 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
           <DialogTitle>Importar contatos</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Campos para importar</div>
+            <div className="flex flex-wrap gap-3">
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox checked={fields.email} onCheckedChange={() => setFields((p) => ({ ...p, email: !p.email }))} />
+                <span>E-mail</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox checked={fields.linkedin} onCheckedChange={() => setFields((p) => ({ ...p, linkedin: !p.linkedin }))} />
+                <span>LinkedIn</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox checked={fields.company} onCheckedChange={() => setFields((p) => ({ ...p, company: !p.company }))} />
+                <span>Empresa</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox checked={fields.role} onCheckedChange={() => setFields((p) => ({ ...p, role: !p.role }))} />
+                <span>Cargo</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox checked={fields.location} onCheckedChange={() => setFields((p) => ({ ...p, location: !p.location }))} />
+                <span>Localização</span>
+              </label>
+            </div>
+          </div>
           <Input
             type="url"
             placeholder="Link do Google Sheets (compartilhado como público ou com acesso)"
@@ -155,6 +196,13 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                 setIsOpen(false);
                 setFile(null);
                 setSheetUrl("");
+                setFields({
+                  email: true,
+                  linkedin: true,
+                  company: true,
+                  role: true,
+                  location: true,
+                });
               }}
               disabled={importMutation.isPending}
               data-testid="button-import-cancel-dd"

@@ -16,6 +16,7 @@ import { insertPersonaSchema, type Persona, type InsertPersona } from "@shared/s
 import { queryClient } from "@/lib/queryClient";
 import EditPersonaDialog from "./EditPersonaDialog";
 import { ContextualTooltip } from "@/components/ui/contextual-tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PersonaToolProps {
   projectId: string;
@@ -26,6 +27,13 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [sheetUrl, setSheetUrl] = useState<string>("");
+  const [fields, setFields] = useState({
+    email: true,
+    linkedin: true,
+    company: true,
+    role: true,
+    location: true,
+  });
 
   const importMutation = useMutation({
     mutationFn: async () => {
@@ -37,6 +45,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("fields", JSON.stringify(fields));
 
         response = await fetch(`/api/projects/${projectId}/personas/import`, {
           method: "POST",
@@ -47,7 +56,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
         response = await fetch(`/api/projects/${projectId}/personas/import-from-sheets`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: sheetUrl.trim() }),
+          body: JSON.stringify({ url: sheetUrl.trim(), fields }),
           credentials: "include",
         });
       }
@@ -68,6 +77,13 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
       setIsOpen(false);
       setFile(null);
       setSheetUrl("");
+      setFields({
+        email: true,
+        linkedin: true,
+        company: true,
+        role: true,
+        location: true,
+      });
     },
     onError: (error: any) => {
       toast({
@@ -95,6 +111,46 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
         </DialogHeader>
 
         <div className="space-y-3">
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-gray-700">Campos para importar</div>
+            <div className="flex flex-wrap gap-3">
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox
+                  checked={fields.email}
+                  onCheckedChange={() => setFields((prev) => ({ ...prev, email: !prev.email }))}
+                />
+                <span>E-mail</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox
+                  checked={fields.linkedin}
+                  onCheckedChange={() => setFields((prev) => ({ ...prev, linkedin: !prev.linkedin }))}
+                />
+                <span>LinkedIn</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox
+                  checked={fields.company}
+                  onCheckedChange={() => setFields((prev) => ({ ...prev, company: !prev.company }))}
+                />
+                <span>Empresa</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox
+                  checked={fields.role}
+                  onCheckedChange={() => setFields((prev) => ({ ...prev, role: !prev.role }))}
+                />
+                <span>Cargo</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                <Checkbox
+                  checked={fields.location}
+                  onCheckedChange={() => setFields((prev) => ({ ...prev, location: !prev.location }))}
+                />
+                <span>Localização</span>
+              </label>
+            </div>
+          </div>
           <Input
             type="url"
             placeholder="Link do Google Sheets (compartilhado como público ou com acesso)"
@@ -116,6 +172,13 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                 setIsOpen(false);
                 setFile(null);
                 setSheetUrl("");
+                setFields({
+                  email: true,
+                  linkedin: true,
+                  company: true,
+                  role: true,
+                  location: true,
+                });
               }}
               disabled={importMutation.isPending}
               data-testid="button-import-cancel"
@@ -237,8 +300,8 @@ function PersonaCard({ persona, projectId }: { persona: Persona; projectId: stri
         {persona.bio && (
           <div>
             <h4 className="font-medium text-sm text-gray-700 mb-1">Biografia</h4>
-            <p className="text-sm text-gray-600" data-testid={`text-persona-bio-${persona.id}`}>
-              {persona.bio}
+            <p className="text-sm text-gray-600 whitespace-pre-line" data-testid={`text-persona-bio-${persona.id}`}>
+              {String(persona.bio).replace(/\s*\|\s*/g, "\n")}
             </p>
           </div>
         )}
