@@ -80,6 +80,82 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
     role: true,
     location: true,
   });
+  const [preview, setPreview] = useState<{ columns: string[]; sampleRows: any[] } | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [mappingSelection, setMappingSelection] = useState<{[k in "name" | "email" | "linkedin" | "company" | "role" | "location"]: string}>({
+    name: "__auto__",
+    email: "__auto__",
+    linkedin: "__auto__",
+    company: "__auto__",
+    role: "__auto__",
+    location: "__auto__",
+  });
+
+  const buildMappingPayload = () => {
+    const m: any = {};
+    for (const k of Object.keys(mappingSelection) as Array<keyof typeof mappingSelection>) {
+      const v = mappingSelection[k];
+      if (v && v !== "__auto__" && v !== "__none__") m[k] = v;
+    }
+    return m;
+  };
+
+  const guessColumn = (columns: string[], patterns: RegExp[]) => {
+    for (const col of columns) {
+      const c = String(col || "");
+      if (patterns.some((p) => p.test(c))) return col;
+    }
+    return "__auto__";
+  };
+
+  const loadPreview = async () => {
+    if (!file && !sheetUrl.trim()) {
+      toast({ title: "Erro", description: "Envie um arquivo ou informe um link do Google Sheets", variant: "destructive" });
+      return;
+    }
+
+    setIsPreviewLoading(true);
+    try {
+      let response: Response;
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import-preview`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+      } else {
+        response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import-preview-from-sheets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sheetUrl.trim() }),
+          credentials: "include",
+        });
+      }
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error((data as any)?.error || "Falha ao detectar colunas");
+      }
+
+      const cols = Array.isArray((data as any)?.columns) ? (data as any).columns : [];
+      setPreview({ columns: cols, sampleRows: Array.isArray((data as any)?.sampleRows) ? (data as any).sampleRows : [] });
+
+      setMappingSelection((prev) => {
+        const next = { ...prev };
+        next.name = prev.name !== "__auto__" ? prev.name : guessColumn(cols, [/^nome$/i, /name/i, /contato/i]);
+        next.email = prev.email !== "__auto__" ? prev.email : guessColumn(cols, [/e-?mail/i]);
+        next.linkedin = prev.linkedin !== "__auto__" ? prev.linkedin : guessColumn(cols, [/linkedin/i]);
+        next.company = prev.company !== "__auto__" ? prev.company : guessColumn(cols, [/empresa/i, /company/i, /organiza/i]);
+        next.role = prev.role !== "__auto__" ? prev.role : guessColumn(cols, [/cargo/i, /role/i, /title/i, /posi/i]);
+        next.location = prev.location !== "__auto__" ? prev.location : guessColumn(cols, [/localiza/i, /location/i, /cidade/i, /state/i, /pais/i]);
+        return next;
+      });
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
 
   const importMutation = useMutation({
     mutationFn: async () => {
@@ -92,6 +168,7 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
         const formData = new FormData();
         formData.append("file", file);
         formData.append("fields", JSON.stringify(fields));
+        formData.append("mapping", JSON.stringify(buildMappingPayload()));
         response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import`, {
           method: "POST",
           body: formData,
@@ -101,7 +178,7 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
         response = await fetch(`/api/double-diamond/${doubleDiamondId}/personas/import-from-sheets`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: sheetUrl.trim(), fields }),
+          body: JSON.stringify({ url: sheetUrl.trim(), fields, mapping: buildMappingPayload() }),
           credentials: "include",
         });
       }
@@ -122,6 +199,15 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
       setIsOpen(false);
       setFile(null);
       setSheetUrl("");
+      setPreview(null);
+      setMappingSelection({
+        name: "__auto__",
+        email: "__auto__",
+        linkedin: "__auto__",
+        company: "__auto__",
+        role: "__auto__",
+        location: "__auto__",
+      });
       setFields({
         email: true,
         linkedin: true,
@@ -175,6 +261,133 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
               </label>
             </div>
           </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-medium">Colunas da planilha</div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => loadPreview()}
+              disabled={isPreviewLoading || (!file && !sheetUrl.trim())}
+              data-testid="button-import-detect-columns-dd"
+            >
+              {isPreviewLoading ? "Detectando..." : "Detectar colunas"}
+            </Button>
+          </div>
+          {preview?.columns?.length ? (
+            <div className="space-y-2 rounded-md border p-3">
+              <div className="text-xs text-gray-600">{preview.columns.join(" | ")}</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-gray-700">Nome</div>
+                  <Select value={mappingSelection.name} onValueChange={(v) => setMappingSelection((p) => ({ ...p, name: v }))}>
+                    <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto</SelectItem>
+                      {preview.columns.map((c) => (
+                        <SelectItem key={`map-name-dd-${c}`} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-gray-700">E-mail</div>
+                  <Select
+                    value={mappingSelection.email}
+                    onValueChange={(v) => {
+                      setMappingSelection((p) => ({ ...p, email: v }));
+                      if (v === "__none__") setFields((p) => ({ ...p, email: false }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto</SelectItem>
+                      <SelectItem value="__none__">Não importar</SelectItem>
+                      {preview.columns.map((c) => (
+                        <SelectItem key={`map-email-dd-${c}`} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-gray-700">LinkedIn</div>
+                  <Select
+                    value={mappingSelection.linkedin}
+                    onValueChange={(v) => {
+                      setMappingSelection((p) => ({ ...p, linkedin: v }));
+                      if (v === "__none__") setFields((p) => ({ ...p, linkedin: false }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto</SelectItem>
+                      <SelectItem value="__none__">Não importar</SelectItem>
+                      {preview.columns.map((c) => (
+                        <SelectItem key={`map-linkedin-dd-${c}`} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-gray-700">Empresa</div>
+                  <Select
+                    value={mappingSelection.company}
+                    onValueChange={(v) => {
+                      setMappingSelection((p) => ({ ...p, company: v }));
+                      if (v === "__none__") setFields((p) => ({ ...p, company: false }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto</SelectItem>
+                      <SelectItem value="__none__">Não importar</SelectItem>
+                      {preview.columns.map((c) => (
+                        <SelectItem key={`map-company-dd-${c}`} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-gray-700">Cargo</div>
+                  <Select
+                    value={mappingSelection.role}
+                    onValueChange={(v) => {
+                      setMappingSelection((p) => ({ ...p, role: v }));
+                      if (v === "__none__") setFields((p) => ({ ...p, role: false }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto</SelectItem>
+                      <SelectItem value="__none__">Não importar</SelectItem>
+                      {preview.columns.map((c) => (
+                        <SelectItem key={`map-role-dd-${c}`} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-gray-700">Localização</div>
+                  <Select
+                    value={mappingSelection.location}
+                    onValueChange={(v) => {
+                      setMappingSelection((p) => ({ ...p, location: v }));
+                      if (v === "__none__") setFields((p) => ({ ...p, location: false }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto</SelectItem>
+                      <SelectItem value="__none__">Não importar</SelectItem>
+                      {preview.columns.map((c) => (
+                        <SelectItem key={`map-location-dd-${c}`} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <Input
             type="url"
             placeholder="Link do Google Sheets (compartilhado como público ou com acesso)"
@@ -196,6 +409,15 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                 setIsOpen(false);
                 setFile(null);
                 setSheetUrl("");
+                setPreview(null);
+                setMappingSelection({
+                  name: "__auto__",
+                  email: "__auto__",
+                  linkedin: "__auto__",
+                  company: "__auto__",
+                  role: "__auto__",
+                  location: "__auto__",
+                });
                 setFields({
                   email: true,
                   linkedin: true,

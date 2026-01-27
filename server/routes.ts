@@ -46,12 +46,14 @@ import {
   insertAiGeneratedAssetSchema,
   insertDoubleDiamondProjectSchema,
   doubleDiamondExports,
+  personas,
   insertGuidingCriterionSchema,
   insertBpmnDiagramSchema
 } from "../shared/schema";
 import bcrypt from "bcrypt";
 import Stripe from "stripe";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
+import { db } from "./db";
 import { 
   loadUserSubscription, 
   checkProjectLimit, 
@@ -121,6 +123,54 @@ declare module 'express-serve-static-core' {
       createdAt: Date;
     };
   }
+}
+
+function parseImportMapping(input: unknown): PersonaImportMapping {
+  if (!input) return {};
+  try {
+    const raw = typeof input === "string" ? JSON.parse(input) : input;
+    const obj = (raw && typeof raw === "object") ? (raw as any) : {};
+    const clean = (v: any) => {
+      const s = String(v ?? "").trim();
+      return s ? s : undefined;
+    };
+    return {
+      name: clean(obj.name),
+      email: clean(obj.email),
+      linkedin: clean(obj.linkedin),
+      company: clean(obj.company),
+      role: clean(obj.role),
+      location: clean(obj.location),
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function parseSpreadsheetRowsFromUpload(file: Express.Multer.File) {
+  const name = String(file.originalname || "").toLowerCase();
+
+  if (name.endsWith(".csv") || String(file.mimetype || "").toLowerCase() === "text/csv") {
+    const csv = file.buffer.toString("utf8");
+    const parsed = Papa.parse(csv, { header: true, skipEmptyLines: true });
+    if (parsed.errors && parsed.errors.length > 0) {
+      throw new Error(parsed.errors[0]?.message || "Falha ao ler CSV");
+    }
+    return (parsed.data as any[]) || [];
+  }
+
+  const workbook = XLSX.read(file.buffer, { type: "buffer" });
+  const sheetName = workbook.SheetNames?.[0];
+  if (!sheetName) return [];
+  const sheet = workbook.Sheets[sheetName];
+  const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+  return (json as any[]) || [];
+}
+
+function getImportPreviewFromRows(rows: any[], maxRows = 5) {
+  const sampleRows = Array.isArray(rows) ? rows.slice(0, Math.max(0, maxRows)) : [];
+  const columns = rows && rows[0] && typeof rows[0] === "object" ? Object.keys(rows[0]) : [];
+  return { columns, sampleRows };
 }
 
 // Authentication middleware
@@ -257,6 +307,15 @@ type PersonaImportFields = {
   location: boolean;
 };
 
+type PersonaImportMapping = {
+  name?: string;
+  email?: string;
+  linkedin?: string;
+  company?: string;
+  role?: string;
+  location?: string;
+};
+
 function parseImportFields(input: unknown): PersonaImportFields {
   const defaults: PersonaImportFields = {
     email: true,
@@ -322,6 +381,7 @@ async function upsertPersonasFromRows(args: {
   rows: any[];
   maxPersonas: number | null | undefined;
   fields?: PersonaImportFields;
+  mapping?: PersonaImportMapping;
 }) {
   const { projectId, rows, maxPersonas } = args;
   const fields = args.fields ?? {
@@ -331,6 +391,8 @@ async function upsertPersonasFromRows(args: {
     role: true,
     location: true,
   };
+
+  const mapping = args.mapping ?? {};
 
   const nameKeys = ["nome", "name", "fullname", "contato", "contact", "person"].map(normalizeImportKey);
   const emailKeys = ["email", "e-mail", "mail"].map(normalizeImportKey);
@@ -349,6 +411,13 @@ async function upsertPersonasFromRows(args: {
   const stateKeys = ["estado", "state", "uf", "provincia", "province"].map(normalizeImportKey);
   const cityKeys = ["cidade", "city", "municipio", "town"].map(normalizeImportKey);
 
+  const mappedNameKeys = mapping.name ? [normalizeImportKey(mapping.name)] : nameKeys;
+  const mappedEmailKeys = mapping.email ? [normalizeImportKey(mapping.email)] : emailKeys;
+  const mappedCompanyKeys = mapping.company ? [normalizeImportKey(mapping.company)] : companyKeys;
+  const mappedRoleKeys = mapping.role ? [normalizeImportKey(mapping.role)] : roleKeys;
+  const mappedLinkedinKeys = mapping.linkedin ? [normalizeImportKey(mapping.linkedin)] : linkedinKeys;
+  const mappedLocationKeys = mapping.location ? [normalizeImportKey(mapping.location)] : locationKeys;
+
   let imported = 0;
   let updated = 0;
   let skipped = 0;
@@ -366,12 +435,12 @@ async function upsertPersonasFromRows(args: {
   }
 
   for (const row of rows) {
-    const name = extractValueFromRow(row, nameKeys);
-    const email = extractValueFromRow(row, emailKeys);
-    const company = extractValueFromRow(row, companyKeys);
-    const role = extractValueFromRow(row, roleKeys);
-    const linkedin = extractValueFromRow(row, linkedinKeys);
-    const directLocation = extractValueFromRow(row, locationKeys);
+    const name = extractValueFromRow(row, mappedNameKeys);
+    const email = extractValueFromRow(row, mappedEmailKeys);
+    const company = extractValueFromRow(row, mappedCompanyKeys);
+    const role = extractValueFromRow(row, mappedRoleKeys);
+    const linkedin = extractValueFromRow(row, mappedLinkedinKeys);
+    const directLocation = extractValueFromRow(row, mappedLocationKeys);
     const country = extractValueFromRow(row, countryKeys);
     const state = extractValueFromRow(row, stateKeys);
     const city = extractValueFromRow(row, cityKeys);
@@ -752,6 +821,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  app.delete("/api/personas/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const personaId = req.params.id;
+
+      const [personaRow] = await db
+        .select({ id: personas.id, projectId: personas.projectId })
+        .from(personas)
+        .where(eq(personas.id, personaId));
+
+      if (!personaRow) {
+        return res.status(404).json({ error: "Persona not found" });
+      }
+
+      const projectId = personaRow.projectId;
+      const ownerProject = await storage.getProject(projectId, userId);
+      if (!ownerProject) {
+        const member = await storage.getProjectMember(projectId, userId);
+        if (!member) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        if (member.role !== "owner" && member.role !== "editor") {
+          return res.status(403).json({ error: "Insufficient permissions" });
+        }
+      }
+
+      const success = await storage.deletePersona(personaId);
+      if (!success) {
+        return res.status(404).json({ error: "Persona not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting persona: - routes.ts", error);
+      res.status(500).json({ error: "Failed to delete persona" });
+    }
+  });
+
   app.post(
     "/api/projects/:projectId/personas/import",
     requireAuth,
@@ -797,11 +904,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
-        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields });
+        const importMapping = parseImportMapping(req.body?.mapping);
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
         res.json({ ...result, projectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
         res.status(400).json({ error: "Falha ao importar contatos", details: msg });
+      }
+    }
+  );
+
+  app.post(
+    "/api/projects/:projectId/personas/import-preview",
+    requireAuth,
+    uploadSpreadsheet.single("file"),
+    async (req: any, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "Nenhum arquivo enviado" });
+        }
+        const rows = await parseSpreadsheetRowsFromUpload(req.file);
+        const preview = getImportPreviewFromRows(rows);
+        res.json(preview);
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao ler arquivo", details: msg });
       }
     }
   );
@@ -849,11 +976,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
-        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields });
+        const importMapping = parseImportMapping(req.body?.mapping);
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
         res.json({ ...result, projectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
         res.status(400).json({ error: "Falha ao importar contatos", details: msg });
+      }
+    }
+  );
+
+  app.post(
+    "/api/projects/:projectId/personas/import-preview-from-sheets",
+    requireAuth,
+    async (req, res) => {
+      try {
+        const sheetUrl = String(req.body?.url || "").trim();
+        const csvUrl = toGoogleSheetsCsvUrl(sheetUrl);
+        if (!csvUrl) {
+          return res.status(400).json({ error: "Link do Google Sheets inválido" });
+        }
+
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+          return res.status(400).json({ error: "Não foi possível acessar o Google Sheets" });
+        }
+        const csv = await response.text();
+        const parsed = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        if (parsed.errors && parsed.errors.length > 0) {
+          throw new Error(parsed.errors[0]?.message || "Falha ao ler CSV do Google Sheets");
+        }
+        const rows = (parsed.data as any[]) || [];
+        const preview = getImportPreviewFromRows(rows);
+        res.json(preview);
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao ler planilha", details: msg });
       }
     }
   );
@@ -6379,11 +6537,31 @@ app.post(
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
-        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields });
+        const importMapping = parseImportMapping(req.body?.mapping);
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
         res.json({ ...result, projectId: mainProjectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
         res.status(400).json({ error: "Falha ao importar contatos", details: msg });
+      }
+    }
+  );
+
+  app.post(
+    "/api/double-diamond/:id/personas/import-preview",
+    requireAuth,
+    uploadSpreadsheet.single("file"),
+    async (req: any, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "Nenhum arquivo enviado" });
+        }
+        const rows = await parseSpreadsheetRowsFromUpload(req.file);
+        const preview = getImportPreviewFromRows(rows);
+        res.json(preview);
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao ler arquivo", details: msg });
       }
     }
   );
@@ -6464,11 +6642,42 @@ app.post(
 
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
-        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields });
+        const importMapping = parseImportMapping(req.body?.mapping);
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
         res.json({ ...result, projectId: mainProjectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
         res.status(400).json({ error: "Falha ao importar contatos", details: msg });
+      }
+    }
+  );
+
+  app.post(
+    "/api/double-diamond/:id/personas/import-preview-from-sheets",
+    requireAuth,
+    async (req, res) => {
+      try {
+        const sheetUrl = String(req.body?.url || "").trim();
+        const csvUrl = toGoogleSheetsCsvUrl(sheetUrl);
+        if (!csvUrl) {
+          return res.status(400).json({ error: "Link do Google Sheets inválido" });
+        }
+
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+          return res.status(400).json({ error: "Não foi possível acessar o Google Sheets" });
+        }
+        const csv = await response.text();
+        const parsed = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        if (parsed.errors && parsed.errors.length > 0) {
+          throw new Error(parsed.errors[0]?.message || "Falha ao ler CSV do Google Sheets");
+        }
+        const rows = (parsed.data as any[]) || [];
+        const preview = getImportPreviewFromRows(rows);
+        res.json(preview);
+      } catch (error: any) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: "Falha ao ler planilha", details: msg });
       }
     }
   );
