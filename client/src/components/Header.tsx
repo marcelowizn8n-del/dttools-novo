@@ -23,7 +23,7 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useTheme } from "@/contexts/ThemeContext";
 // Versão dos logos para controle de cache
-const LOGO_VERSION = "1.0.9";
+const LOGO_VERSION = "1.1.0";
 
 export default function Header() {
   const { isAuthenticated, isAdmin } = useAuth();
