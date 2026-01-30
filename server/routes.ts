@@ -598,6 +598,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (!expressRaw) {
     throw new Error("Failed to load express raw body parser");
   }
+
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ ok: true });
+  });
   
   app.post(
     "/api/stripe-webhook",
