@@ -29,12 +29,13 @@ import { Link, useLocation } from "wouter";
 import type { Project } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import dttoolsIcon from "../assets/dttools-icon.png";
 import { WelcomeMessage } from "@/components/ui/welcome-message";
 import { PhaseNavigator } from "@/components/ui/phase-navigator";
 import { NextStepCard } from "@/components/ui/next-step-card";
 import InvitesList from "@/components/InvitesList";
 import { useTheme } from "@/contexts/ThemeContext";
+
+const dttoolsIcon = "/logo-icon.png";
 
 const phases = [
   {

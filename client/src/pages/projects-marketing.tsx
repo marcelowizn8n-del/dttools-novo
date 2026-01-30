@@ -25,7 +25,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import dttoolsIcon from "../assets/dttools-icon.png";
+
+const dttoolsIcon = "/logo-icon.png";
 
 const phases = [
   {

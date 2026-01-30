@@ -10,8 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Testimonial } from "@shared/schema";
 // Use direct path to logo in public root  
-const logoHorizontal = "/logo-horizontal.png";
-import dttoolsIcon from "../assets/dttools-icon.png";
+const dttoolsIcon = "/logo-icon.png";
 
 const phases = [
   {
