@@ -51,6 +51,7 @@ import {
   insertBpmnDiagramSchema
 } from "../shared/schema";
 import bcrypt from "bcrypt";
+import { sendInviteEmail } from "./emailService";
 import Stripe from "stripe";
 import { sql, eq } from "drizzle-orm";
 import { db } from "./db";
@@ -1346,6 +1347,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         expiresAt
       });
+
+      // Send invite email (non-blocking — don't fail the request if email fails)
+      try {
+        const inviter = await storage.getUserById(userId);
+        const project = await storage.getProject(projectId, userId);
+        await sendInviteEmail({
+          to: email,
+          inviterName: inviter?.username || "Um membro",
+          projectName: project?.name || "Projeto",
+          role,
+          token,
+        });
+      } catch (emailError) {
+        console.error("Failed to send invite email (invite still created):", emailError);
+      }
 
       res.status(201).json(invite);
     } catch (error) {
