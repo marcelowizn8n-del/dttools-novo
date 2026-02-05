@@ -1314,7 +1314,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const limits = req.subscription?.limits;
-      if (limits && limits.maxUsersPerTeam !== null && limits.maxUsersPerTeam !== undefined) {
+      const maxUsers = limits?.maxUsersPerTeam;
+      // Only enforce limit when maxUsersPerTeam is a positive number (null = unlimited, 0 = no limit set)
+      if (maxUsers && maxUsers > 0) {
         const project = await storage.getProject(projectId, userId);
         if (!project) {
           return res.status(404).json({ error: "Project not found" });
@@ -1323,10 +1325,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const members = await storage.getProjectMembers(projectId);
         const currentTeamSize = 1 + members.length;
 
-        if (currentTeamSize >= limits.maxUsersPerTeam) {
+        if (currentTeamSize >= maxUsers) {
           return res.status(403).json({
             error: "Team member limit reached",
-            message: `Seu plano permite até ${limits.maxUsersPerTeam} usuários por equipe. Faça upgrade do plano para adicionar mais membros.`,
+            message: `Seu plano permite até ${maxUsers} usuários por equipe. Faça upgrade do plano para adicionar mais membros.`,
             upgrade_required: true,
           });
         }
