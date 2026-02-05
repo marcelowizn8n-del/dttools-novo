@@ -1299,7 +1299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/members/invite", requireAuth, loadUserSubscription, checkCollaborationAccess, requireProjectAccess('owner'), async (req, res) => {
+  app.post("/api/projects/:projectId/members/invite", requireAuth, loadUserSubscription, requireProjectAccess('owner'), async (req, res) => {
     try {
       const { email, role } = req.body;
       const userId = req.session!.userId!;

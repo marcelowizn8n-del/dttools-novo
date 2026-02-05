@@ -55,14 +55,21 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'members'] });
     },
     onError: (error: any) => {
-      const status = error?.status;
-      const body = error?.body;
+      const msg = error?.message || "";
+      // apiRequest throws Error("403: {json}") — parse status and body from message
+      const statusMatch = msg.match(/^(\d+):/);
+      const status = statusMatch ? parseInt(statusMatch[1]) : 0;
+      let body: any = {};
+      try {
+        const jsonPart = msg.substring(msg.indexOf(":") + 1).trim();
+        body = JSON.parse(jsonPart);
+      } catch {}
 
-      if (status === 403 && body?.upgrade_required) {
+      if (status === 403 && (body?.upgrade_required || msg.includes("Collaboration not available"))) {
         toast({
           title: "Colaboração não disponível",
           description:
-            "Colaboração em tempo real não está disponível no seu plano atual. Ative o add-on Colaboração Avançada em Add-ons.",
+            body?.message || "Colaboração em tempo real não está disponível no seu plano atual. Ative o add-on Colaboração Avançada em Add-ons.",
           variant: "destructive",
         });
         return;
@@ -70,7 +77,7 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
 
       toast({
         title: "Erro ao enviar convite",
-        description: "Não foi possível enviar o convite. Tente novamente.",
+        description: body?.error || body?.message || "Não foi possível enviar o convite. Tente novamente.",
         variant: "destructive",
       });
     },
