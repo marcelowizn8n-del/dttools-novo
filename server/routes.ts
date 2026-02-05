@@ -1346,6 +1346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(invite);
     } catch (error) {
+      console.error("Error creating invite:", error);
       res.status(500).json({ error: "Failed to create invite" });
     }
   });
@@ -1442,7 +1443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId: invite.projectId,
         userId: userId,
         role: invite.role,
-        invitedBy: invite.invitedBy
+        addedBy: invite.invitedBy
       });
 
       await storage.updateProjectInvite(invite.id, { 

@@ -353,6 +353,46 @@ app.use((req, res, next) => {
           );
         `);
 
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS project_members (
+            id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id VARCHAR NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            user_id VARCHAR NOT NULL REFERENCES users(id),
+            role TEXT NOT NULL DEFAULT 'viewer',
+            added_by VARCHAR REFERENCES users(id),
+            added_at TIMESTAMP DEFAULT now()
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS project_invites (
+            id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id VARCHAR NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            email TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'viewer',
+            invited_by VARCHAR NOT NULL REFERENCES users(id),
+            status TEXT NOT NULL DEFAULT 'pending',
+            token TEXT NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            responded_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT now()
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS project_comments (
+            id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id VARCHAR NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            user_id VARCHAR NOT NULL REFERENCES users(id),
+            entity_type TEXT NOT NULL,
+            entity_id VARCHAR,
+            comment TEXT NOT NULL,
+            parent_comment_id VARCHAR,
+            created_at TIMESTAMP DEFAULT now(),
+            updated_at TIMESTAMP DEFAULT now()
+          );
+        `);
+
         log('✅ [STARTUP] Schema columns verified and ready');
       } catch (schemaError) {
         // Log but don't crash - table might not exist yet
