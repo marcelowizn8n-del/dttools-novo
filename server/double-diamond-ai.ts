@@ -4,6 +4,14 @@ const genAI = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY || "" 
 });
 
+const DOUBLE_DIAMOND_MODEL = process.env.GEMINI_DOUBLE_DIAMOND_MODEL || "gemini-2.0-flash-001";
+
+function assertGeminiConfigured() {
+  if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_API_KEY.trim()) {
+    throw new Error("GEMINI_API_KEY not configured");
+  }
+}
+
 // ===== PHASE 1: DISCOVER (Divergence) =====
 
 export interface DiscoverResult {
@@ -35,6 +43,7 @@ export async function generateDiscoverPhase(input: {
   problemStatement: string;
   language?: string;
 }): Promise<DiscoverResult> {
+  assertGeminiConfigured();
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
@@ -93,12 +102,11 @@ Retorne APENAS um objeto JSON (sem markdown):
 
   try {
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: DOUBLE_DIAMOND_MODEL,
       contents: prompt
     });
     
     const text = result.text;
-    if (!text) throw new Error("Empty AI response");
     if (!text) throw new Error("Empty AI response");
     
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -132,6 +140,7 @@ export async function generateDefinePhase(input: {
   insights: Array<{ text: string; source: string }>;
   language?: string;
 }): Promise<DefineResult> {
+  assertGeminiConfigured();
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
@@ -193,7 +202,7 @@ Return ONLY a JSON object (no markdown):
 
   try {
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: DOUBLE_DIAMOND_MODEL,
       contents: prompt
     });
     
@@ -232,6 +241,7 @@ export async function generateDevelopPhase(input: {
   sector: string;
   language?: string;
 }): Promise<DevelopResult> {
+  assertGeminiConfigured();
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
@@ -289,7 +299,7 @@ Return ONLY a JSON object (no markdown):
 
   try {
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: DOUBLE_DIAMOND_MODEL,
       contents: prompt
     });
     
@@ -349,6 +359,7 @@ export async function generateDeliverPhase(input: {
   sector: string;
   language?: string;
 }): Promise<DeliverResult> {
+  assertGeminiConfigured();
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
@@ -435,7 +446,7 @@ Return ONLY a JSON object (no markdown):
 
   try {
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: DOUBLE_DIAMOND_MODEL,
       contents: prompt
     });
     
@@ -486,6 +497,7 @@ export async function analyzeDFV(input: {
   selectedIdeas: any[];
   language?: string;
 }): Promise<DFVAnalysis> {
+  assertGeminiConfigured();
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
@@ -573,7 +585,7 @@ Retorne APENAS um objeto JSON (sem markdown):
 
   try {
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: DOUBLE_DIAMOND_MODEL,
       contents: prompt
     });
     
@@ -609,6 +621,7 @@ export async function analyzeBpmnProcess(input: {
   bpmnXml: string;
   language?: string;
 }): Promise<BpmnAnalysisResult> {
+  assertGeminiConfigured();
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
@@ -677,7 +690,7 @@ Retorne APENAS um objeto JSON (sem markdown):
 
   try {
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: DOUBLE_DIAMOND_MODEL,
       contents: prompt
     });
 
@@ -705,6 +718,7 @@ export async function generateHmwFromBpmnAnalysis(input: {
   analysis: BpmnAnalysisResult;
   language?: string;
 }): Promise<BpmnHmwFromAnalysisResult> {
+  assertGeminiConfigured();
   const lang = input.language || "pt-BR";
   const isPortuguese = lang.startsWith("pt");
   const isSpanish = lang.startsWith("es");
@@ -770,7 +784,7 @@ Retorne APENAS um objeto JSON (sem markdown) com o formato:
 
   try {
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: DOUBLE_DIAMOND_MODEL,
       contents: prompt,
     });
 

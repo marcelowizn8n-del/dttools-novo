@@ -6136,8 +6136,21 @@ app.post(
 
       res.json(updated);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error("Error generating Discover phase: - routes.ts", error);
-      res.status(500).json({ error: "Failed to generate Discover phase" });
+
+      if (message.includes("GEMINI_API_KEY") && message.includes("not configured")) {
+        res.status(503).json({
+          error: "AI temporarily unavailable",
+          details: "Gemini API key is not configured. Configure GEMINI_API_KEY on the server and try again.",
+        });
+        return;
+      }
+
+      res.status(500).json({
+        error: "Failed to generate Discover phase",
+        details: "The AI provider returned an unexpected response. Please try again in a moment.",
+      });
     }
   });
 
