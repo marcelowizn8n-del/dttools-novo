@@ -1313,10 +1313,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid role. Must be 'editor' or 'viewer'" });
       }
 
+      const isAdmin = req.session.user?.role === "admin";
       const limits = req.subscription?.limits;
       const maxUsers = limits?.maxUsersPerTeam;
-      // Only enforce limit when maxUsersPerTeam is a positive number (null = unlimited, 0 = no limit set)
-      if (maxUsers && maxUsers > 0) {
+      // Admins bypass team size limits; only enforce when maxUsersPerTeam is a positive number
+      if (!isAdmin && maxUsers && maxUsers > 0) {
         const project = await storage.getProject(projectId, userId);
         if (!project) {
           return res.status(404).json({ error: "Project not found" });
