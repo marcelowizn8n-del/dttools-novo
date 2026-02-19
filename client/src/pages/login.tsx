@@ -6,16 +6,21 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function LoginPage() {
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
+  const redirectTo = (() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect") || "/";
+    return redirect.startsWith("/") ? redirect : "/";
+  })();
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate(redirectTo);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, redirectTo]);
 
   const handleLoginSuccess = () => {
-    navigate("/");
+    navigate(redirectTo);
   };
 
   return (

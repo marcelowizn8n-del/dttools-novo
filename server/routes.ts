@@ -1635,7 +1635,7 @@ Estrutura obrigatória:
         respondedAt: new Date()
       });
 
-      res.json({ success: true });
+      res.json({ success: true, projectId: invite.projectId });
     } catch (error) {
       res.status(500).json({ error: "Failed to accept invite" });
     }

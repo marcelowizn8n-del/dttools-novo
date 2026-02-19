@@ -101,7 +101,10 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         throw new Error(errorData.error || t("auth.signup.error.generic"));
       }
 
-      onSuccess?.(data);
+      if (onSuccess) {
+        onSuccess(data);
+        return;
+      }
 
       // Success - redirect to dashboard
       window.location.href = "/dashboard";

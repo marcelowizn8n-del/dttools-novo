@@ -45,6 +45,7 @@ const VideoTutorials = lazy(() => import("@/pages/VideoTutorials"));
 const DoubleDiamond = lazy(() => import("@/pages/DoubleDiamond"));
 const DoubleDiamondProject = lazy(() => import("@/pages/DoubleDiamondProject"));
 const AddonsPage = lazy(() => import("@/pages/addons"));
+const InviteAcceptPage = lazy(() => import("@/pages/invite-accept"));
 
 function RouteFallback() {
   return (
@@ -175,6 +176,11 @@ function Router() {
       <Route path="/signup">
         <Suspense fallback={<RouteFallback />}>
           <SignupPage />
+        </Suspense>
+      </Route>
+      <Route path="/invite/accept">
+        <Suspense fallback={<RouteFallback />}>
+          <InviteAcceptPage />
         </Suspense>
       </Route>
       <Route path="/complete-profile">

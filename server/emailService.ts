@@ -1,6 +1,14 @@
 import nodemailer from "nodemailer";
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.dttools.app";
+function getFrontendBaseUrl(): string {
+  const configured = (process.env.FRONTEND_URL || "")
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+  const first = configured[0] || "https://www.dttools.app";
+  return first.replace(/\/$/, "");
+}
 
 // Create reusable transporter
 function createTransporter() {
@@ -47,7 +55,8 @@ export async function sendInviteEmail(params: {
     return false;
   }
 
-  const acceptUrl = `${FRONTEND_URL}/invite/accept?token=${params.token}`;
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const acceptUrl = `${frontendBaseUrl}/invite/accept?token=${params.token}`;
   const rolePt = params.role === "editor" ? "Editor" : "Visualizador";
 
   const html = `
@@ -102,7 +111,7 @@ export async function sendInviteEmail(params: {
             <td style="background:#fafafa;padding:20px 40px;text-align:center;">
               <p style="margin:0;color:#a1a1aa;font-size:12px;">
                 &copy; ${new Date().getFullYear()} Design Thinking Tools &mdash;
-                <a href="${FRONTEND_URL}" style="color:#6366f1;text-decoration:none;">dttools.app</a>
+                <a href="${frontendBaseUrl}" style="color:#6366f1;text-decoration:none;">dttools.app</a>
               </p>
             </td>
           </tr>
