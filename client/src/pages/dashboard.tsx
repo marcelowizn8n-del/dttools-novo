@@ -17,7 +17,8 @@ import {
   BookOpen,
   BarChart3,
   Sparkles,
-  Rocket
+  Rocket,
+  BriefcaseBusiness
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -660,7 +661,7 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 <Link href="/double-diamond">
                   <Card 
                     className="cursor-pointer transition-all duration-300 border-2 hover:shadow-xl hover:scale-105 bg-gradient-to-br from-blue-600 to-purple-600 text-white border-blue-500"
@@ -728,6 +729,33 @@ export default function Dashboard() {
                         <span>
                           {t("dashboard.advanced.benchmarking.badge.maturity")}
                         </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link href="/commercial">
+                  <Card
+                    className="cursor-pointer transition-all duration-300 border-2 hover:shadow-xl hover:scale-105 bg-gradient-to-br from-orange-600 to-amber-600 text-white border-orange-500"
+                    data-testid="card-commercial"
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                          <BriefcaseBusiness className="w-8 h-8" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl mb-2">Comercial CRM</CardTitle>
+                          <CardDescription className="text-white/90">
+                            Gestão de contas, contatos, pipeline, SWOT e playbooks.
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 text-sm text-white/80">
+                        <Target className="w-4 h-4" />
+                        <span>Pipeline configurável e ações comerciais</span>
                       </div>
                     </CardContent>
                   </Card>

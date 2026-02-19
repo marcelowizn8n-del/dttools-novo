@@ -15,6 +15,7 @@ import {
   Sparkles,
   Sun,
   Moon,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -177,6 +178,20 @@ export default function Header() {
               </Link>
             )}
             {isAuthenticated && (
+              <Link href="/commercial">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  data-testid="nav-commercial-compact"
+                  title="Comercial CRM"
+                >
+                  <BriefcaseBusiness className="h-4 w-4" />
+                  <span className="sr-only">Comercial CRM</span>
+                </Button>
+              </Link>
+            )}
+            {isAuthenticated && (
               <Link href="/addons">
                 <Button
                   variant="ghost"
@@ -266,6 +281,14 @@ export default function Header() {
                 <Button variant="ghost" className="text-sm" data-testid="nav-double-diamond">
                   <TrendingUp className="mr-1 h-4 w-4" />
                   Double Diamond
+                </Button>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link href="/commercial">
+                <Button variant="ghost" className="text-sm" data-testid="nav-commercial">
+                  <BriefcaseBusiness className="mr-1 h-4 w-4" />
+                  Comercial CRM
                 </Button>
               </Link>
             )}
@@ -391,6 +414,14 @@ export default function Header() {
                     <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-double-diamond" onClick={() => setIsMobileMenuOpen(false)}>
                       <TrendingUp className="mr-2 h-4 w-4" />
                       Double Diamond
+                    </Button>
+                  </Link>
+                )}
+                {isAuthenticated && (
+                  <Link href="/commercial">
+                    <Button variant="ghost" className="w-full justify-start" data-testid="mobile-nav-commercial" onClick={() => setIsMobileMenuOpen(false)}>
+                      <BriefcaseBusiness className="mr-2 h-4 w-4" />
+                      Comercial CRM
                     </Button>
                   </Link>
                 )}

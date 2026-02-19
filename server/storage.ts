@@ -31,6 +31,12 @@ import {
   type LovabilityMetric, type InsertLovabilityMetric,
   type ProjectAnalytics, type InsertProjectAnalytics,
   type CompetitiveAnalysis, type InsertCompetitiveAnalysis,
+  type CommercialAccount, type InsertCommercialAccount,
+  type CommercialContact, type InsertCommercialContact,
+  type CommercialPipelineStage, type InsertCommercialPipelineStage,
+  type CommercialOpportunity, type InsertCommercialOpportunity,
+  type CommercialSwotAnalysis, type InsertCommercialSwot,
+  type CommercialPlaybookTemplate, type InsertCommercialPlaybook,
   type ProjectBackup, type InsertProjectBackup,
   type HelpArticle, type InsertHelpArticle,
   type IndustrySector, type InsertIndustrySector,
@@ -51,6 +57,8 @@ import {
   userAddons,
   canvasDrawings, phaseCards, benchmarks, benchmarkAssessments,
   dvfAssessments, lovabilityMetrics, projectAnalytics, competitiveAnalysis, guidingCriteria,
+  commercialAccounts, commercialContacts, commercialPipelineStages,
+  commercialOpportunities, commercialSwotAnalyses, commercialPlaybookTemplates,
   projectBackups, helpArticles, industrySectors, successCases, aiGeneratedAssets,
   analyticsEvents, projectMembers, projectInvites, projectComments, 
   doubleDiamondProjects, doubleDiamondExports, bpmnDiagrams
@@ -273,6 +281,37 @@ export interface IStorage {
   createCompetitiveAnalysis(analysis: InsertCompetitiveAnalysis): Promise<CompetitiveAnalysis>;
   updateCompetitiveAnalysis(id: string, analysis: Partial<InsertCompetitiveAnalysis>): Promise<CompetitiveAnalysis | undefined>;
   deleteCompetitiveAnalysis(id: string): Promise<boolean>;
+
+  // Commercial Module (Phase 1 + 2)
+  getCommercialAccounts(userId: string): Promise<CommercialAccount[]>;
+  createCommercialAccount(account: InsertCommercialAccount): Promise<CommercialAccount>;
+  updateCommercialAccount(id: string, account: Partial<InsertCommercialAccount>): Promise<CommercialAccount | undefined>;
+  deleteCommercialAccount(id: string, userId: string): Promise<boolean>;
+
+  getCommercialContacts(accountId: string): Promise<CommercialContact[]>;
+  createCommercialContact(contact: InsertCommercialContact): Promise<CommercialContact>;
+  updateCommercialContact(id: string, contact: Partial<InsertCommercialContact>): Promise<CommercialContact | undefined>;
+  deleteCommercialContact(id: string): Promise<boolean>;
+
+  getCommercialPipelineStages(userId: string): Promise<CommercialPipelineStage[]>;
+  createCommercialPipelineStage(stage: InsertCommercialPipelineStage): Promise<CommercialPipelineStage>;
+  updateCommercialPipelineStage(id: string, stage: Partial<InsertCommercialPipelineStage>): Promise<CommercialPipelineStage | undefined>;
+  deleteCommercialPipelineStage(id: string): Promise<boolean>;
+
+  getCommercialOpportunities(userId: string): Promise<CommercialOpportunity[]>;
+  createCommercialOpportunity(opportunity: InsertCommercialOpportunity): Promise<CommercialOpportunity>;
+  updateCommercialOpportunity(id: string, opportunity: Partial<InsertCommercialOpportunity>): Promise<CommercialOpportunity | undefined>;
+  deleteCommercialOpportunity(id: string): Promise<boolean>;
+
+  getCommercialSwotAnalyses(userId: string): Promise<CommercialSwotAnalysis[]>;
+  createCommercialSwotAnalysis(swot: InsertCommercialSwot): Promise<CommercialSwotAnalysis>;
+  updateCommercialSwotAnalysis(id: string, swot: Partial<InsertCommercialSwot>): Promise<CommercialSwotAnalysis | undefined>;
+  deleteCommercialSwotAnalysis(id: string): Promise<boolean>;
+
+  getCommercialPlaybooks(userId: string): Promise<CommercialPlaybookTemplate[]>;
+  createCommercialPlaybook(playbook: InsertCommercialPlaybook): Promise<CommercialPlaybookTemplate>;
+  updateCommercialPlaybook(id: string, playbook: Partial<InsertCommercialPlaybook>): Promise<CommercialPlaybookTemplate | undefined>;
+  deleteCommercialPlaybook(id: string): Promise<boolean>;
 
   // Project Backups
   createProjectBackup(projectId: string, backupType: 'auto' | 'manual', description?: string): Promise<any>;
@@ -1536,6 +1575,152 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCompetitiveAnalysis(id: string): Promise<boolean> {
     const result = await db.delete(competitiveAnalysis).where(eq(competitiveAnalysis.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Commercial Module (Phase 1 + 2)
+  async getCommercialAccounts(userId: string): Promise<CommercialAccount[]> {
+    return await db.select().from(commercialAccounts)
+      .where(eq(commercialAccounts.userId, userId))
+      .orderBy(desc(commercialAccounts.createdAt));
+  }
+
+  async createCommercialAccount(account: InsertCommercialAccount): Promise<CommercialAccount> {
+    const [newAccount] = await db.insert(commercialAccounts).values(account).returning();
+    return newAccount;
+  }
+
+  async updateCommercialAccount(id: string, account: Partial<InsertCommercialAccount>): Promise<CommercialAccount | undefined> {
+    const [updated] = await db.update(commercialAccounts)
+      .set({ ...account, updatedAt: new Date() })
+      .where(eq(commercialAccounts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommercialAccount(id: string, userId: string): Promise<boolean> {
+    const result = await db.delete(commercialAccounts)
+      .where(and(eq(commercialAccounts.id, id), eq(commercialAccounts.userId, userId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getCommercialContacts(accountId: string): Promise<CommercialContact[]> {
+    return await db.select().from(commercialContacts)
+      .where(eq(commercialContacts.accountId, accountId))
+      .orderBy(desc(commercialContacts.createdAt));
+  }
+
+  async createCommercialContact(contact: InsertCommercialContact): Promise<CommercialContact> {
+    const [newContact] = await db.insert(commercialContacts).values(contact).returning();
+    return newContact;
+  }
+
+  async updateCommercialContact(id: string, contact: Partial<InsertCommercialContact>): Promise<CommercialContact | undefined> {
+    const [updated] = await db.update(commercialContacts)
+      .set({ ...contact, updatedAt: new Date() })
+      .where(eq(commercialContacts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommercialContact(id: string): Promise<boolean> {
+    const result = await db.delete(commercialContacts).where(eq(commercialContacts.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getCommercialPipelineStages(userId: string): Promise<CommercialPipelineStage[]> {
+    return await db.select().from(commercialPipelineStages)
+      .where(eq(commercialPipelineStages.userId, userId))
+      .orderBy(commercialPipelineStages.order, desc(commercialPipelineStages.createdAt));
+  }
+
+  async createCommercialPipelineStage(stage: InsertCommercialPipelineStage): Promise<CommercialPipelineStage> {
+    const [newStage] = await db.insert(commercialPipelineStages).values(stage).returning();
+    return newStage;
+  }
+
+  async updateCommercialPipelineStage(id: string, stage: Partial<InsertCommercialPipelineStage>): Promise<CommercialPipelineStage | undefined> {
+    const [updated] = await db.update(commercialPipelineStages)
+      .set({ ...stage, updatedAt: new Date() })
+      .where(eq(commercialPipelineStages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommercialPipelineStage(id: string): Promise<boolean> {
+    const result = await db.delete(commercialPipelineStages).where(eq(commercialPipelineStages.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getCommercialOpportunities(userId: string): Promise<CommercialOpportunity[]> {
+    return await db.select().from(commercialOpportunities)
+      .where(eq(commercialOpportunities.userId, userId))
+      .orderBy(desc(commercialOpportunities.updatedAt));
+  }
+
+  async createCommercialOpportunity(opportunity: InsertCommercialOpportunity): Promise<CommercialOpportunity> {
+    const [newOpportunity] = await db.insert(commercialOpportunities).values(opportunity).returning();
+    return newOpportunity;
+  }
+
+  async updateCommercialOpportunity(id: string, opportunity: Partial<InsertCommercialOpportunity>): Promise<CommercialOpportunity | undefined> {
+    const [updated] = await db.update(commercialOpportunities)
+      .set({ ...opportunity, updatedAt: new Date() })
+      .where(eq(commercialOpportunities.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommercialOpportunity(id: string): Promise<boolean> {
+    const result = await db.delete(commercialOpportunities).where(eq(commercialOpportunities.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getCommercialSwotAnalyses(userId: string): Promise<CommercialSwotAnalysis[]> {
+    return await db.select().from(commercialSwotAnalyses)
+      .where(eq(commercialSwotAnalyses.userId, userId))
+      .orderBy(desc(commercialSwotAnalyses.updatedAt));
+  }
+
+  async createCommercialSwotAnalysis(swot: InsertCommercialSwot): Promise<CommercialSwotAnalysis> {
+    const [newSwot] = await db.insert(commercialSwotAnalyses).values(swot).returning();
+    return newSwot;
+  }
+
+  async updateCommercialSwotAnalysis(id: string, swot: Partial<InsertCommercialSwot>): Promise<CommercialSwotAnalysis | undefined> {
+    const [updated] = await db.update(commercialSwotAnalyses)
+      .set({ ...swot, updatedAt: new Date() })
+      .where(eq(commercialSwotAnalyses.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommercialSwotAnalysis(id: string): Promise<boolean> {
+    const result = await db.delete(commercialSwotAnalyses).where(eq(commercialSwotAnalyses.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getCommercialPlaybooks(userId: string): Promise<CommercialPlaybookTemplate[]> {
+    return await db.select().from(commercialPlaybookTemplates)
+      .where(eq(commercialPlaybookTemplates.userId, userId))
+      .orderBy(desc(commercialPlaybookTemplates.updatedAt));
+  }
+
+  async createCommercialPlaybook(playbook: InsertCommercialPlaybook): Promise<CommercialPlaybookTemplate> {
+    const [newPlaybook] = await db.insert(commercialPlaybookTemplates).values(playbook).returning();
+    return newPlaybook;
+  }
+
+  async updateCommercialPlaybook(id: string, playbook: Partial<InsertCommercialPlaybook>): Promise<CommercialPlaybookTemplate | undefined> {
+    const [updated] = await db.update(commercialPlaybookTemplates)
+      .set({ ...playbook, updatedAt: new Date() })
+      .where(eq(commercialPlaybookTemplates.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommercialPlaybook(id: string): Promise<boolean> {
+    const result = await db.delete(commercialPlaybookTemplates).where(eq(commercialPlaybookTemplates.id, id));
     return (result.rowCount || 0) > 0;
   }
 

@@ -49,6 +49,99 @@ export const industrySectors = pgTable("industry_sectors", {
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
 
+// Commercial Module (Phase 1 + 2)
+export const commercialAccounts = pgTable("commercial_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  segment: text("segment"),
+  companySize: text("company_size"),
+  country: text("country"),
+  state: text("state"),
+  city: text("city"),
+  address: text("address"),
+  website: text("website"),
+  status: text("status").default("active"),
+  tags: jsonb("tags").default([]),
+  customFields: jsonb("custom_fields").default({}),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const commercialContacts = pgTable("commercial_contacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  accountId: varchar("account_id").references(() => commercialAccounts.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  role: text("role"),
+  email: text("email"),
+  phone: text("phone"),
+  preferredChannel: text("preferred_channel"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const commercialPipelineStages = pgTable("commercial_pipeline_stages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  order: integer("order").notNull().default(0),
+  color: text("color").default("#3B82F6"),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const commercialOpportunities = pgTable("commercial_opportunities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  accountId: varchar("account_id").references(() => commercialAccounts.id, { onDelete: "cascade" }).notNull(),
+  contactId: varchar("contact_id").references(() => commercialContacts.id, { onDelete: "set null" }),
+  stageId: varchar("stage_id").references(() => commercialPipelineStages.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  valueEstimate: real("value_estimate").default(0),
+  probability: integer("probability").default(0),
+  expectedCloseDate: timestamp("expected_close_date"),
+  status: text("status").default("open"), // open, won, lost
+  lossReason: text("loss_reason"),
+  nextActionType: text("next_action_type"), // call, email, visit, message, meeting
+  nextActionDescription: text("next_action_description"),
+  nextActionDate: timestamp("next_action_date"),
+  lastContactAt: timestamp("last_contact_at"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const commercialSwotAnalyses = pgTable("commercial_swot_analyses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  segment: text("segment"),
+  context: text("context"),
+  strengths: jsonb("strengths").default([]),
+  weaknesses: jsonb("weaknesses").default([]),
+  opportunities: jsonb("opportunities").default([]),
+  threats: jsonb("threats").default([]),
+  actionPlan: jsonb("action_plan").default([]),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+export const commercialPlaybookTemplates = pgTable("commercial_playbook_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  channel: text("channel").notNull(), // phone, email, ecommerce, visit, campaign
+  segment: text("segment"),
+  objective: text("objective"),
+  content: text("content").notNull(),
+  checklist: jsonb("checklist").default([]),
+  version: integer("version").default(1),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 export const kbDocuments = pgTable("kb_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   source: text("source").notNull().default("google_drive"),
@@ -931,6 +1024,42 @@ export const insertBenchmarkAssessmentSchema = createInsertSchema(benchmarkAsses
   updatedAt: true,
 });
 
+export const insertCommercialAccountSchema = createInsertSchema(commercialAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommercialContactSchema = createInsertSchema(commercialContacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommercialPipelineStageSchema = createInsertSchema(commercialPipelineStages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommercialOpportunitySchema = createInsertSchema(commercialOpportunities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommercialSwotSchema = createInsertSchema(commercialSwotAnalyses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommercialPlaybookSchema = createInsertSchema(commercialPlaybookTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Insert schemas for phase cards
 export const insertPhaseCardSchema = createInsertSchema(phaseCards).omit({
   id: true,
@@ -941,6 +1070,25 @@ export const insertPhaseCardSchema = createInsertSchema(phaseCards).omit({
 // Export types for phase cards
 export type PhaseCard = typeof phaseCards.$inferSelect;
 export type InsertPhaseCard = z.infer<typeof insertPhaseCardSchema>;
+
+// Export types for commercial module
+export type CommercialAccount = typeof commercialAccounts.$inferSelect;
+export type InsertCommercialAccount = z.infer<typeof insertCommercialAccountSchema>;
+
+export type CommercialContact = typeof commercialContacts.$inferSelect;
+export type InsertCommercialContact = z.infer<typeof insertCommercialContactSchema>;
+
+export type CommercialPipelineStage = typeof commercialPipelineStages.$inferSelect;
+export type InsertCommercialPipelineStage = z.infer<typeof insertCommercialPipelineStageSchema>;
+
+export type CommercialOpportunity = typeof commercialOpportunities.$inferSelect;
+export type InsertCommercialOpportunity = z.infer<typeof insertCommercialOpportunitySchema>;
+
+export type CommercialSwotAnalysis = typeof commercialSwotAnalyses.$inferSelect;
+export type InsertCommercialSwot = z.infer<typeof insertCommercialSwotSchema>;
+
+export type CommercialPlaybookTemplate = typeof commercialPlaybookTemplates.$inferSelect;
+export type InsertCommercialPlaybook = z.infer<typeof insertCommercialPlaybookSchema>;
 
 // DVF Assessment - Desirability, Feasibility, Viability evaluation for ideas
 export const dvfAssessments = pgTable("dvf_assessments", {

@@ -39,6 +39,12 @@ import {
   insertLovabilityMetricSchema,
   insertProjectAnalyticsSchema,
   insertCompetitiveAnalysisSchema,
+  insertCommercialAccountSchema,
+  insertCommercialContactSchema,
+  insertCommercialPipelineStageSchema,
+  insertCommercialOpportunitySchema,
+  insertCommercialSwotSchema,
+  insertCommercialPlaybookSchema,
   updateProfileSchema,
   insertHelpArticleSchema,
   insertIndustrySectorSchema,
@@ -5021,6 +5027,363 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting competitive analysis: - routes.ts:4056", error);
       res.status(500).json({ error: "Failed to delete competitive analysis" });
+    }
+  });
+
+  // Commercial Module Routes (Phase 1 + 2)
+  // Accounts
+  app.get("/api/commercial/accounts", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const accounts = await storage.getCommercialAccounts(userId);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching commercial accounts:", error);
+      res.status(500).json({ error: "Failed to fetch accounts" });
+    }
+  });
+
+  app.post("/api/commercial/accounts", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const parsed = insertCommercialAccountSchema.parse({
+        ...req.body,
+        userId,
+      });
+      const account = await storage.createCommercialAccount(parsed);
+      res.status(201).json(account);
+    } catch (error) {
+      console.error("Error creating commercial account:", error);
+      res.status(500).json({ error: "Failed to create account" });
+    }
+  });
+
+  app.put("/api/commercial/accounts/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsed = insertCommercialAccountSchema.partial().parse(req.body);
+      const account = await storage.updateCommercialAccount(id, parsed);
+      if (!account) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+      res.json(account);
+    } catch (error) {
+      console.error("Error updating commercial account:", error);
+      res.status(500).json({ error: "Failed to update account" });
+    }
+  });
+
+  app.delete("/api/commercial/accounts/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const { id } = req.params;
+      const success = await storage.deleteCommercialAccount(id, userId);
+      if (!success) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting commercial account:", error);
+      res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
+  // Contacts
+  app.get("/api/commercial/accounts/:accountId/contacts", requireAuth, async (req, res) => {
+    try {
+      const { accountId } = req.params;
+      const contacts = await storage.getCommercialContacts(accountId);
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching commercial contacts:", error);
+      res.status(500).json({ error: "Failed to fetch contacts" });
+    }
+  });
+
+  app.post("/api/commercial/contacts", requireAuth, async (req, res) => {
+    try {
+      const parsed = insertCommercialContactSchema.parse(req.body);
+      const contact = await storage.createCommercialContact(parsed);
+      res.status(201).json(contact);
+    } catch (error) {
+      console.error("Error creating commercial contact:", error);
+      res.status(500).json({ error: "Failed to create contact" });
+    }
+  });
+
+  app.put("/api/commercial/contacts/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsed = insertCommercialContactSchema.partial().parse(req.body);
+      const contact = await storage.updateCommercialContact(id, parsed);
+      if (!contact) {
+        return res.status(404).json({ error: "Contact not found" });
+      }
+      res.json(contact);
+    } catch (error) {
+      console.error("Error updating commercial contact:", error);
+      res.status(500).json({ error: "Failed to update contact" });
+    }
+  });
+
+  app.delete("/api/commercial/contacts/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteCommercialContact(id);
+      if (!success) {
+        return res.status(404).json({ error: "Contact not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting commercial contact:", error);
+      res.status(500).json({ error: "Failed to delete contact" });
+    }
+  });
+
+  // Pipeline Stages
+  app.get("/api/commercial/stages", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      let stages = await storage.getCommercialPipelineStages(userId);
+
+      if (stages.length === 0) {
+        const defaults = [
+          { name: "Novo Lead", order: 0, color: "#6B7280" },
+          { name: "Contato Feito", order: 1, color: "#2563EB" },
+          { name: "Qualificado", order: 2, color: "#7C3AED" },
+          { name: "Proposta", order: 3, color: "#D97706" },
+          { name: "Fechado", order: 4, color: "#16A34A" },
+        ];
+
+        for (const stage of defaults) {
+          await storage.createCommercialPipelineStage({
+            userId,
+            name: stage.name,
+            order: stage.order,
+            color: stage.color,
+            isDefault: true,
+          });
+        }
+
+        stages = await storage.getCommercialPipelineStages(userId);
+      }
+
+      res.json(stages);
+    } catch (error) {
+      console.error("Error fetching pipeline stages:", error);
+      res.status(500).json({ error: "Failed to fetch stages" });
+    }
+  });
+
+  app.post("/api/commercial/stages", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const parsed = insertCommercialPipelineStageSchema.parse({
+        ...req.body,
+        userId,
+      });
+      const stage = await storage.createCommercialPipelineStage(parsed);
+      res.status(201).json(stage);
+    } catch (error) {
+      console.error("Error creating pipeline stage:", error);
+      res.status(500).json({ error: "Failed to create stage" });
+    }
+  });
+
+  app.put("/api/commercial/stages/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsed = insertCommercialPipelineStageSchema.partial().parse(req.body);
+      const stage = await storage.updateCommercialPipelineStage(id, parsed);
+      if (!stage) {
+        return res.status(404).json({ error: "Stage not found" });
+      }
+      res.json(stage);
+    } catch (error) {
+      console.error("Error updating pipeline stage:", error);
+      res.status(500).json({ error: "Failed to update stage" });
+    }
+  });
+
+  app.delete("/api/commercial/stages/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteCommercialPipelineStage(id);
+      if (!success) {
+        return res.status(404).json({ error: "Stage not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting pipeline stage:", error);
+      res.status(500).json({ error: "Failed to delete stage" });
+    }
+  });
+
+  // Opportunities
+  app.get("/api/commercial/opportunities", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const opportunities = await storage.getCommercialOpportunities(userId);
+      res.json(opportunities);
+    } catch (error) {
+      console.error("Error fetching opportunities:", error);
+      res.status(500).json({ error: "Failed to fetch opportunities" });
+    }
+  });
+
+  app.post("/api/commercial/opportunities", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const parsed = insertCommercialOpportunitySchema.parse({
+        ...req.body,
+        userId,
+      });
+      const opportunity = await storage.createCommercialOpportunity(parsed);
+      res.status(201).json(opportunity);
+    } catch (error) {
+      console.error("Error creating opportunity:", error);
+      res.status(500).json({ error: "Failed to create opportunity" });
+    }
+  });
+
+  app.put("/api/commercial/opportunities/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsed = insertCommercialOpportunitySchema.partial().parse(req.body);
+      const opportunity = await storage.updateCommercialOpportunity(id, parsed);
+      if (!opportunity) {
+        return res.status(404).json({ error: "Opportunity not found" });
+      }
+      res.json(opportunity);
+    } catch (error) {
+      console.error("Error updating opportunity:", error);
+      res.status(500).json({ error: "Failed to update opportunity" });
+    }
+  });
+
+  app.delete("/api/commercial/opportunities/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteCommercialOpportunity(id);
+      if (!success) {
+        return res.status(404).json({ error: "Opportunity not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting opportunity:", error);
+      res.status(500).json({ error: "Failed to delete opportunity" });
+    }
+  });
+
+  // SWOT
+  app.get("/api/commercial/swot", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const analyses = await storage.getCommercialSwotAnalyses(userId);
+      res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching SWOT analyses:", error);
+      res.status(500).json({ error: "Failed to fetch SWOT analyses" });
+    }
+  });
+
+  app.post("/api/commercial/swot", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const parsed = insertCommercialSwotSchema.parse({
+        ...req.body,
+        userId,
+      });
+      const swot = await storage.createCommercialSwotAnalysis(parsed);
+      res.status(201).json(swot);
+    } catch (error) {
+      console.error("Error creating SWOT analysis:", error);
+      res.status(500).json({ error: "Failed to create SWOT analysis" });
+    }
+  });
+
+  app.put("/api/commercial/swot/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsed = insertCommercialSwotSchema.partial().parse(req.body);
+      const swot = await storage.updateCommercialSwotAnalysis(id, parsed);
+      if (!swot) {
+        return res.status(404).json({ error: "SWOT analysis not found" });
+      }
+      res.json(swot);
+    } catch (error) {
+      console.error("Error updating SWOT analysis:", error);
+      res.status(500).json({ error: "Failed to update SWOT analysis" });
+    }
+  });
+
+  app.delete("/api/commercial/swot/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteCommercialSwotAnalysis(id);
+      if (!success) {
+        return res.status(404).json({ error: "SWOT analysis not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting SWOT analysis:", error);
+      res.status(500).json({ error: "Failed to delete SWOT analysis" });
+    }
+  });
+
+  // Playbooks
+  app.get("/api/commercial/playbooks", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const playbooks = await storage.getCommercialPlaybooks(userId);
+      res.json(playbooks);
+    } catch (error) {
+      console.error("Error fetching playbooks:", error);
+      res.status(500).json({ error: "Failed to fetch playbooks" });
+    }
+  });
+
+  app.post("/api/commercial/playbooks", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const parsed = insertCommercialPlaybookSchema.parse({
+        ...req.body,
+        userId,
+      });
+      const playbook = await storage.createCommercialPlaybook(parsed);
+      res.status(201).json(playbook);
+    } catch (error) {
+      console.error("Error creating playbook:", error);
+      res.status(500).json({ error: "Failed to create playbook" });
+    }
+  });
+
+  app.put("/api/commercial/playbooks/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const parsed = insertCommercialPlaybookSchema.partial().parse(req.body);
+      const playbook = await storage.updateCommercialPlaybook(id, parsed);
+      if (!playbook) {
+        return res.status(404).json({ error: "Playbook not found" });
+      }
+      res.json(playbook);
+    } catch (error) {
+      console.error("Error updating playbook:", error);
+      res.status(500).json({ error: "Failed to update playbook" });
+    }
+  });
+
+  app.delete("/api/commercial/playbooks/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteCommercialPlaybook(id);
+      if (!success) {
+        return res.status(404).json({ error: "Playbook not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting playbook:", error);
+      res.status(500).json({ error: "Failed to delete playbook" });
     }
   });
 

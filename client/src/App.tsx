@@ -28,6 +28,7 @@ const PricingPage = lazy(() => import("@/pages/pricing"));
 const ChatPage = lazy(() => import("@/pages/chat"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const BenchmarkingPage = lazy(() => import("@/pages/benchmarking"));
+const CommercialPage = lazy(() => import("@/pages/commercial"));
 const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
 const Terms = lazy(() => import("@/pages/terms"));
@@ -236,6 +237,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<RouteFallback />}>
             <BenchmarkingPage />
+          </Suspense>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/commercial">
+        <ProtectedRoute>
+          <Suspense fallback={<RouteFallback />}>
+            <CommercialPage />
           </Suspense>
         </ProtectedRoute>
       </Route>
