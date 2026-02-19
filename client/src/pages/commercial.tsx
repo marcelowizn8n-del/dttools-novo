@@ -31,6 +31,25 @@ function splitByLine(value: string): string[] {
     .filter((line) => line.length > 0);
 }
 
+function getMutationErrorMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof Error)) {
+    return fallback;
+  }
+
+  const [, rawPayload] = error.message.split(":", 2);
+  if (!rawPayload) {
+    return error.message || fallback;
+  }
+
+  const payload = rawPayload.trim();
+  try {
+    const parsed = JSON.parse(payload) as { message?: string; error?: string };
+    return parsed.message || parsed.error || error.message || fallback;
+  } catch {
+    return payload || error.message || fallback;
+  }
+}
+
 export default function CommercialPage() {
   const { toast } = useToast();
 
@@ -140,6 +159,13 @@ export default function CommercialPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/commercial/accounts"] });
       setNewAccount({ name: "", segment: "", city: "", state: "", country: "Brasil", website: "" });
       toast({ title: "Conta criada", description: "Conta adicionada com sucesso." });
+    },
+    onError: (error) => {
+      toast({
+        title: "Não foi possível criar a conta",
+        description: getMutationErrorMessage(error, "Tente novamente em alguns instantes."),
+        variant: "destructive",
+      });
     },
   });
 
