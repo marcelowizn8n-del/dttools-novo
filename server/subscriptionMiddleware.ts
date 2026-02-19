@@ -8,6 +8,56 @@ function normalizeLimit(value: number | null | undefined): number | null {
   return value;
 }
 
+type CommercialAccess = {
+  commercialEnabled: boolean;
+  maxCommercialOpportunities: number | null;
+  maxCommercialSwotAnalyses: number | null;
+  maxCommercialPlaybooks: number | null;
+  maxCommercialAiGenerations: number | null;
+};
+
+function resolveCommercialAccess(planName: string | null | undefined, hasCommercialPro: boolean): CommercialAccess {
+  if (hasCommercialPro) {
+    return {
+      commercialEnabled: true,
+      maxCommercialOpportunities: 500,
+      maxCommercialSwotAnalyses: 150,
+      maxCommercialPlaybooks: 150,
+      maxCommercialAiGenerations: 120,
+    };
+  }
+
+  const normalized = String(planName || "").trim().toLowerCase();
+
+  if (normalized === "enterprise") {
+    return {
+      commercialEnabled: true,
+      maxCommercialOpportunities: null,
+      maxCommercialSwotAnalyses: null,
+      maxCommercialPlaybooks: null,
+      maxCommercialAiGenerations: 250,
+    };
+  }
+
+  if (normalized === "pro") {
+    return {
+      commercialEnabled: true,
+      maxCommercialOpportunities: 120,
+      maxCommercialSwotAnalyses: 30,
+      maxCommercialPlaybooks: 40,
+      maxCommercialAiGenerations: 40,
+    };
+  }
+
+  return {
+    commercialEnabled: false,
+    maxCommercialOpportunities: 0,
+    maxCommercialSwotAnalyses: 0,
+    maxCommercialPlaybooks: 0,
+    maxCommercialAiGenerations: 0,
+  };
+}
+
 // Extend Request interface to include subscription info
 declare module 'express-serve-static-core' {
   interface Request {
@@ -28,6 +78,11 @@ declare module 'express-serve-static-core' {
         hasPermissionManagement: boolean;
         hasSharedWorkspace: boolean;
         hasCommentsAndFeedback: boolean;
+        commercialEnabled: boolean;
+        maxCommercialOpportunities: number | null;
+        maxCommercialSwotAnalyses: number | null;
+        maxCommercialPlaybooks: number | null;
+        maxCommercialAiGenerations: number | null;
       };
       addons?: {
         doubleDiamondPro: boolean;
@@ -35,6 +90,7 @@ declare module 'express-serve-static-core' {
         aiTurbo: boolean;
         collabAdvanced: boolean;
         libraryPremium: boolean;
+        commercialPro: boolean;
         raw: any[];
       };
     };
@@ -49,6 +105,7 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
     // User not authenticated - apply free plan limits
     const freePlan = await storage.getSubscriptionPlanByName("free");
     if (freePlan) {
+      const commercialAccess = resolveCommercialAccess(freePlan.name, false);
       const planMaxProjects = normalizeLimit(freePlan.maxProjects);
       const planMaxPersonas = normalizeLimit(freePlan.maxPersonasPerProject);
       const planMaxUsers = normalizeLimit(freePlan.maxUsersPerTeam);
@@ -75,6 +132,11 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
           hasPermissionManagement: freePlan.hasPermissionManagement ?? false,
           hasSharedWorkspace: freePlan.hasSharedWorkspace ?? false,
           hasCommentsAndFeedback: freePlan.hasCommentsAndFeedback ?? false,
+          commercialEnabled: commercialAccess.commercialEnabled,
+          maxCommercialOpportunities: commercialAccess.maxCommercialOpportunities,
+          maxCommercialSwotAnalyses: commercialAccess.maxCommercialSwotAnalyses,
+          maxCommercialPlaybooks: commercialAccess.maxCommercialPlaybooks,
+          maxCommercialAiGenerations: commercialAccess.maxCommercialAiGenerations,
         },
         addons: {
           doubleDiamondPro: false,
@@ -82,6 +144,7 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
           aiTurbo: false,
           collabAdvanced: false,
           libraryPremium: false,
+          commercialPro: false,
           raw: [],
         },
       };
@@ -137,6 +200,9 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
       const hasAiTurbo = addonKeys.has("ai_turbo");
       const hasCollabAdvanced = addonKeys.has("collab_advanced");
       const hasLibraryPremium = addonKeys.has("library_premium");
+      const hasCommercialPro = addonKeys.has("commercial_pro");
+
+      const commercialAccess = resolveCommercialAccess(plan.name, hasCommercialPro);
 
       let maxProjects = userMaxProjects !== null ? userMaxProjects : planMaxProjects;
       let aiChatLimit = userAiChatLimit !== null ? userAiChatLimit : planAiChat;
@@ -194,6 +260,11 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
           hasPermissionManagement,
           hasSharedWorkspace,
           hasCommentsAndFeedback,
+          commercialEnabled: commercialAccess.commercialEnabled,
+          maxCommercialOpportunities: commercialAccess.maxCommercialOpportunities,
+          maxCommercialSwotAnalyses: commercialAccess.maxCommercialSwotAnalyses,
+          maxCommercialPlaybooks: commercialAccess.maxCommercialPlaybooks,
+          maxCommercialAiGenerations: commercialAccess.maxCommercialAiGenerations,
         },
         addons: {
           doubleDiamondPro: hasDoubleDiamondPro,
@@ -201,6 +272,7 @@ export async function loadUserSubscription(req: Request, res: Response, next: Ne
           aiTurbo: hasAiTurbo,
           collabAdvanced: hasCollabAdvanced,
           libraryPremium: hasLibraryPremium,
+          commercialPro: hasCommercialPro,
           raw: activeAddons,
         },
       };
@@ -376,6 +448,11 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
         hasPermissionManagement: freePlan.hasPermissionManagement ?? false,
         hasSharedWorkspace: freePlan.hasSharedWorkspace ?? false,
         hasCommentsAndFeedback: freePlan.hasCommentsAndFeedback ?? false,
+        commercialEnabled: resolveCommercialAccess(freePlan.name, false).commercialEnabled,
+        maxCommercialOpportunities: resolveCommercialAccess(freePlan.name, false).maxCommercialOpportunities,
+        maxCommercialSwotAnalyses: resolveCommercialAccess(freePlan.name, false).maxCommercialSwotAnalyses,
+        maxCommercialPlaybooks: resolveCommercialAccess(freePlan.name, false).maxCommercialPlaybooks,
+        maxCommercialAiGenerations: resolveCommercialAccess(freePlan.name, false).maxCommercialAiGenerations,
       } : null,
       addons: {
         doubleDiamondPro: false,
@@ -383,6 +460,7 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
         aiTurbo: false,
         collabAdvanced: false,
         libraryPremium: false,
+        commercialPro: false,
         raw: [],
       },
       usage: {
@@ -494,6 +572,11 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
         hasPermissionManagement,
         hasSharedWorkspace,
         hasCommentsAndFeedback,
+        commercialEnabled: commercialAccess.commercialEnabled,
+        maxCommercialOpportunities: commercialAccess.maxCommercialOpportunities,
+        maxCommercialSwotAnalyses: commercialAccess.maxCommercialSwotAnalyses,
+        maxCommercialPlaybooks: commercialAccess.maxCommercialPlaybooks,
+        maxCommercialAiGenerations: commercialAccess.maxCommercialAiGenerations,
       };
 
       addonsInfo = {
@@ -502,6 +585,7 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
         aiTurbo: hasAiTurbo,
         collabAdvanced: hasCollabAdvanced,
         libraryPremium: hasLibraryPremium,
+        commercialPro: hasCommercialPro,
         raw: activeAddons,
       };
     }

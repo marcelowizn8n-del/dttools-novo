@@ -95,6 +95,7 @@ export const commercialPipelineStages = pgTable("commercial_pipeline_stages", {
 export const commercialOpportunities = pgTable("commercial_opportunities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  projectId: varchar("project_id").references(() => projects.id, { onDelete: "set null" }),
   accountId: varchar("account_id").references(() => commercialAccounts.id, { onDelete: "cascade" }).notNull(),
   contactId: varchar("contact_id").references(() => commercialContacts.id, { onDelete: "set null" }),
   stageId: varchar("stage_id").references(() => commercialPipelineStages.id, { onDelete: "set null" }),
@@ -115,6 +116,7 @@ export const commercialOpportunities = pgTable("commercial_opportunities", {
 export const commercialSwotAnalyses = pgTable("commercial_swot_analyses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  projectId: varchar("project_id").references(() => projects.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   segment: text("segment"),
   context: text("context"),
@@ -130,6 +132,7 @@ export const commercialSwotAnalyses = pgTable("commercial_swot_analyses", {
 export const commercialPlaybookTemplates = pgTable("commercial_playbook_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  projectId: varchar("project_id").references(() => projects.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   channel: text("channel").notNull(), // phone, email, ecommerce, visit, campaign
   segment: text("segment"),
