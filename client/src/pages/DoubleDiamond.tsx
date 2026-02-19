@@ -230,11 +230,13 @@ export default function DoubleDiamond() {
           </Card>
         </DialogTrigger>
 
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl h-[90vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2 border-b">
             <DialogTitle className="text-xl sm:text-2xl">{t("dd.list.wizard.title")}</DialogTitle>
           </DialogHeader>
-          <DoubleDiamondWizard onComplete={() => setShowWizard(false)} />
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6">
+            <DoubleDiamondWizard onComplete={() => setShowWizard(false)} />
+          </div>
         </DialogContent>
       </Dialog>
 
