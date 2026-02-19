@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS commercial_pipeline_stages (
 CREATE TABLE IF NOT EXISTS commercial_opportunities (
   id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id varchar NOT NULL REFERENCES users(id),
+  project_id varchar REFERENCES projects(id) ON DELETE SET NULL,
   account_id varchar NOT NULL REFERENCES commercial_accounts(id) ON DELETE CASCADE,
   contact_id varchar REFERENCES commercial_contacts(id) ON DELETE SET NULL,
   stage_id varchar REFERENCES commercial_pipeline_stages(id) ON DELETE SET NULL,
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS commercial_opportunities (
 CREATE TABLE IF NOT EXISTS commercial_swot_analyses (
   id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id varchar NOT NULL REFERENCES users(id),
+  project_id varchar REFERENCES projects(id) ON DELETE SET NULL,
   name text NOT NULL,
   segment text,
   context text,
@@ -81,6 +83,7 @@ CREATE TABLE IF NOT EXISTS commercial_swot_analyses (
 CREATE TABLE IF NOT EXISTS commercial_playbook_templates (
   id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id varchar NOT NULL REFERENCES users(id),
+  project_id varchar REFERENCES projects(id) ON DELETE SET NULL,
   name text NOT NULL,
   channel text NOT NULL,
   segment text,
@@ -100,3 +103,26 @@ CREATE INDEX IF NOT EXISTS idx_commercial_opportunities_user_id ON commercial_op
 CREATE INDEX IF NOT EXISTS idx_commercial_opportunities_stage_id ON commercial_opportunities(stage_id);
 CREATE INDEX IF NOT EXISTS idx_commercial_swot_user_id ON commercial_swot_analyses(user_id);
 CREATE INDEX IF NOT EXISTS idx_commercial_playbooks_user_id ON commercial_playbook_templates(user_id);
+
+-- Backward-compatible updates for databases where tables already exist
+ALTER TABLE commercial_opportunities ADD COLUMN IF NOT EXISTS project_id varchar;
+ALTER TABLE commercial_swot_analyses ADD COLUMN IF NOT EXISTS project_id varchar;
+ALTER TABLE commercial_playbook_templates ADD COLUMN IF NOT EXISTS project_id varchar;
+
+DO $$ BEGIN
+  ALTER TABLE commercial_opportunities
+    ADD CONSTRAINT commercial_opportunities_project_id_projects_id_fk
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE commercial_swot_analyses
+    ADD CONSTRAINT commercial_swot_analyses_project_id_projects_id_fk
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE commercial_playbook_templates
+    ADD CONSTRAINT commercial_playbook_templates_project_id_projects_id_fk
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

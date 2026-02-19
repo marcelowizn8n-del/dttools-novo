@@ -19,9 +19,10 @@ import type {
   CommercialPipelineStage,
   CommercialPlaybookTemplate,
   CommercialSwotAnalysis,
+  Project,
 } from "@shared/schema";
 
-const channels = ["phone", "email", "ecommerce", "visit", "campaign"];
+const channels = ["phone", "email", "whatsapp", "linkedin", "ecommerce", "visit", "campaign"];
 
 function splitByLine(value: string): string[] {
   return value
@@ -44,6 +45,10 @@ export default function CommercialPage() {
     website: "",
   });
 
+  const aiAutofillMutation = useMutation({
+    mutationFn: (data: any) => apiRequest("POST", "/api/commercial/ai-autofill", data),
+  });
+
   const [newContact, setNewContact] = useState({
     accountId: "",
     name: "",
@@ -54,6 +59,7 @@ export default function CommercialPage() {
   });
 
   const [newOpportunity, setNewOpportunity] = useState({
+    projectId: "",
     title: "",
     accountId: "",
     contactId: "",
@@ -65,6 +71,7 @@ export default function CommercialPage() {
   });
 
   const [newSwot, setNewSwot] = useState({
+    projectId: "",
     name: "",
     segment: "",
     context: "",
@@ -75,6 +82,7 @@ export default function CommercialPage() {
   });
 
   const [newPlaybook, setNewPlaybook] = useState({
+    projectId: "",
     name: "",
     channel: "email",
     segment: "",
@@ -101,6 +109,10 @@ export default function CommercialPage() {
 
   const { data: playbooks = [] } = useQuery<CommercialPlaybookTemplate[]>({
     queryKey: ["/api/commercial/playbooks"],
+  });
+
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
   });
 
   useEffect(() => {
@@ -181,6 +193,7 @@ export default function CommercialPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/commercial/opportunities"] });
       setNewOpportunity({
+        projectId: "",
         title: "",
         accountId: "",
         contactId: "",
@@ -215,6 +228,7 @@ export default function CommercialPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/commercial/swot"] });
       setNewSwot({
+        projectId: "",
         name: "",
         segment: "",
         context: "",
@@ -249,6 +263,7 @@ export default function CommercialPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/commercial/playbooks"] });
       setNewPlaybook({
+        projectId: "",
         name: "",
         channel: "email",
         segment: "",
@@ -466,6 +481,16 @@ export default function CommercialPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <select
+                  className="h-10 rounded-md border border-input bg-background px-3"
+                  value={newOpportunity.projectId}
+                  onChange={(e) => setNewOpportunity({ ...newOpportunity, projectId: e.target.value })}
+                >
+                  <option value="">Projeto vinculado (opcional)</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.name}</option>
+                  ))}
+                </select>
                 <Input placeholder="Título" value={newOpportunity.title} onChange={(e) => setNewOpportunity({ ...newOpportunity, title: e.target.value })} />
                 <select
                   className="h-10 rounded-md border border-input bg-background px-3"
@@ -549,6 +574,7 @@ export default function CommercialPage() {
                   {opportunities.filter((op) => op.stageId === stage.id).map((op) => (
                     <div key={op.id} className="border rounded-md p-2 space-y-1">
                       <p className="text-sm font-medium">{op.title}</p>
+                      {op.projectId ? <p className="text-[11px] text-muted-foreground">Projeto vinculado</p> : null}
                       <p className="text-xs text-muted-foreground">R$ {(op.valueEstimate || 0).toLocaleString("pt-BR")}</p>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{op.probability || 0}%</Badge>
@@ -604,9 +630,46 @@ export default function CommercialPage() {
                 <CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5" /> Nova SWOT</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                <select
+                  className="h-10 rounded-md border border-input bg-background px-3"
+                  value={newSwot.projectId}
+                  onChange={(e) => setNewSwot({ ...newSwot, projectId: e.target.value })}
+                >
+                  <option value="">Projeto vinculado (opcional)</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.name}</option>
+                  ))}
+                </select>
                 <Input placeholder="Nome da análise" value={newSwot.name} onChange={(e) => setNewSwot({ ...newSwot, name: e.target.value })} />
                 <Input placeholder="Segmento" value={newSwot.segment} onChange={(e) => setNewSwot({ ...newSwot, segment: e.target.value })} />
                 <Textarea placeholder="Contexto" value={newSwot.context} onChange={(e) => setNewSwot({ ...newSwot, context: e.target.value })} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    const response = await aiAutofillMutation.mutateAsync({
+                      mode: "swot",
+                      projectId: newSwot.projectId || undefined,
+                      segment: newSwot.segment,
+                      context: newSwot.context,
+                    });
+                    const parsed = await response.json();
+                    setNewSwot((prev) => ({
+                      ...prev,
+                      name: parsed.name || prev.name,
+                      segment: parsed.segment || prev.segment,
+                      context: parsed.context || prev.context,
+                      strengths: Array.isArray(parsed.strengths) ? parsed.strengths.join("\n") : prev.strengths,
+                      weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses.join("\n") : prev.weaknesses,
+                      opportunities: Array.isArray(parsed.opportunities) ? parsed.opportunities.join("\n") : prev.opportunities,
+                      threats: Array.isArray(parsed.threats) ? parsed.threats.join("\n") : prev.threats,
+                    }));
+                    toast({ title: "SWOT preenchida por IA", description: "Você pode editar tudo antes de salvar." });
+                  }}
+                  disabled={aiAutofillMutation.isPending}
+                >
+                  Gerar rascunho com IA
+                </Button>
                 <Textarea placeholder="Forças (1 por linha)" value={newSwot.strengths} onChange={(e) => setNewSwot({ ...newSwot, strengths: e.target.value })} />
                 <Textarea placeholder="Fraquezas (1 por linha)" value={newSwot.weaknesses} onChange={(e) => setNewSwot({ ...newSwot, weaknesses: e.target.value })} />
                 <Textarea placeholder="Oportunidades (1 por linha)" value={newSwot.opportunities} onChange={(e) => setNewSwot({ ...newSwot, opportunities: e.target.value })} />
@@ -634,6 +697,16 @@ export default function CommercialPage() {
                 <CardTitle>Novo playbook por canal</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                <select
+                  className="h-10 rounded-md border border-input bg-background px-3"
+                  value={newPlaybook.projectId}
+                  onChange={(e) => setNewPlaybook({ ...newPlaybook, projectId: e.target.value })}
+                >
+                  <option value="">Projeto vinculado (opcional)</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.name}</option>
+                  ))}
+                </select>
                 <Input placeholder="Nome do playbook" value={newPlaybook.name} onChange={(e) => setNewPlaybook({ ...newPlaybook, name: e.target.value })} />
                 <div className="grid grid-cols-2 gap-2">
                   <select className="h-10 rounded-md border border-input bg-background px-3" value={newPlaybook.channel} onChange={(e) => setNewPlaybook({ ...newPlaybook, channel: e.target.value })}>
@@ -644,6 +717,33 @@ export default function CommercialPage() {
                   <Input placeholder="Segmento" value={newPlaybook.segment} onChange={(e) => setNewPlaybook({ ...newPlaybook, segment: e.target.value })} />
                 </div>
                 <Input placeholder="Objetivo" value={newPlaybook.objective} onChange={(e) => setNewPlaybook({ ...newPlaybook, objective: e.target.value })} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    const response = await aiAutofillMutation.mutateAsync({
+                      mode: "playbook",
+                      projectId: newPlaybook.projectId || undefined,
+                      segment: newPlaybook.segment,
+                      objective: newPlaybook.objective,
+                      channel: newPlaybook.channel,
+                    });
+                    const parsed = await response.json();
+                    setNewPlaybook((prev) => ({
+                      ...prev,
+                      name: parsed.name || prev.name,
+                      channel: parsed.channel || prev.channel,
+                      segment: parsed.segment || prev.segment,
+                      objective: parsed.objective || prev.objective,
+                      content: parsed.content || prev.content,
+                      checklist: Array.isArray(parsed.checklist) ? parsed.checklist.join("\n") : prev.checklist,
+                    }));
+                    toast({ title: "Playbook preenchido por IA", description: "Revise e ajuste antes de salvar." });
+                  }}
+                  disabled={aiAutofillMutation.isPending}
+                >
+                  Gerar rascunho com IA
+                </Button>
                 <Textarea placeholder="Conteúdo do playbook" value={newPlaybook.content} onChange={(e) => setNewPlaybook({ ...newPlaybook, content: e.target.value })} />
                 <Textarea placeholder="Checklist (1 item por linha)" value={newPlaybook.checklist} onChange={(e) => setNewPlaybook({ ...newPlaybook, checklist: e.target.value })} />
                 <Button
@@ -672,6 +772,7 @@ export default function CommercialPage() {
                 {swotAnalyses.map((swot) => (
                   <div key={swot.id} className="border rounded-md p-3">
                     <p className="font-medium">{swot.name}</p>
+                    {swot.projectId ? <p className="text-[11px] text-muted-foreground">Projeto vinculado</p> : null}
                     <p className="text-xs text-muted-foreground">{swot.segment || "Segmento livre"}</p>
                     <div className="mt-2 flex flex-wrap gap-1">
                       <Badge variant="outline">F: {Array.isArray(swot.strengths) ? swot.strengths.length : 0}</Badge>
@@ -722,6 +823,7 @@ export default function CommercialPage() {
                       <p className="font-medium">{playbook.name}</p>
                       <Badge>{playbook.channel}</Badge>
                     </div>
+                    {playbook.projectId ? <p className="text-[11px] text-muted-foreground">Projeto vinculado</p> : null}
                     <p className="text-xs text-muted-foreground">{playbook.segment || "Segmento livre"}</p>
                     <p className="text-sm mt-2 line-clamp-3">{playbook.content}</p>
                     <div className="mt-2 flex gap-2">
