@@ -36,12 +36,12 @@ function getMutationErrorMessage(error: unknown, fallback: string): string {
     return fallback;
   }
 
-  const [, rawPayload] = error.message.split(":", 2);
-  if (!rawPayload) {
+  const separatorIndex = error.message.indexOf(":");
+  if (separatorIndex === -1) {
     return error.message || fallback;
   }
 
-  const payload = rawPayload.trim();
+  const payload = error.message.slice(separatorIndex + 1).trim();
   try {
     const parsed = JSON.parse(payload) as { message?: string; error?: string };
     return parsed.message || parsed.error || error.message || fallback;
