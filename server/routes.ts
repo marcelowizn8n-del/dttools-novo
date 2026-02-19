@@ -220,7 +220,7 @@ function requireProjectAccess(requiredRole: 'owner' | 'editor' | 'viewer' = 'vie
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    const projectId = req.params.projectId;
+    const projectId = req.params.projectId || req.params.id;
     if (!projectId) {
       return res.status(400).json({ error: "Project ID required" });
     }
@@ -1227,10 +1227,10 @@ Estrutura obrigatória:
     }
   });
 
-  app.get("/api/projects/:id", requireAuth, async (req, res) => {
+  app.get("/api/projects/:id", requireAuth, requireProjectAccess('viewer'), async (req, res) => {
     try {
       const userId = req.session!.userId!;
-      const project = await storage.getProject(req.params.id, userId);
+      const project = await storage.getProject(req.params.id, userId) || await storage.getProjectById(req.params.id);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
@@ -1241,7 +1241,7 @@ Estrutura obrigatória:
   });
 
   // Optimized endpoint: Fetch project with ALL related data in single request
-  app.get("/api/projects/:id/full", requireAuth, async (req, res) => {
+  app.get("/api/projects/:id/full", requireAuth, requireProjectAccess('viewer'), async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const projectId = req.params.id;
@@ -1282,14 +1282,16 @@ Estrutura obrigatória:
         storage.getLovabilityMetrics(projectId),
         storage.getProjectAnalytics(projectId)
       ]);
+
+      const resolvedProject = project || await storage.getProjectById(projectId);
       
-      if (!project) {
+      if (!resolvedProject) {
         return res.status(404).json({ error: "Project not found" });
       }
       
       // Return everything in one response
       res.json({
-        project,
+        project: resolvedProject,
         empathyMaps,
         personas,
         interviews,
@@ -2596,7 +2598,7 @@ Estrutura obrigatória:
   });
 
   // Analytics routes
-  app.get("/api/projects/:projectId/stats", requireAuth, async (req, res) => {
+  app.get("/api/projects/:projectId/stats", requireAuth, requireProjectAccess('viewer'), async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const stats = await storage.getProjectStats(req.params.projectId, userId);

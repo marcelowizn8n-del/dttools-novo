@@ -73,6 +73,7 @@ export interface IStorage {
   getProjects(userId: string): Promise<Project[]>;
   getAllProjects(): Promise<Project[]>;
   getProject(id: string, userId: string): Promise<Project | undefined>;
+  getProjectById(id: string): Promise<Project | undefined>;
   createProject(project: InsertProject & { userId: string }): Promise<Project>;
   updateProject(id: string, userId: string, project: Partial<InsertProject>): Promise<Project | undefined>;
   deleteProject(id: string, userId: string): Promise<boolean>;
@@ -422,6 +423,11 @@ export class DatabaseStorage implements IStorage {
 
   async getProject(id: string, userId: string): Promise<Project | undefined> {
     const [project] = await db.select().from(projects).where(and(eq(projects.id, id), eq(projects.userId, userId)));
+    return project;
+  }
+
+  async getProjectById(id: string): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
     return project;
   }
 
@@ -1229,7 +1235,7 @@ export class DatabaseStorage implements IStorage {
     completionRate: number;
   }> {
     // Basic implementation - can be enhanced with more sophisticated logic
-    const project = await this.getProject(projectId, userId);
+    const project = await this.getProject(projectId, userId) || await this.getProjectById(projectId);
     return {
       totalTools: 15, // Total tools across all 5 phases
       completedTools: 0, // Would count actual completed tools
