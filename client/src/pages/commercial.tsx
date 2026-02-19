@@ -212,6 +212,13 @@ export default function CommercialPage() {
       setNewContact((prev) => ({ ...prev, name: "", role: "", email: "", phone: "" }));
       toast({ title: "Contato criado", description: "Contato adicionado com sucesso." });
     },
+    onError: (error) => {
+      toast({
+        title: "Não foi possível criar o contato",
+        description: getMutationErrorMessage(error, "Tente novamente em alguns instantes."),
+        variant: "destructive",
+      });
+    },
   });
 
   const createOpportunityMutation = useMutation({
