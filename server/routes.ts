@@ -118,6 +118,10 @@ const ADDON_PRICE_IDS: Record<string, { monthly?: string; yearly?: string }> = {
     monthly: process.env.STRIPE_PRICE_ADDON_LIBRARY_PREMIUM_MONTHLY,
     yearly: process.env.STRIPE_PRICE_ADDON_LIBRARY_PREMIUM_YEARLY,
   },
+  commercial_pro: {
+    monthly: process.env.STRIPE_PRICE_ADDON_COMMERCIAL_PRO_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_ADDON_COMMERCIAL_PRO_YEARLY,
+  },
 };
 
 // Extend Request interface to include session user
@@ -273,6 +277,56 @@ function requireDoubleDiamondProAddon(req: Request, res: Response, next: NextFun
 
   next();
 }
+
+const requireCommercialAccess = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.subscription?.limits?.commercialEnabled) {
+    return res.status(403).json({
+      error: "Commercial module not available",
+      message: "O módulo Comercial está disponível apenas em planos compatíveis ou com add-on Commercial Pro.",
+      upgrade_required: true,
+    });
+  }
+  next();
+};
+
+const requireCommercialCreateLimit = (entity: "opportunity" | "swot" | "playbook") => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.session?.userId;
+      const limits = req.subscription?.limits;
+      if (!userId || !limits) {
+        return next();
+      }
+
+      let maxLimit: number | null = null;
+      let currentCount = 0;
+
+      if (entity === "opportunity") {
+        maxLimit = limits.maxCommercialOpportunities;
+        currentCount = (await storage.getCommercialOpportunities(userId)).length;
+      } else if (entity === "swot") {
+        maxLimit = limits.maxCommercialSwotAnalyses;
+        currentCount = (await storage.getCommercialSwotAnalyses(userId)).length;
+      } else {
+        maxLimit = limits.maxCommercialPlaybooks;
+        currentCount = (await storage.getCommercialPlaybooks(userId)).length;
+      }
+
+      if (maxLimit !== null && currentCount >= maxLimit) {
+        return res.status(403).json({
+          error: "Commercial usage limit reached",
+          message: `Seu plano permite até ${maxLimit} ${entity === "opportunity" ? "oportunidades" : entity === "swot" ? "análises SWOT" : "playbooks"}.`,
+          upgrade_required: true,
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error("Error checking commercial limits:", error);
+      next(error);
+    }
+  };
+};
 
 // Configuração do multer para upload de arquivos
 const storage_config = multer.memoryStorage();
@@ -867,6 +921,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting persona: - routes.ts", error);
       res.status(500).json({ error: "Failed to delete persona" });
+    }
+  });
+
+  app.post("/api/commercial/ai-autofill", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
+    try {
+      const userId = req.session!.userId!;
+      const limits = req.subscription?.limits;
+
+      const maxAiGenerations = limits?.maxCommercialAiGenerations ?? 0;
+      if (maxAiGenerations !== null) {
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+        const usage = await storage.getAnalyticsEvents({
+          userId,
+          eventType: "commercial_ai_generation",
+          startDate: monthStart,
+        });
+
+        if (usage.length >= maxAiGenerations) {
+          return res.status(403).json({
+            error: "Commercial AI limit reached",
+            message: `Seu plano permite ${maxAiGenerations} preenchimentos por IA por mês no módulo Comercial.`,
+            upgrade_required: true,
+          });
+        }
+      }
+
+      const mode = String(req.body?.mode || "").trim().toLowerCase();
+      const projectId = String(req.body?.projectId || "").trim();
+      const segment = String(req.body?.segment || "").trim();
+      const context = String(req.body?.context || "").trim();
+      const objective = String(req.body?.objective || "").trim();
+      const channel = String(req.body?.channel || "email").trim().toLowerCase();
+
+      if (!["swot", "playbook"].includes(mode)) {
+        return res.status(400).json({ error: "Invalid mode. Use swot or playbook." });
+      }
+
+      let projectName = "Sem projeto vinculado";
+      let projectDescription = "";
+
+      if (projectId) {
+        const linkedProject = await storage.getProject(projectId, userId);
+        if (!linkedProject) {
+          return res.status(400).json({ error: "Invalid projectId for this user" });
+        }
+        projectName = linkedProject.name;
+        projectDescription = linkedProject.description || "";
+      }
+
+      const prompt = mode === "swot"
+        ? `Gere APENAS JSON válido para SWOT comercial.
+Contexto: projeto=${projectName}; descrição=${projectDescription}; segmento=${segment}; contexto_comercial=${context}.
+Estrutura obrigatória:
+{
+  "name": "string",
+  "segment": "string",
+  "context": "string",
+  "strengths": ["string"],
+  "weaknesses": ["string"],
+  "opportunities": ["string"],
+  "threats": ["string"],
+  "actionPlan": ["string"]
+}`
+        : `Gere APENAS JSON válido para playbook comercial.
+Contexto: projeto=${projectName}; descrição=${projectDescription}; segmento=${segment}; objetivo=${objective}; canal=${channel}.
+Estrutura obrigatória:
+{
+  "name": "string",
+  "channel": "string",
+  "segment": "string",
+  "objective": "string",
+  "content": "string",
+  "checklist": ["string"]
+}`;
+
+      const aiRaw = await designThinkingGeminiAI.chat(prompt, {
+        currentPhase: 2,
+        projectName,
+        projectDescription,
+      });
+
+      const firstBrace = aiRaw.indexOf("{");
+      const lastBrace = aiRaw.lastIndexOf("}");
+      const candidate = firstBrace !== -1 && lastBrace > firstBrace ? aiRaw.slice(firstBrace, lastBrace + 1) : aiRaw;
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(candidate);
+      } catch {
+        return res.status(422).json({ error: "AI response was not valid JSON", raw: aiRaw });
+      }
+
+      await storage.createAnalyticsEvent({
+        eventType: "commercial_ai_generation",
+        userId,
+        projectId: projectId || null,
+        metadata: { mode },
+      });
+
+      res.json(parsed);
+    } catch (error) {
+      console.error("Error generating commercial AI autofill:", error);
+      res.status(500).json({ error: "Failed to generate commercial autofill" });
     }
   });
 
@@ -5032,7 +5191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Commercial Module Routes (Phase 1 + 2)
   // Accounts
-  app.get("/api/commercial/accounts", requireAuth, async (req, res) => {
+  app.get("/api/commercial/accounts", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const accounts = await storage.getCommercialAccounts(userId);
@@ -5043,7 +5202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/commercial/accounts", requireAuth, async (req, res) => {
+  app.post("/api/commercial/accounts", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const parsed = insertCommercialAccountSchema.parse({
@@ -5058,7 +5217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commercial/accounts/:id", requireAuth, async (req, res) => {
+  app.put("/api/commercial/accounts/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const parsed = insertCommercialAccountSchema.partial().parse(req.body);
@@ -5073,7 +5232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/commercial/accounts/:id", requireAuth, async (req, res) => {
+  app.delete("/api/commercial/accounts/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const { id } = req.params;
@@ -5089,7 +5248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Contacts
-  app.get("/api/commercial/accounts/:accountId/contacts", requireAuth, async (req, res) => {
+  app.get("/api/commercial/accounts/:accountId/contacts", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { accountId } = req.params;
       const contacts = await storage.getCommercialContacts(accountId);
@@ -5100,7 +5259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/commercial/contacts", requireAuth, async (req, res) => {
+  app.post("/api/commercial/contacts", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const parsed = insertCommercialContactSchema.parse(req.body);
       const contact = await storage.createCommercialContact(parsed);
@@ -5111,7 +5270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commercial/contacts/:id", requireAuth, async (req, res) => {
+  app.put("/api/commercial/contacts/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const parsed = insertCommercialContactSchema.partial().parse(req.body);
@@ -5126,7 +5285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/commercial/contacts/:id", requireAuth, async (req, res) => {
+  app.delete("/api/commercial/contacts/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const success = await storage.deleteCommercialContact(id);
@@ -5141,7 +5300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pipeline Stages
-  app.get("/api/commercial/stages", requireAuth, async (req, res) => {
+  app.get("/api/commercial/stages", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       let stages = await storage.getCommercialPipelineStages(userId);
@@ -5175,7 +5334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/commercial/stages", requireAuth, async (req, res) => {
+  app.post("/api/commercial/stages", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const parsed = insertCommercialPipelineStageSchema.parse({
@@ -5190,7 +5349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commercial/stages/:id", requireAuth, async (req, res) => {
+  app.put("/api/commercial/stages/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const parsed = insertCommercialPipelineStageSchema.partial().parse(req.body);
@@ -5205,7 +5364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/commercial/stages/:id", requireAuth, async (req, res) => {
+  app.delete("/api/commercial/stages/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const success = await storage.deleteCommercialPipelineStage(id);
@@ -5220,7 +5379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Opportunities
-  app.get("/api/commercial/opportunities", requireAuth, async (req, res) => {
+  app.get("/api/commercial/opportunities", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const opportunities = await storage.getCommercialOpportunities(userId);
@@ -5231,13 +5390,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/commercial/opportunities", requireAuth, async (req, res) => {
+  app.post("/api/commercial/opportunities", requireAuth, loadUserSubscription, requireCommercialAccess, requireCommercialCreateLimit("opportunity"), async (req, res) => {
     try {
       const userId = req.session!.userId!;
+      const normalizedProjectId = typeof req.body?.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const parsed = insertCommercialOpportunitySchema.parse({
         ...req.body,
+        projectId: normalizedProjectId,
         userId,
       });
+
+      if (parsed.projectId) {
+        const linkedProject = await storage.getProject(parsed.projectId, userId);
+        if (!linkedProject) {
+          return res.status(400).json({ error: "Invalid projectId for this user" });
+        }
+      }
+
       const opportunity = await storage.createCommercialOpportunity(parsed);
       res.status(201).json(opportunity);
     } catch (error) {
@@ -5246,11 +5415,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commercial/opportunities/:id", requireAuth, async (req, res) => {
+  app.put("/api/commercial/opportunities/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
+      const userId = req.session!.userId!;
+      const normalizedProjectId = typeof req.body?.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const parsed = insertCommercialOpportunitySchema.partial().parse(req.body);
-      const opportunity = await storage.updateCommercialOpportunity(id, parsed);
+      const payload = { ...parsed, ...(req.body?.projectId !== undefined ? { projectId: normalizedProjectId } : {}) };
+
+      if (payload.projectId) {
+        const linkedProject = await storage.getProject(payload.projectId, userId);
+        if (!linkedProject) {
+          return res.status(400).json({ error: "Invalid projectId for this user" });
+        }
+      }
+
+      const opportunity = await storage.updateCommercialOpportunity(id, payload);
       if (!opportunity) {
         return res.status(404).json({ error: "Opportunity not found" });
       }
@@ -5261,7 +5441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/commercial/opportunities/:id", requireAuth, async (req, res) => {
+  app.delete("/api/commercial/opportunities/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const success = await storage.deleteCommercialOpportunity(id);
@@ -5276,7 +5456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SWOT
-  app.get("/api/commercial/swot", requireAuth, async (req, res) => {
+  app.get("/api/commercial/swot", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const analyses = await storage.getCommercialSwotAnalyses(userId);
@@ -5287,13 +5467,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/commercial/swot", requireAuth, async (req, res) => {
+  app.post("/api/commercial/swot", requireAuth, loadUserSubscription, requireCommercialAccess, requireCommercialCreateLimit("swot"), async (req, res) => {
     try {
       const userId = req.session!.userId!;
+      const normalizedProjectId = typeof req.body?.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const parsed = insertCommercialSwotSchema.parse({
         ...req.body,
+        projectId: normalizedProjectId,
         userId,
       });
+
+      if (parsed.projectId) {
+        const linkedProject = await storage.getProject(parsed.projectId, userId);
+        if (!linkedProject) {
+          return res.status(400).json({ error: "Invalid projectId for this user" });
+        }
+      }
+
       const swot = await storage.createCommercialSwotAnalysis(parsed);
       res.status(201).json(swot);
     } catch (error) {
@@ -5302,11 +5492,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commercial/swot/:id", requireAuth, async (req, res) => {
+  app.put("/api/commercial/swot/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
+      const userId = req.session!.userId!;
+      const normalizedProjectId = typeof req.body?.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const parsed = insertCommercialSwotSchema.partial().parse(req.body);
-      const swot = await storage.updateCommercialSwotAnalysis(id, parsed);
+      const payload = { ...parsed, ...(req.body?.projectId !== undefined ? { projectId: normalizedProjectId } : {}) };
+
+      if (payload.projectId) {
+        const linkedProject = await storage.getProject(payload.projectId, userId);
+        if (!linkedProject) {
+          return res.status(400).json({ error: "Invalid projectId for this user" });
+        }
+      }
+
+      const swot = await storage.updateCommercialSwotAnalysis(id, payload);
       if (!swot) {
         return res.status(404).json({ error: "SWOT analysis not found" });
       }
@@ -5317,7 +5518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/commercial/swot/:id", requireAuth, async (req, res) => {
+  app.delete("/api/commercial/swot/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const success = await storage.deleteCommercialSwotAnalysis(id);
@@ -5332,7 +5533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Playbooks
-  app.get("/api/commercial/playbooks", requireAuth, async (req, res) => {
+  app.get("/api/commercial/playbooks", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
       const playbooks = await storage.getCommercialPlaybooks(userId);
@@ -5343,13 +5544,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/commercial/playbooks", requireAuth, async (req, res) => {
+  app.post("/api/commercial/playbooks", requireAuth, loadUserSubscription, requireCommercialAccess, requireCommercialCreateLimit("playbook"), async (req, res) => {
     try {
       const userId = req.session!.userId!;
+      const normalizedProjectId = typeof req.body?.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const parsed = insertCommercialPlaybookSchema.parse({
         ...req.body,
+        projectId: normalizedProjectId,
         userId,
       });
+
+      if (parsed.projectId) {
+        const linkedProject = await storage.getProject(parsed.projectId, userId);
+        if (!linkedProject) {
+          return res.status(400).json({ error: "Invalid projectId for this user" });
+        }
+      }
+
       const playbook = await storage.createCommercialPlaybook(parsed);
       res.status(201).json(playbook);
     } catch (error) {
@@ -5358,11 +5569,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/commercial/playbooks/:id", requireAuth, async (req, res) => {
+  app.put("/api/commercial/playbooks/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
+      const userId = req.session!.userId!;
+      const normalizedProjectId = typeof req.body?.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const parsed = insertCommercialPlaybookSchema.partial().parse(req.body);
-      const playbook = await storage.updateCommercialPlaybook(id, parsed);
+      const payload = { ...parsed, ...(req.body?.projectId !== undefined ? { projectId: normalizedProjectId } : {}) };
+
+      if (payload.projectId) {
+        const linkedProject = await storage.getProject(payload.projectId, userId);
+        if (!linkedProject) {
+          return res.status(400).json({ error: "Invalid projectId for this user" });
+        }
+      }
+
+      const playbook = await storage.updateCommercialPlaybook(id, payload);
       if (!playbook) {
         return res.status(404).json({ error: "Playbook not found" });
       }
@@ -5373,7 +5595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/commercial/playbooks/:id", requireAuth, async (req, res) => {
+  app.delete("/api/commercial/playbooks/:id", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const { id } = req.params;
       const success = await storage.deleteCommercialPlaybook(id);
