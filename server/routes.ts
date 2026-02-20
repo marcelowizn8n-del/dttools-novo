@@ -1,5 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
+import {
+  createServer, type Server
+} from "http";
 import multer from "multer";
 import sharp from "sharp";
 import path from "path";
@@ -56,6 +58,7 @@ import {
   insertGuidingCriterionSchema,
   insertBpmnDiagramSchema
 } from "../shared/schema";
+import type { CommercialOpportunity, CommercialPipelineStage } from "../shared/schema";
 import bcrypt from "bcrypt";
 import { sendInviteEmail } from "./emailService";
 import Stripe from "stripe";
@@ -123,6 +126,88 @@ const ADDON_PRICE_IDS: Record<string, { monthly?: string; yearly?: string }> = {
     yearly: process.env.STRIPE_PRICE_ADDON_COMMERCIAL_PRO_YEARLY,
   },
 };
+
+const clampScore = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
+
+function computeStageScore(stageName?: string | null): number {
+  const name = (stageName || "").toLowerCase();
+  if (!name) return 50;
+  if (name.includes("fechado") || name.includes("won") || name.includes("ganho")) return 100;
+  if (name.includes("proposta") || name.includes("proposal")) return 85;
+  if (name.includes("negocia")) return 75;
+  if (name.includes("diagn") || name.includes("qualifica")) return 60;
+  if (name.includes("lead") || name.includes("novo") || name.includes("contato")) return 40;
+  return 55;
+}
+
+function computeCloseDateScore(expectedCloseDate?: Date | string | null): number {
+  if (!expectedCloseDate) return 50;
+  const closeDate = new Date(expectedCloseDate);
+  if (Number.isNaN(closeDate.getTime())) return 50;
+
+  const now = new Date();
+  const diffMs = closeDate.getTime() - now.getTime();
+  const daysToClose = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (daysToClose <= 15) return 100;
+  if (daysToClose <= 30) return 85;
+  if (daysToClose <= 60) return 70;
+  if (daysToClose <= 90) return 55;
+  if (daysToClose <= 120) return 40;
+  return 25;
+}
+
+function computeValueScore(valueEstimate?: number | null): number {
+  const value = Number(valueEstimate || 0);
+  if (value <= 0) return 0;
+  const normalized = (Math.log10(value + 1) / 6) * 100;
+  return clampScore(Math.round(normalized));
+}
+
+function computeLeadScore(
+  opportunity: CommercialOpportunity,
+  stage?: CommercialPipelineStage,
+): number {
+  const status = (opportunity.status || "open").toLowerCase();
+  if (status === "won") return 100;
+  if (status === "lost") return 5;
+
+  const probabilityScore = clampScore(Number(opportunity.probability || 0));
+  const stageScore = computeStageScore(stage?.name);
+  const closeDateScore = computeCloseDateScore(opportunity.expectedCloseDate);
+  const valueScore = computeValueScore(opportunity.valueEstimate);
+
+  const weighted =
+    probabilityScore * 0.5 +
+    stageScore * 0.25 +
+    closeDateScore * 0.15 +
+    valueScore * 0.1;
+
+  return clampScore(Math.round(weighted));
+}
+
+function getLeadScoreBand(score: number): "hot" | "warm" | "cold" {
+  if (score >= 75) return "hot";
+  if (score >= 45) return "warm";
+  return "cold";
+}
+
+function withLeadScore(
+  opportunities: CommercialOpportunity[],
+  stages: CommercialPipelineStage[],
+) {
+  const stageMap = new Map(stages.map((stage) => [stage.id, stage]));
+
+  return opportunities.map((opportunity) => {
+    const stage = opportunity.stageId ? stageMap.get(opportunity.stageId) : undefined;
+    const leadScore = computeLeadScore(opportunity, stage);
+    return {
+      ...opportunity,
+      leadScore,
+      leadScoreBand: getLeadScoreBand(leadScore),
+    };
+  });
+}
 
 // Extend Request interface to include session user
 declare module 'express-serve-static-core' {
@@ -5388,8 +5473,11 @@ Estrutura obrigatória:
   app.get("/api/commercial/opportunities", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
-      const opportunities = await storage.getCommercialOpportunities(userId);
-      res.json(opportunities);
+      const [opportunities, stages] = await Promise.all([
+        storage.getCommercialOpportunities(userId),
+        storage.getCommercialPipelineStages(userId),
+      ]);
+      res.json(withLeadScore(opportunities, stages));
     } catch (error) {
       console.error("Error fetching opportunities:", error);
       res.status(500).json({ error: "Failed to fetch opportunities" });
@@ -5414,7 +5502,9 @@ Estrutura obrigatória:
       }
 
       const opportunity = await storage.createCommercialOpportunity(parsed);
-      res.status(201).json(opportunity);
+      const stages = await storage.getCommercialPipelineStages(userId);
+      const [enrichedOpportunity] = withLeadScore([opportunity], stages);
+      res.status(201).json(enrichedOpportunity);
     } catch (error) {
       console.error("Error creating opportunity:", error);
       res.status(500).json({ error: "Failed to create opportunity" });
@@ -5440,7 +5530,9 @@ Estrutura obrigatória:
       if (!opportunity) {
         return res.status(404).json({ error: "Opportunity not found" });
       }
-      res.json(opportunity);
+      const stages = await storage.getCommercialPipelineStages(userId);
+      const [enrichedOpportunity] = withLeadScore([opportunity], stages);
+      res.json(enrichedOpportunity);
     } catch (error) {
       console.error("Error updating opportunity:", error);
       res.status(500).json({ error: "Failed to update opportunity" });

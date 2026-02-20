@@ -24,6 +24,22 @@ import type {
 
 const channels = ["phone", "email", "whatsapp", "linkedin", "ecommerce", "visit", "campaign"];
 
+type LeadScoreBand = "hot" | "warm" | "cold";
+type CommercialOpportunityWithScore = CommercialOpportunity & {
+  leadScore?: number;
+  leadScoreBand?: LeadScoreBand;
+};
+
+function getLeadScoreStyles(band?: LeadScoreBand) {
+  if (band === "hot") {
+    return "bg-red-100 text-red-700 border-red-200";
+  }
+  if (band === "warm") {
+    return "bg-amber-100 text-amber-700 border-amber-200";
+  }
+  return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
 function splitByLine(value: string): string[] {
   return value
     .split("\n")
@@ -118,7 +134,7 @@ export default function CommercialPage() {
     queryKey: ["/api/commercial/stages"],
   });
 
-  const { data: opportunities = [] } = useQuery<CommercialOpportunity[]>({
+  const { data: opportunities = [] } = useQuery<CommercialOpportunityWithScore[]>({
     queryKey: ["/api/commercial/opportunities"],
   });
 
@@ -604,13 +620,19 @@ export default function CommercialPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {opportunities.filter((op) => op.stageId === stage.id).map((op) => (
+                  {opportunities
+                    .filter((op) => op.stageId === stage.id)
+                    .sort((a, b) => (b.leadScore || 0) - (a.leadScore || 0))
+                    .map((op) => (
                     <div key={op.id} className="border rounded-md p-2 space-y-1">
                       <p className="text-sm font-medium">{op.title}</p>
                       {op.projectId ? <p className="text-[11px] text-muted-foreground">Projeto vinculado</p> : null}
                       <p className="text-xs text-muted-foreground">R$ {(op.valueEstimate || 0).toLocaleString("pt-BR")}</p>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{op.probability || 0}%</Badge>
+                        <Badge variant="outline" className={getLeadScoreStyles(op.leadScoreBand)}>
+                          Score: {op.leadScore ?? 0}
+                        </Badge>
                         <select
                           className="h-7 rounded border border-input text-xs px-1"
                           value={op.stageId || ""}
