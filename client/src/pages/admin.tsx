@@ -1644,6 +1644,7 @@ function UserLimitsDialog({
    aiTurbo: boolean;
    collabAdvanced: boolean;
    libraryPremium: boolean;
+   commercialPro: boolean;
  };
 
 function UserAddonsDialog({
@@ -1687,6 +1688,7 @@ function UserAddonsDialog({
         aiTurbo: payload.addons.aiTurbo,
         collabAdvanced: payload.addons.collabAdvanced,
         libraryPremium: payload.addons.libraryPremium,
+        commercialPro: payload.addons.commercialPro,
       };
 
       body.trialDays =
@@ -1823,6 +1825,19 @@ function UserAddonsDialog({
                 checked={localAddons.libraryPremium}
                 onCheckedChange={(checked) =>
                   handleToggle("libraryPremium", checked)
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium">{t("admin.addons.item.commercialPro.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("admin.addons.item.commercialPro.description")}</p>
+              </div>
+              <Switch
+                checked={localAddons.commercialPro}
+                onCheckedChange={(checked) =>
+                  handleToggle("commercialPro", checked)
                 }
               />
             </div>

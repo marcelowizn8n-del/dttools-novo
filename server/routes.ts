@@ -3987,6 +3987,7 @@ Estrutura obrigatória:
           aiTurbo: addonKeys.has("ai_turbo"),
           collabAdvanced: addonKeys.has("collab_advanced"),
           libraryPremium: addonKeys.has("library_premium"),
+          commercialPro: addonKeys.has("commercial_pro"),
         },
         raw: activeAddons,
       });
@@ -4005,6 +4006,7 @@ Estrutura obrigatória:
         aiTurbo,
         collabAdvanced,
         libraryPremium,
+        commercialPro,
         trialDays,
       } = req.body || {};
 
@@ -4070,6 +4072,7 @@ Estrutura obrigatória:
         updateAddon("ai_turbo", aiTurbo),
         updateAddon("collab_advanced", collabAdvanced),
         updateAddon("library_premium", libraryPremium),
+        updateAddon("commercial_pro", commercialPro),
       ]);
 
       const activeAddons = await storage.getActiveUserAddons(userId);
@@ -4083,6 +4086,7 @@ Estrutura obrigatória:
           aiTurbo: addonKeys.has("ai_turbo"),
           collabAdvanced: addonKeys.has("collab_advanced"),
           libraryPremium: addonKeys.has("library_premium"),
+          commercialPro: addonKeys.has("commercial_pro"),
         },
         raw: activeAddons,
       });
