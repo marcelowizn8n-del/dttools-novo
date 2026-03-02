@@ -521,6 +521,9 @@ export async function getSubscriptionInfo(req: Request, res: Response) {
       const hasAiTurbo = addonKeys.has("ai_turbo");
       const hasCollabAdvanced = addonKeys.has("collab_advanced");
       const hasLibraryPremium = addonKeys.has("library_premium");
+      const hasCommercialPro = addonKeys.has("commercial_pro");
+
+      const commercialAccess = resolveCommercialAccess(plan.name, hasCommercialPro);
 
       let maxProjects = userMaxProjects !== null ? userMaxProjects : planMaxProjects;
       let aiChatLimit = userAiChatLimit !== null ? userAiChatLimit : planAiChat;

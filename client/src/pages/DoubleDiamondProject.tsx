@@ -284,9 +284,11 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                     <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-name-dd-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-name-dd-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -303,9 +305,11 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-email-dd-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-email-dd-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -322,9 +326,11 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-linkedin-dd-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-linkedin-dd-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -341,9 +347,11 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-company-dd-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-company-dd-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -360,9 +368,11 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-role-dd-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-role-dd-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -379,9 +389,11 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-location-dd-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-location-dd-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -25,9 +25,12 @@ import type {
 const channels = ["phone", "email", "whatsapp", "linkedin", "ecommerce", "visit", "campaign"];
 
 type LeadScoreBand = "hot" | "warm" | "cold";
+type FollowUpStatus = "overdue" | "today" | "upcoming" | "unscheduled";
 type CommercialOpportunityWithScore = CommercialOpportunity & {
   leadScore?: number;
   leadScoreBand?: LeadScoreBand;
+  followUpStatus?: FollowUpStatus;
+  followUpDueInDays?: number | null;
 };
 
 function getLeadScoreStyles(band?: LeadScoreBand) {
@@ -38,6 +41,33 @@ function getLeadScoreStyles(band?: LeadScoreBand) {
     return "bg-amber-100 text-amber-700 border-amber-200";
   }
   return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function getFollowUpStyles(status?: FollowUpStatus) {
+  if (status === "overdue") return "bg-rose-100 text-rose-700 border-rose-200";
+  if (status === "today") return "bg-orange-100 text-orange-700 border-orange-200";
+  if (status === "upcoming") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  return "bg-slate-100 text-slate-600 border-slate-200";
+}
+
+function getFollowUpLabel(status?: FollowUpStatus, dueInDays?: number | null) {
+  if (status === "overdue") {
+    return `Atrasado ${Math.abs(dueInDays ?? 0)}d`;
+  }
+  if (status === "today") {
+    return "Follow-up hoje";
+  }
+  if (status === "upcoming") {
+    return `Em ${dueInDays ?? 0}d`;
+  }
+  return "Sem follow-up";
+}
+
+function getFollowUpPriority(status?: FollowUpStatus) {
+  if (status === "overdue") return 3;
+  if (status === "today") return 2;
+  if (status === "upcoming") return 1;
+  return 0;
 }
 
 function splitByLine(value: string): string[] {
@@ -622,7 +652,16 @@ export default function CommercialPage() {
                 <CardContent className="space-y-2">
                   {opportunities
                     .filter((op) => op.stageId === stage.id)
-                    .sort((a, b) => (b.leadScore || 0) - (a.leadScore || 0))
+                    .sort((a, b) => {
+                      const followUpDiff =
+                        getFollowUpPriority(b.followUpStatus) - getFollowUpPriority(a.followUpStatus);
+
+                      if (followUpDiff !== 0) {
+                        return followUpDiff;
+                      }
+
+                      return (b.leadScore || 0) - (a.leadScore || 0);
+                    })
                     .map((op) => (
                     <div key={op.id} className="border rounded-md p-2 space-y-1">
                       <p className="text-sm font-medium">{op.title}</p>
@@ -632,6 +671,9 @@ export default function CommercialPage() {
                         <Badge variant="outline">{op.probability || 0}%</Badge>
                         <Badge variant="outline" className={getLeadScoreStyles(op.leadScoreBand)}>
                           Score: {op.leadScore ?? 0}
+                        </Badge>
+                        <Badge variant="outline" className={getFollowUpStyles(op.followUpStatus)}>
+                          {getFollowUpLabel(op.followUpStatus, op.followUpDueInDays)}
                         </Badge>
                         <select
                           className="h-7 rounded border border-input text-xs px-1"

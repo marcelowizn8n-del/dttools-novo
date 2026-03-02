@@ -263,9 +263,11 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-name-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-name-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -282,9 +284,11 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-email-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-email-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -301,9 +305,11 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-linkedin-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-linkedin-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -320,9 +326,11 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-company-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-company-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -339,9 +347,11 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-role-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-role-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -358,9 +368,11 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       <SelectItem value="__none__">Não importar</SelectItem>
-                      {preview.columns.map((c) => (
-                        <SelectItem key={`map-location-${c}`} value={c}>{c}</SelectItem>
-                      ))}
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c) => (
+                          <SelectItem key={`map-location-${c}`} value={c}>{c}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

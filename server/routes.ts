@@ -192,6 +192,104 @@ function getLeadScoreBand(score: number): "hot" | "warm" | "cold" {
   return "cold";
 }
 
+function computeFollowUpDays(stageName: string | undefined): number {
+  const name = (stageName || "").toLowerCase();
+
+  if (name.includes("negocia")) {
+    return 0;
+  }
+  if (name.includes("proposta")) {
+    return 1;
+  }
+  if (name.includes("qualifica") || name.includes("diagn")) {
+    return 2;
+  }
+  if (name.includes("lead") || name.includes("novo") || name.includes("contato")) {
+    return 2;
+  }
+
+  return 3;
+}
+
+function computeFollowUpStatus(nextActionDate?: Date | string | null): "overdue" | "today" | "upcoming" | "unscheduled" {
+  if (!nextActionDate) return "unscheduled";
+
+  const due = new Date(nextActionDate);
+  if (Number.isNaN(due.getTime())) return "unscheduled";
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const tomorrowStart = todayStart + 24 * 60 * 60 * 1000;
+  const dueTime = due.getTime();
+
+  if (dueTime < todayStart) return "overdue";
+  if (dueTime >= todayStart && dueTime < tomorrowStart) return "today";
+  return "upcoming";
+}
+
+function computeFollowUpDueInDays(nextActionDate?: Date | string | null): number | null {
+  if (!nextActionDate) return null;
+  const due = new Date(nextActionDate);
+  if (Number.isNaN(due.getTime())) return null;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const dueStart = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+  return Math.round((dueStart - todayStart) / (24 * 60 * 60 * 1000));
+}
+
+const AUTO_FOLLOW_UP_MARKER = "[AUTO-FOLLOWUP]";
+
+function hasAutoFollowUpReminder(description?: string | null): boolean {
+  return typeof description === "string" && description.includes(AUTO_FOLLOW_UP_MARKER);
+}
+
+function buildAutoFollowUpReminderDescription(opportunity: CommercialOpportunity): string {
+  const dueInDays = computeFollowUpDueInDays(opportunity.nextActionDate);
+  const overdueDays = Math.max(1, Math.abs(dueInDays ?? 0));
+  return `${AUTO_FOLLOW_UP_MARKER} Follow-up atrasado há ${overdueDays}d. Priorize contato hoje.`;
+}
+
+async function ensureOverdueFollowUpReminders(opportunities: CommercialOpportunity[]): Promise<CommercialOpportunity[]> {
+  const updates = await Promise.all(
+    opportunities.map(async (opportunity) => {
+      const status = (opportunity.status || "open").toLowerCase();
+      const followUpStatus = computeFollowUpStatus(opportunity.nextActionDate);
+      const hasManualDescription = typeof opportunity.nextActionDescription === "string" && opportunity.nextActionDescription.trim().length > 0;
+
+      if (status !== "open" || followUpStatus !== "overdue" || hasManualDescription || hasAutoFollowUpReminder(opportunity.nextActionDescription)) {
+        return null;
+      }
+
+      return storage.updateCommercialOpportunity(opportunity.id, {
+        nextActionType: opportunity.nextActionType || "message",
+        nextActionDescription: buildAutoFollowUpReminderDescription(opportunity),
+      });
+    }),
+  );
+
+  const updatedById = new Map(
+    updates
+      .filter((updated): updated is CommercialOpportunity => Boolean(updated))
+      .map((updated) => [updated.id, updated]),
+  );
+
+  return opportunities.map((opportunity) => updatedById.get(opportunity.id) || opportunity);
+}
+
+function buildAutoNextActionDate(opportunity: CommercialOpportunity, stage?: CommercialPipelineStage): Date | null {
+  const status = (opportunity.status || "open").toLowerCase();
+  if (status === "won" || status === "lost") {
+    return null;
+  }
+
+  const days = computeFollowUpDays(stage?.name);
+
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
 function withLeadScore(
   opportunities: CommercialOpportunity[],
   stages: CommercialPipelineStage[],
@@ -205,6 +303,8 @@ function withLeadScore(
       ...opportunity,
       leadScore,
       leadScoreBand: getLeadScoreBand(leadScore),
+      followUpStatus: computeFollowUpStatus(opportunity.nextActionDate),
+      followUpDueInDays: computeFollowUpDueInDays(opportunity.nextActionDate),
     };
   });
 }
@@ -5473,10 +5573,12 @@ Estrutura obrigatória:
   app.get("/api/commercial/opportunities", requireAuth, loadUserSubscription, requireCommercialAccess, async (req, res) => {
     try {
       const userId = req.session!.userId!;
-      const [opportunities, stages] = await Promise.all([
+      const [opportunitiesRaw, stages] = await Promise.all([
         storage.getCommercialOpportunities(userId),
         storage.getCommercialPipelineStages(userId),
       ]);
+
+      const opportunities = await ensureOverdueFollowUpReminders(opportunitiesRaw);
       res.json(withLeadScore(opportunities, stages));
     } catch (error) {
       console.error("Error fetching opportunities:", error);
@@ -5494,6 +5596,17 @@ Estrutura obrigatória:
         userId,
       });
 
+      const stages = await storage.getCommercialPipelineStages(userId);
+      const stage = parsed.stageId ? stages.find((s) => s.id === parsed.stageId) : undefined;
+      const autoNextActionDate = req.body?.nextActionDate === undefined
+        ? buildAutoNextActionDate(parsed, stage)
+        : undefined;
+
+      const payload = {
+        ...parsed,
+        ...(autoNextActionDate !== undefined ? { nextActionDate: autoNextActionDate } : {}),
+      };
+
       if (parsed.projectId) {
         const linkedProject = await storage.getProject(parsed.projectId, userId);
         if (!linkedProject) {
@@ -5501,9 +5614,9 @@ Estrutura obrigatória:
         }
       }
 
-      const opportunity = await storage.createCommercialOpportunity(parsed);
-      const stages = await storage.getCommercialPipelineStages(userId);
-      const [enrichedOpportunity] = withLeadScore([opportunity], stages);
+      const opportunity = await storage.createCommercialOpportunity(payload);
+      const [opportunityWithReminder] = await ensureOverdueFollowUpReminders([opportunity]);
+      const [enrichedOpportunity] = withLeadScore([opportunityWithReminder], stages);
       res.status(201).json(enrichedOpportunity);
     } catch (error) {
       console.error("Error creating opportunity:", error);
@@ -5519,6 +5632,14 @@ Estrutura obrigatória:
       const parsed = insertCommercialOpportunitySchema.partial().parse(req.body);
       const payload = { ...parsed, ...(req.body?.projectId !== undefined ? { projectId: normalizedProjectId } : {}) };
 
+      const stages = await storage.getCommercialPipelineStages(userId);
+      const stage = payload.stageId ? stages.find((s) => s.id === payload.stageId) : undefined;
+
+      if (req.body?.nextActionDate === undefined && (payload.stageId !== undefined || payload.probability !== undefined || payload.status !== undefined)) {
+        const autoNextActionDate = buildAutoNextActionDate(payload as CommercialOpportunity, stage);
+        payload.nextActionDate = autoNextActionDate;
+      }
+
       if (payload.projectId) {
         const linkedProject = await storage.getProject(payload.projectId, userId);
         if (!linkedProject) {
@@ -5530,8 +5651,8 @@ Estrutura obrigatória:
       if (!opportunity) {
         return res.status(404).json({ error: "Opportunity not found" });
       }
-      const stages = await storage.getCommercialPipelineStages(userId);
-      const [enrichedOpportunity] = withLeadScore([opportunity], stages);
+      const [opportunityWithReminder] = await ensureOverdueFollowUpReminders([opportunity]);
+      const [enrichedOpportunity] = withLeadScore([opportunityWithReminder], stages);
       res.json(enrichedOpportunity);
     } catch (error) {
       console.error("Error updating opportunity:", error);
