@@ -321,6 +321,19 @@ declare module 'express-serve-static-core' {
   }
 }
 
+function parseImportExtraColumns(input: unknown): string[] {
+  if (!input) return [];
+  try {
+    const raw = typeof input === "string" ? JSON.parse(input) : input;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((v) => String(v ?? "").trim())
+      .filter((v) => v !== "");
+  } catch {
+    return [];
+  }
+}
+
 function parseImportMapping(input: unknown): PersonaImportMapping {
   if (!input) return {};
   try {
@@ -628,6 +641,7 @@ async function upsertPersonasFromRows(args: {
   maxPersonas: number | null | undefined;
   fields?: PersonaImportFields;
   mapping?: PersonaImportMapping;
+  extraColumns?: string[];
 }) {
   const { projectId, rows, maxPersonas } = args;
   const fields = args.fields ?? {
@@ -639,6 +653,7 @@ async function upsertPersonasFromRows(args: {
   };
 
   const mapping = args.mapping ?? {};
+  const extraColumns = Array.isArray(args.extraColumns) ? args.extraColumns : [];
 
   const nameKeys = ["nome", "name", "fullname", "contato", "contact", "person"].map(normalizeImportKey);
   const emailKeys = ["email", "e-mail", "mail"].map(normalizeImportKey);
@@ -721,6 +736,15 @@ async function upsertPersonasFromRows(args: {
       fields.email && email ? `Email: ${email}` : "",
       fields.linkedin && linkedin ? `LinkedIn: ${linkedin}` : "",
     ].filter((p) => p !== "");
+
+    for (const col of extraColumns) {
+      const key = String(col || "").trim();
+      if (!key) continue;
+      const value = (row as any)?.[key];
+      const text = String(value ?? "").trim();
+      if (!text) continue;
+      bioLines.push(`${key}: ${text}`);
+    }
     const bio = bioLines.join("\n");
 
     const existing = (email ? byEmail.get(email.trim().toLowerCase()) : null) || (resolvedName ? byName.get(resolvedName.trim().toLowerCase()) : null);
@@ -1273,7 +1297,8 @@ Estrutura obrigatória:
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
         const importMapping = parseImportMapping(req.body?.mapping);
-        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
+        const extraColumns = parseImportExtraColumns(req.body?.extraColumns);
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields, mapping: importMapping, extraColumns });
         res.json({ ...result, projectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -1345,7 +1370,8 @@ Estrutura obrigatória:
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
         const importMapping = parseImportMapping(req.body?.mapping);
-        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
+        const extraColumns = parseImportExtraColumns(req.body?.extraColumns);
+        const result = await upsertPersonasFromRows({ projectId, rows, maxPersonas, fields: importFields, mapping: importMapping, extraColumns });
         res.json({ ...result, projectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -7392,7 +7418,8 @@ app.post(
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
         const importMapping = parseImportMapping(req.body?.mapping);
-        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
+        const extraColumns = parseImportExtraColumns(req.body?.extraColumns);
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields, mapping: importMapping, extraColumns });
         res.json({ ...result, projectId: mainProjectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -7497,7 +7524,8 @@ app.post(
         const maxPersonas = req.subscription?.limits?.maxPersonasPerProject;
         const importFields = parseImportFields(req.body?.fields);
         const importMapping = parseImportMapping(req.body?.mapping);
-        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields, mapping: importMapping });
+        const extraColumns = parseImportExtraColumns(req.body?.extraColumns);
+        const result = await upsertPersonasFromRows({ projectId: mainProjectId, rows, maxPersonas, fields: importFields, mapping: importMapping, extraColumns });
         res.json({ ...result, projectId: mainProjectId });
       } catch (error: any) {
         const msg = error instanceof Error ? error.message : String(error);

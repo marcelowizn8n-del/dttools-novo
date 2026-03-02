@@ -36,6 +36,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
   });
   const [preview, setPreview] = useState<{ columns: string[]; sampleRows: any[] } | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [extraColumns, setExtraColumns] = useState<string[]>([]);
   const [mappingSelection, setMappingSelection] = useState<{[k in "name" | "email" | "linkedin" | "company" | "role" | "location"]: string}>({
     name: "__auto__",
     email: "__auto__",
@@ -72,7 +73,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
 
   const loadPreview = async () => {
     if (!file && !sheetUrl.trim()) {
-      toast({ title: "Erro", description: "Envie um arquivo ou informe um link do Google Sheets", variant: "destructive" });
+      toast({ title: "Atenção", description: "Envie um arquivo ou cole um link do Google Sheets" });
       return;
     }
 
@@ -119,10 +120,14 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
     }
   };
 
+  const toggleExtraColumn = (col: string) => {
+    setExtraColumns((prev) => (prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col]));
+  };
+
   const importMutation = useMutation({
     mutationFn: async () => {
       if (!file && !sheetUrl.trim()) {
-        throw new Error("Envie um arquivo ou informe um link do Google Sheets");
+        throw new Error("Envie um arquivo ou cole um link do Google Sheets");
       }
 
       let response: Response;
@@ -131,7 +136,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
         formData.append("file", file);
         formData.append("fields", JSON.stringify(fields));
         formData.append("mapping", JSON.stringify(buildMappingPayload()));
-
+        formData.append("extraColumns", JSON.stringify(extraColumns));
         response = await fetch(`/api/projects/${projectId}/personas/import`, {
           method: "POST",
           body: formData,
@@ -141,7 +146,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
         response = await fetch(`/api/projects/${projectId}/personas/import-from-sheets`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: sheetUrl.trim(), fields, mapping: buildMappingPayload() }),
+          body: JSON.stringify({ url: sheetUrl.trim(), fields, mapping: buildMappingPayload(), extraColumns }),
           credentials: "include",
         });
       }
@@ -163,6 +168,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
       setFile(null);
       setSheetUrl("");
       setPreview(null);
+      setExtraColumns([]);
       setMappingSelection({
         name: "__auto__",
         email: "__auto__",
@@ -257,10 +263,10 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
               <div className="text-xs text-gray-600">{preview.columns.join(" | ")}</div>
               {preview.sampleRows?.length ? (
                 <div className="max-h-56 overflow-auto rounded-md border bg-white">
-                  <table className="min-w-full text-xs">
+                  <table className="min-w-max text-xs">
                     <thead className="sticky top-0 bg-gray-50">
                       <tr>
-                        {preview.columns.slice(0, 6).map((c, i) => (
+                        {preview.columns.map((c, i) => (
                           <th key={`preview-col-${i}-${c}`} className="px-2 py-1 text-left font-medium text-gray-700 whitespace-nowrap">
                             {getColumnLabel(c, i)}
                           </th>
@@ -270,7 +276,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <tbody>
                       {preview.sampleRows.slice(0, 5).map((row, idx) => (
                         <tr key={`preview-row-${idx}`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                          {preview.columns.slice(0, 6).map((c, i) => (
+                          {preview.columns.map((c, i) => (
                             <td key={`preview-cell-${idx}-${i}-${c}`} className="px-2 py-1 text-gray-700 whitespace-nowrap">
                               {String((row as any)?.[c] ?? "").slice(0, 60)}
                             </td>
@@ -279,6 +285,25 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              ) : null}
+              {preview.columns?.length ? (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-gray-700">Campos extras (opcional)</div>
+                  <div className="max-h-32 overflow-auto rounded-md border p-2 bg-white">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {preview.columns
+                        .filter((c) => typeof c === "string" && c.trim() !== "")
+                        .map((c, i) => (
+                          <label key={`extra-${i}-${c}`} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                            <Checkbox checked={extraColumns.includes(c)} onCheckedChange={() => toggleExtraColumn(c)} />
+                            <span className="truncate" title={c}>
+                              {getColumnLabel(c, i)}
+                            </span>
+                          </label>
+                        ))}
+                    </div>
+                  </div>
                 </div>
               ) : null}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
