@@ -100,6 +100,14 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
     return m;
   };
 
+  const getColumnLabel = (col: string, index: number) => {
+    const c = String(col ?? "").trim();
+    if (!c) return `Coluna ${index + 1} (sem nome)`;
+    const m = c.match(/^_(\d+)$/);
+    if (m?.[1]) return `Coluna ${m[1]} (sem nome)`;
+    return c;
+  };
+
   const guessColumn = (columns: string[], patterns: RegExp[]) => {
     for (const col of columns) {
       const c = String(col || "");
@@ -282,9 +290,9 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                   <table className="min-w-full text-xs">
                     <thead className="sticky top-0 bg-gray-50">
                       <tr>
-                        {preview.columns.slice(0, 6).map((c) => (
-                          <th key={`preview-dd-col-${c}`} className="px-2 py-1 text-left font-medium text-gray-700 whitespace-nowrap">
-                            {c || "(vazio)"}
+                        {preview.columns.slice(0, 6).map((c, i) => (
+                          <th key={`preview-dd-col-${i}-${c}`} className="px-2 py-1 text-left font-medium text-gray-700 whitespace-nowrap">
+                            {getColumnLabel(c, i)}
                           </th>
                         ))}
                       </tr>
@@ -292,8 +300,8 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                     <tbody>
                       {preview.sampleRows.slice(0, 5).map((row, idx) => (
                         <tr key={`preview-dd-row-${idx}`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                          {preview.columns.slice(0, 6).map((c) => (
-                            <td key={`preview-dd-cell-${idx}-${c}`} className="px-2 py-1 text-gray-700 whitespace-nowrap">
+                          {preview.columns.slice(0, 6).map((c, i) => (
+                            <td key={`preview-dd-cell-${idx}-${i}-${c}`} className="px-2 py-1 text-gray-700 whitespace-nowrap">
                               {String((row as any)?.[c] ?? "").slice(0, 60)}
                             </td>
                           ))}
@@ -312,8 +320,10 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                       <SelectItem value="__auto__">Auto</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-name-dd-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`dd-map-name-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -333,8 +343,10 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-email-dd-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`dd-map-email-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -354,8 +366,10 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-linkedin-dd-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`dd-map-linkedin-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -375,8 +389,10 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-company-dd-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`dd-map-company-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -396,8 +412,10 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-role-dd-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`dd-map-role-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -417,8 +435,10 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-location-dd-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`dd-map-location-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>

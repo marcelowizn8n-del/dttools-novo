@@ -54,6 +54,14 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
     return m;
   };
 
+  const getColumnLabel = (col: string, index: number) => {
+    const c = String(col ?? "").trim();
+    if (!c) return `Coluna ${index + 1} (sem nome)`;
+    const m = c.match(/^_(\d+)$/);
+    if (m?.[1]) return `Coluna ${m[1]} (sem nome)`;
+    return c;
+  };
+
   const guessColumn = (columns: string[], patterns: RegExp[]) => {
     for (const col of columns) {
       const c = String(col || "");
@@ -258,9 +266,9 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                   <table className="min-w-full text-xs">
                     <thead className="sticky top-0 bg-gray-50">
                       <tr>
-                        {preview.columns.slice(0, 6).map((c) => (
-                          <th key={`preview-col-${c}`} className="px-2 py-1 text-left font-medium text-gray-700 whitespace-nowrap">
-                            {c || "(vazio)"}
+                        {preview.columns.slice(0, 6).map((c, i) => (
+                          <th key={`preview-col-${i}-${c}`} className="px-2 py-1 text-left font-medium text-gray-700 whitespace-nowrap">
+                            {getColumnLabel(c, i)}
                           </th>
                         ))}
                       </tr>
@@ -268,8 +276,8 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                     <tbody>
                       {preview.sampleRows.slice(0, 5).map((row, idx) => (
                         <tr key={`preview-row-${idx}`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                          {preview.columns.slice(0, 6).map((c) => (
-                            <td key={`preview-cell-${idx}-${c}`} className="px-2 py-1 text-gray-700 whitespace-nowrap">
+                          {preview.columns.slice(0, 6).map((c, i) => (
+                            <td key={`preview-cell-${idx}-${i}-${c}`} className="px-2 py-1 text-gray-700 whitespace-nowrap">
                               {String((row as any)?.[c] ?? "").slice(0, 60)}
                             </td>
                           ))}
@@ -282,18 +290,18 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <div className="text-xs font-medium text-gray-700">Nome</div>
-                  <Select
-                    value={mappingSelection.name}
-                    onValueChange={(v) => setMappingSelection((p) => ({ ...p, name: v }))}
-                  >
+                  <Select value={mappingSelection.name} onValueChange={(v) => setMappingSelection((p) => ({ ...p, name: v }))}>
                     <SelectTrigger className="h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__auto__">Auto</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-name-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`map-name-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
+                      <SelectItem value="__none__">Não importar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -312,8 +320,10 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-email-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`map-email-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -333,8 +343,10 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-linkedin-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`map-linkedin-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -354,8 +366,10 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-company-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`map-company-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -375,8 +389,10 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-role-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`map-role-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -396,8 +412,10 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
                       <SelectItem value="__none__">Não importar</SelectItem>
                       {preview.columns
                         .filter((c) => typeof c === "string" && c.trim() !== "")
-                        .map((c) => (
-                          <SelectItem key={`map-location-${c}`} value={c}>{c}</SelectItem>
+                        .map((c, i) => (
+                          <SelectItem key={`map-location-${i}-${c}`} value={c}>
+                            {getColumnLabel(c, i)}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
