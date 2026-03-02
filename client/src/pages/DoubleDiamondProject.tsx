@@ -239,7 +239,7 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
         <Upload className="mr-2 h-4 w-4" />
         Importar contatos
       </Button>
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Importar contatos</DialogTitle>
         </DialogHeader>
@@ -286,7 +286,7 @@ function ImportPersonasDialogDD({ doubleDiamondId }: { doubleDiamondId: string }
             <div className="space-y-2 rounded-md border p-3">
               <div className="text-xs text-gray-600">{preview.columns.join(" | ")}</div>
               {preview.sampleRows?.length ? (
-                <div className="overflow-auto rounded-md border bg-white">
+                <div className="max-h-56 overflow-auto rounded-md border bg-white">
                   <table className="min-w-full text-xs">
                     <thead className="sticky top-0 bg-gray-50">
                       <tr>

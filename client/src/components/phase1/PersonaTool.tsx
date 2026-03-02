@@ -190,20 +190,14 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" data-testid="button-import-personas">
-          <Upload className="w-4 h-4 mr-2" />
-          Importar contatos
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[520px]">
+      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)} data-testid="button-import-personas">
+        <Upload className="mr-2 h-4 w-4" />
+        Importar contatos
+      </Button>
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Importar contatos</DialogTitle>
-          <DialogDescription>
-            Envie um arquivo CSV ou XLSX (exportado do Google Sheets/Excel) para criar personas.
-          </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-3">
           <div className="space-y-2">
             <div className="text-sm font-medium text-gray-700">Campos para importar</div>
@@ -262,7 +256,7 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
             <div className="space-y-2 rounded-md border p-3">
               <div className="text-xs text-gray-600">{preview.columns.join(" | ")}</div>
               {preview.sampleRows?.length ? (
-                <div className="overflow-auto rounded-md border bg-white">
+                <div className="max-h-56 overflow-auto rounded-md border bg-white">
                   <table className="min-w-full text-xs">
                     <thead className="sticky top-0 bg-gray-50">
                       <tr>
