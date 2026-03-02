@@ -680,6 +680,17 @@ async function upsertPersonasFromRows(args: {
     if (em) byEmail.set(em.toLowerCase(), p);
   }
 
+  const buildNameFromEmail = (rawEmail: string) => {
+    const safe = String(rawEmail || "").trim();
+    if (!safe || !safe.includes("@")) return "";
+    const local = safe.split("@")[0] || "";
+    const normalized = local
+      .replace(/[._-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return normalized || local || safe;
+  };
+
   for (const row of rows) {
     const name = extractValueFromRow(row, mappedNameKeys);
     const email = extractValueFromRow(row, mappedEmailKeys);
@@ -699,6 +710,8 @@ async function upsertPersonasFromRows(args: {
       continue;
     }
 
+    const resolvedName = name || (email ? buildNameFromEmail(email) : "");
+
     const occupation = fields.role ? (role || "") : "";
 
     const bioLines = [
@@ -710,10 +723,10 @@ async function upsertPersonasFromRows(args: {
     ].filter((p) => p !== "");
     const bio = bioLines.join("\n");
 
-    const existing = (email ? byEmail.get(email.trim().toLowerCase()) : null) || (name ? byName.get(name.trim().toLowerCase()) : null);
+    const existing = (email ? byEmail.get(email.trim().toLowerCase()) : null) || (resolvedName ? byName.get(resolvedName.trim().toLowerCase()) : null);
     if (existing) {
       const updatePayload: any = {};
-      if (name && name.trim() && name.trim() !== existing.name) updatePayload.name = name.trim();
+      if (resolvedName && resolvedName.trim() && resolvedName.trim() !== existing.name) updatePayload.name = resolvedName.trim();
       if (fields.role && occupation && occupation.trim()) updatePayload.occupation = occupation.trim();
       if (bio && bio.trim()) updatePayload.bio = bio.trim();
       if (Object.keys(updatePayload).length > 0) {
@@ -730,14 +743,14 @@ async function upsertPersonasFromRows(args: {
       }
     }
 
-    if (!name) {
+    if (!resolvedName) {
       skipped++;
       continue;
     }
 
     const personaPayload = insertPersonaSchema.parse({
       projectId,
-      name: name.trim(),
+      name: resolvedName.trim(),
       age: undefined,
       occupation: (fields.role ? (occupation.trim() || undefined) : undefined),
       bio: bio || undefined,

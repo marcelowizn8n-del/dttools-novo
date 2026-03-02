@@ -253,6 +253,32 @@ function ImportPersonasDialog({ projectId }: { projectId: string }) {
           {preview?.columns?.length ? (
             <div className="space-y-2 rounded-md border p-3">
               <div className="text-xs text-gray-600">{preview.columns.join(" | ")}</div>
+              {preview.sampleRows?.length ? (
+                <div className="overflow-auto rounded-md border bg-white">
+                  <table className="min-w-full text-xs">
+                    <thead className="sticky top-0 bg-gray-50">
+                      <tr>
+                        {preview.columns.slice(0, 6).map((c) => (
+                          <th key={`preview-col-${c}`} className="px-2 py-1 text-left font-medium text-gray-700 whitespace-nowrap">
+                            {c || "(vazio)"}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.sampleRows.slice(0, 5).map((row, idx) => (
+                        <tr key={`preview-row-${idx}`} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                          {preview.columns.slice(0, 6).map((c) => (
+                            <td key={`preview-cell-${idx}-${c}`} className="px-2 py-1 text-gray-700 whitespace-nowrap">
+                              {String((row as any)?.[c] ?? "").slice(0, 60)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <div className="text-xs font-medium text-gray-700">Nome</div>
